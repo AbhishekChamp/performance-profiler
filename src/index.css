@@ -1,0 +1,271 @@
+@import "tailwindcss";
+
+/* Tell Tailwind where to scan for classes */
+@source "./**/*.tsx";
+@source "./**/*.ts";
+@source "./**/*.html";
+
+/* Custom theme colors */
+:root {
+  --dev-bg: #0d1117;
+  --dev-surface: #161b22;
+  --dev-surface-hover: #1c2128;
+  --dev-border: #30363d;
+  --dev-border-subtle: #21262d;
+  --dev-text: #c9d1d9;
+  --dev-text-muted: #8b949e;
+  --dev-text-subtle: #6e7681;
+  --dev-accent: #58a6ff;
+  --dev-accent-hover: #79c0ff;
+  --dev-success: #238636;
+  --dev-success-bright: #3fb950;
+  --dev-warning: #d29922;
+  --dev-warning-bright: #e3b341;
+  --dev-danger: #da3633;
+  --dev-danger-bright: #f85149;
+  --dev-info: #1f6feb;
+}
+
+/* Base styles */
+* {
+  border-color: var(--dev-border);
+}
+
+html {
+  background-color: var(--dev-bg);
+  color: var(--dev-text);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+body {
+  background-color: var(--dev-bg);
+  color: var(--dev-text);
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+::selection {
+  background-color: rgba(88, 166, 255, 0.3);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--dev-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--dev-border);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--dev-text-subtle);
+}
+
+/* Component utilities */
+.glass-panel {
+  background-color: rgba(22, 27, 34, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--dev-border);
+}
+
+.dev-panel {
+  background-color: var(--dev-surface);
+  border: 1px solid var(--dev-border);
+  border-radius: 0.5rem;
+}
+
+.dev-panel-hover {
+  transition: background-color 0.2s;
+}
+
+.dev-panel-hover:hover {
+  background-color: var(--dev-surface-hover);
+}
+
+.dev-button {
+  padding: 0.375rem 0.75rem;
+  background-color: rgba(88, 166, 255, 0.1);
+  color: var(--dev-accent);
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.dev-button:hover {
+  background-color: rgba(88, 166, 255, 0.2);
+  border-color: rgba(88, 166, 255, 0.5);
+}
+
+.dev-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dev-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.3);
+}
+
+.dev-button-secondary {
+  padding: 0.375rem 0.75rem;
+  background-color: var(--dev-surface);
+  color: var(--dev-text-muted);
+  border: 1px solid var(--dev-border);
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.dev-button-secondary:hover {
+  background-color: var(--dev-surface-hover);
+  color: var(--dev-text);
+}
+
+.dev-input {
+  background-color: var(--dev-surface);
+  border: 1px solid var(--dev-border);
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--dev-text);
+  transition: all 0.2s;
+}
+
+.dev-input::placeholder {
+  color: var(--dev-text-subtle);
+}
+
+.dev-input:focus {
+  outline: none;
+  border-color: var(--dev-accent);
+  box-shadow: 0 0 0 1px rgba(88, 166, 255, 0.3);
+}
+
+.metric-card {
+  background-color: var(--dev-surface);
+  border: 1px solid var(--dev-border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.metric-value {
+  font-size: 1.5rem;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-weight: 600;
+  color: var(--dev-text);
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  color: var(--dev-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.section-header {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--dev-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.status-badge-success {
+  background-color: rgba(35, 134, 54, 0.1);
+  color: var(--dev-success-bright);
+  border: 1px solid rgba(35, 134, 54, 0.3);
+}
+
+.status-badge-warning {
+  background-color: rgba(210, 153, 34, 0.1);
+  color: var(--dev-warning-bright);
+  border: 1px solid rgba(210, 153, 34, 0.3);
+}
+
+.status-badge-danger {
+  background-color: rgba(218, 54, 51, 0.1);
+  color: var(--dev-danger-bright);
+  border: 1px solid rgba(218, 54, 51, 0.3);
+}
+
+.status-badge-info {
+  background-color: rgba(88, 166, 255, 0.1);
+  color: var(--dev-accent);
+  border: 1px solid rgba(88, 166, 255, 0.3);
+}
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--dev-text-muted);
+  transition: background-color 0.15s;
+  cursor: pointer;
+}
+
+.tree-item:hover {
+  background-color: var(--dev-surface-hover);
+  color: var(--dev-text);
+}
+
+.tree-item-active {
+  background-color: rgba(88, 166, 255, 0.1);
+  color: var(--dev-accent);
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-10px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.gradient-text {
+  background: linear-gradient(to right, var(--dev-accent), var(--dev-accent-hover));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
