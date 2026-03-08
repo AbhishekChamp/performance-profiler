@@ -290,3 +290,12 @@ code, pre, .font-mono {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* Missing hover background utility */
+.bg-dev-hover {
+  background-color: var(--dev-surface-hover);
+}
+
+.hover\:bg-dev-hover:hover {
+  background-color: var(--dev-surface-hover);
+}

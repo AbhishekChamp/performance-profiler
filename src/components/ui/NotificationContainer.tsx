@@ -1,12 +1,6 @@
 import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { 
-  X, 
-  CheckCircle, 
-  AlertCircle, 
-  Info, 
-  AlertTriangle,
-} from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { useNotificationStore } from '@/stores/notificationStore';
 
 const icons = {
@@ -27,9 +21,9 @@ export function NotificationContainer() {
   const { notifications, removeNotification } = useNotificationStore();
 
   return (
-    <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 max-w-[400px] pointer-events-none">
+    <div className="fixed top-4 right-4 z-9999 flex flex-col gap-2 max-w-100 pointer-events-none">
       <AnimatePresence mode="popLayout">
-        {notifications.map((notification) => (
+        {notifications.map(notification => (
           <NotificationItem
             key={notification.id}
             notification={notification}
@@ -70,13 +64,13 @@ function NotificationItem({ notification, onClose }: NotificationItemProps) {
       transition={{ duration: 0.2 }}
       className={`flex items-center gap-3 p-3.5 bg-dev-surface rounded-lg shadow-lg border-l-4 ${colors[type]} pointer-events-auto`}
     >
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         <Icon size={20} />
       </div>
       <p className="flex-1 m-0 text-sm text-dev-text leading-snug">{message}</p>
       <button
         onClick={onClose}
-        className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded hover:bg-dev-hover text-dev-text-muted hover:text-dev-text transition-colors"
+        className="shrink-0 flex items-center justify-center w-6 h-6 rounded hover:bg-dev-hover text-dev-text-muted hover:text-dev-text transition-colors"
         aria-label="Dismiss notification"
       >
         <X size={16} />

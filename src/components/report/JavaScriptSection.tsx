@@ -1,5 +1,5 @@
 import { BarChart } from '../charts/BarChart';
-import type { JSFileAnalysis, JSFunction } from '@/types';
+import type { JSFileAnalysis } from '@/types';
 import { Braces, AlertTriangle, FunctionSquare } from 'lucide-react';
 
 interface JavaScriptSectionProps {

@@ -1,14 +1,6 @@
-import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, X } from 'lucide-react';
-
-interface ConfirmOptions {
-  title: string;
-  message: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  type?: 'danger' | 'warning' | 'info';
-}
+import type { ConfirmOptions } from '@/hooks/useConfirm';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -18,7 +10,13 @@ interface ConfirmDialogProps {
 }
 
 export function ConfirmDialog({ isOpen, options, onConfirm, onCancel }: ConfirmDialogProps) {
-  const { title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', type = 'warning' } = options;
+  const {
+    title,
+    message,
+    confirmLabel = 'Confirm',
+    cancelLabel = 'Cancel',
+    type = 'warning',
+  } = options;
 
   const colors = {
     danger: 'from-red-500 to-pink-500 border-red-500/50',
@@ -42,24 +40,28 @@ export function ConfirmDialog({ isOpen, options, onConfirm, onCancel }: ConfirmD
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onCancel}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-100"
           />
-          
+
           {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-full max-w-md"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-101 w-full max-w-md"
           >
             <div className="relative bg-gray-900/95 backdrop-blur-xl rounded-2xl border border-gray-700/50 shadow-2xl overflow-hidden">
               {/* Glow Effect */}
-              <div className={`absolute -inset-px bg-gradient-to-r ${colors[type]} opacity-20 blur-xl`} />
-              
+              <div
+                className={`absolute -inset-px bg-linear-to-r ${colors[type]} opacity-20 blur-xl`}
+              />
+
               <div className="relative p-6">
                 {/* Header */}
                 <div className="flex items-start gap-4 mb-6">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colors[type]} flex items-center justify-center flex-shrink-0`}>
+                  <div
+                    className={`w-12 h-12 rounded-xl bg-linear-to-br ${colors[type]} flex items-center justify-center shrink-0`}
+                  >
                     <AlertTriangle className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1">
@@ -96,47 +98,4 @@ export function ConfirmDialog({ isOpen, options, onConfirm, onCancel }: ConfirmD
       )}
     </AnimatePresence>
   );
-}
-
-// Hook for using confirm dialog
-export function useConfirm() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [options, setOptions] = useState<ConfirmOptions>({
-    title: '',
-    message: '',
-  });
-  const [resolveRef, setResolveRef] = useState<((value: boolean) => void) | null>(null);
-
-  const confirm = useCallback((newOptions: ConfirmOptions): Promise<boolean> => {
-    setOptions(newOptions);
-    setIsOpen(true);
-    
-    return new Promise((resolve) => {
-      setResolveRef(() => resolve);
-    });
-  }, []);
-
-  const handleConfirm = useCallback(() => {
-    setIsOpen(false);
-    resolveRef?.(true);
-    setResolveRef(null);
-  }, [resolveRef]);
-
-  const handleCancel = useCallback(() => {
-    setIsOpen(false);
-    resolveRef?.(false);
-    setResolveRef(null);
-  }, [resolveRef]);
-
-  return {
-    confirm,
-    dialog: (
-      <ConfirmDialog
-        isOpen={isOpen}
-        options={options}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-      />
-    ),
-  };
 }

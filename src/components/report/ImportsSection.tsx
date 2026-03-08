@@ -1,5 +1,5 @@
 import type { ImportAnalysis } from '@/types';
-import { Package, AlertTriangle, TreePine, Copy, CheckCircle, Zap } from 'lucide-react';
+import { Package, AlertTriangle, TreePine, CheckCircle, Zap } from 'lucide-react';
 
 interface ImportsSectionProps {
   imports: ImportAnalysis;

@@ -16,18 +16,26 @@ export function ThemeToggle({ size = 'md', showLabel = false }: ThemeToggleProps
   const handleToggle = () => {
     toggleMode();
     const newMode = !isDark ? 'Dark' : 'Light';
-    toast.success(`${newMode} mode enabled`, {
-      icon: !isDark ? '🌙' : '☀️',
-      duration: 2000,
-    });
+    try {
+      toast.success(`${newMode} mode enabled`, {
+        icon: !isDark ? '🌙' : '☀️',
+        duration: 2000,
+      });
+    } catch (e) {
+      console.error('Failed to show toast:', e);
+    }
   };
 
   const handleSystemPreference = () => {
     setMode('system');
-    toast.success('Using system theme preference', {
-      icon: '🖥️',
-      duration: 2000,
-    });
+    try {
+      toast.success('Using system theme preference', {
+        icon: '🖥️',
+        duration: 2000,
+      });
+    } catch (e) {
+      console.error('Failed to show toast:', e);
+    }
   };
 
   const iconSizes = { sm: 16, md: 20, lg: 24 };

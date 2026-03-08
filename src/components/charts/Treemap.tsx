@@ -8,6 +8,14 @@ interface TreemapProps {
   height?: number;
 }
 
+interface TreemapDatum {
+  children: BundleModule[];
+}
+
+interface HierarchyNode extends d3.HierarchyRectangularNode<TreemapDatum> {
+  data: BundleModule & TreemapDatum;
+}
+
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
@@ -27,41 +35,44 @@ export function Treemap({ modules, width = 600, height = 400 }: TreemapProps) {
     svg.selectAll('*').remove();
 
     // Prepare data
-    const root = d3.hierarchy<{ children: BundleModule[] }>({ children: modules })
-      .sum((d: any) => d.size)
-      .sort((a: any, b: any) => b.value! - a.value!);
+    const root = d3.hierarchy<TreemapDatum>({ children: modules })
+      .sum((d) => 'size' in d ? (d as unknown as BundleModule).size : 0)
+      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
 
     // Create treemap layout
-    d3.treemap()
+    const treemapLayout = d3.treemap<TreemapDatum>()
       .size([width, height])
       .padding(2)
-      .round(true)
-      (root as any);
+      .round(true);
+    
+    treemapLayout(root);
 
     // Draw rectangles
+    const leaves = root.leaves() as unknown as HierarchyNode[];
+    
     const leaf = svg.selectAll('g')
-      .data(root.leaves())
+      .data(leaves)
       .join('g')
-      .attr('transform', (d: any) => `translate(${d.x0},${d.y0})`);
+      .attr('transform', (d) => `translate(${d.x0},${d.y0})`);
 
     leaf.append('rect')
-      .attr('width', (d: any) => d.x1 - d.x0)
-      .attr('height', (d: any) => d.y1 - d.y0)
-      .attr('fill', (d: any) => {
+      .attr('width', (d) => d.x1 - d.x0)
+      .attr('height', (d) => d.y1 - d.y0)
+      .attr('fill', (d) => {
         const baseColor = d.data.type === 'vendor' ? '#58a6ff' : '#3fb950';
         return d3.color(baseColor)!.copy({ opacity: 0.7 }).toString();
       })
-      .attr('stroke', (d: any) => {
+      .attr('stroke', (d) => {
         const baseColor = d.data.type === 'vendor' ? '#58a6ff' : '#3fb950';
         return baseColor;
       })
       .attr('stroke-width', 1)
       .attr('rx', 2)
-      .on('mouseover', function(event: MouseEvent, d: any) {
+      .on('mouseover', function(event: MouseEvent, d: HierarchyNode) {
         setTooltip({
           x: event.pageX + 10,
           y: event.pageY - 10,
-          content: d.data as BundleModule,
+          content: d.data,
         });
       })
       .on('mousemove', function(event: MouseEvent) {
@@ -79,9 +90,9 @@ export function Treemap({ modules, width = 600, height = 400 }: TreemapProps) {
     leaf.append('text')
       .attr('x', 4)
       .attr('y', 14)
-      .text((d: any) => {
+      .text((d) => {
         const w = d.x1 - d.x0;
-        return w > 60 ? (d.data.name as string).slice(0, 15) : '';
+        return w > 60 ? d.data.name.slice(0, 15) : '';
       })
       .style('font-size', '10px')
       .style('fill', '#c9d1d9')
@@ -90,9 +101,9 @@ export function Treemap({ modules, width = 600, height = 400 }: TreemapProps) {
     leaf.append('text')
       .attr('x', 4)
       .attr('y', 26)
-      .text((d: any) => {
+      .text((d) => {
         const w = d.x1 - d.x0;
-        return w > 60 ? formatBytes(d.data.size as number) : '';
+        return w > 60 ? formatBytes(d.data.size) : '';
       })
       .style('font-size', '9px')
       .style('fill', '#8b949e')

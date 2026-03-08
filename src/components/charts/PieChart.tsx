@@ -50,25 +50,25 @@ export function PieChart({
       .outerRadius(radius + 5);
 
     // Draw slices
-    const slices = g.selectAll('path')
+    const slices = g.selectAll<SVGPathElement, d3.PieArcDatum<PieData>>('path')
       .data(pie(data))
       .join('path')
       .attr('fill', d => d.data.color)
       .attr('stroke', '#0d1117')
       .attr('stroke-width', 2)
-      .attr('d', arc as any)
+      .attr('d', arc)
       .on('mouseover', function(_event: MouseEvent, d: d3.PieArcDatum<PieData>) {
         d3.select(this)
           .transition()
           .duration(200)
-          .attr('d', arcHover as any);
+          .attr('d', arcHover as unknown as string);
         setHoveredSlice(d.data);
       })
       .on('mouseout', function() {
         d3.select(this)
           .transition()
           .duration(200)
-          .attr('d', arc as any);
+          .attr('d', arc as unknown as string);
         setHoveredSlice(null);
       });
 
@@ -76,11 +76,17 @@ export function PieChart({
     slices
       .transition()
       .duration(750)
-      .attrTween('d', function(d: any) {
+      .attrTween('d', function(d: d3.PieArcDatum<PieData>) {
         const i = d3.interpolate(d.startAngle + 0.1, d.endAngle);
         return function(t: number) {
-          d.endAngle = i(t);
-          return (arc as any)(d);
+          const interpolatedDatum: d3.PieArcDatum<PieData> = { 
+            ...d, 
+            endAngle: i(t),
+            padAngle: d.padAngle,
+            startAngle: d.startAngle,
+            data: d.data
+          };
+          return arc(interpolatedDatum) ?? '';
         };
       });
 

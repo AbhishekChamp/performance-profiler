@@ -150,6 +150,11 @@ function generateOptimizations(
   memory?: MemoryAnalysis,
   imports?: ImportAnalysis
 ): Optimization[] {
+  // Mark these parameters as intentionally received but not yet used
+  void network;
+  void thirdParty;
+  void memory;
+  void imports;
   const optimizations: Optimization[] = [];
 
   // Bundle optimizations
@@ -444,44 +449,65 @@ npm dedupe  # Try deduplication`,
   });
 }
 
+// Helper to safely run analyzers with error logging
+function safeAnalyze<T>(name: string, fn: () => T): T | undefined {
+  try {
+    console.log(`[Pipeline] Running ${name}...`);
+    const result = fn();
+    console.log(`[Pipeline] ${name} completed`);
+    return result;
+  } catch (error) {
+    console.error(`[Pipeline] ${name} failed:`, error);
+    return undefined;
+  }
+}
+
 export async function runAnalysisPipeline(
   files: FileInput[],
   options: AnalysisOptions
 ): Promise<AnalysisReport> {
+  console.log('[Pipeline] Starting analysis pipeline with', files.length, 'files');
+  
   // Categorize files
   const htmlFiles = files.filter(f => f.name.endsWith('.html'));
   const jsFiles = files.filter(f => /\.(js|jsx|ts|tsx|mjs)$/.test(f.name));
   const cssFiles = files.filter(f => /\.(css|scss|sass|less)$/.test(f.name));
   const tsConfigFile = files.find(f => f.name === 'tsconfig.json');
 
+  console.log('[Pipeline] HTML files:', htmlFiles.length);
+  console.log('[Pipeline] JS files:', jsFiles.length);
+  console.log('[Pipeline] CSS files:', cssFiles.length);
+
   const htmlContent = htmlFiles[0]?.content || '';
   const hasCSS = cssFiles.length > 0;
   const hasJS = jsFiles.length > 0;
 
-  // Run analyzers
-  const bundle = options.includeBundle ? analyzeBundle(files) : undefined;
-  const dom = options.includeDOM && htmlContent ? analyzeDOM(htmlContent) : undefined;
-  const css = options.includeCSS ? analyzeCSS(cssFiles, htmlContent) : undefined;
-  const assets = options.includeAssets ? analyzeAssets(files) : undefined;
-  const js = options.includeJS ? analyzeJavaScript(jsFiles) : undefined;
-  const react = (options.includeReact && js) ? analyzeReact(js) : undefined;
+  // Run analyzers with error handling
+  const bundle = options.includeBundle ? safeAnalyze('analyzeBundle', () => analyzeBundle(files)) : undefined;
+  const dom = options.includeDOM && htmlContent ? safeAnalyze('analyzeDOM', () => analyzeDOM(htmlContent)) : undefined;
+  const css = options.includeCSS ? safeAnalyze('analyzeCSS', () => analyzeCSS(cssFiles, htmlContent)) : undefined;
+  const assets = options.includeAssets ? safeAnalyze('analyzeAssets', () => analyzeAssets(files)) : undefined;
+  const js = options.includeJS ? safeAnalyze('analyzeJavaScript', () => analyzeJavaScript(jsFiles)) : undefined;
+  const react = (options.includeReact && js) ? safeAnalyze('analyzeReact', () => analyzeReact(js)) : undefined;
 
   // Phase 1: New analyzers
-  const webVitals = options.includeWebVitals ? analyzeWebVitals(files, dom, bundle, assets, hasCSS, hasJS) : undefined;
-  const network = options.includeNetwork && htmlContent ? analyzeNetwork(htmlContent) : undefined;
-  const images = options.includeImages && htmlContent ? analyzeImages(htmlContent) : undefined;
-  const fonts = options.includeFonts ? analyzeFonts(cssFiles) : undefined;
+  const webVitals = options.includeWebVitals ? safeAnalyze('analyzeWebVitals', () => analyzeWebVitals(files, dom, bundle, assets, hasCSS, hasJS)) : undefined;
+  const network = options.includeNetwork && htmlContent ? safeAnalyze('analyzeNetwork', () => analyzeNetwork(htmlContent)) : undefined;
+  const images = options.includeImages && htmlContent ? safeAnalyze('analyzeImages', () => analyzeImages(htmlContent)) : undefined;
+  const fonts = options.includeFonts ? safeAnalyze('analyzeFonts', () => analyzeFonts(cssFiles)) : undefined;
 
   // Phase 2: New analyzers
-  const accessibility = options.includeAccessibility && htmlContent ? analyzeAccessibility(htmlContent) : undefined;
-  const seo = options.includeSEO && htmlContent ? analyzeSEO(htmlContent) : undefined;
-  const typescript = options.includeTypeScript ? analyzeTypeScript(files, tsConfigFile?.content) : undefined;
-  const security = options.includeSecurity ? analyzeSecurity(files, htmlContent) : undefined;
+  const accessibility = options.includeAccessibility && htmlContent ? safeAnalyze('analyzeAccessibility', () => analyzeAccessibility(htmlContent)) : undefined;
+  const seo = options.includeSEO && htmlContent ? safeAnalyze('analyzeSEO', () => analyzeSEO(htmlContent)) : undefined;
+  const typescript = options.includeTypeScript ? safeAnalyze('analyzeTypeScript', () => analyzeTypeScript(files, tsConfigFile?.content)) : undefined;
+  const security = options.includeSecurity ? safeAnalyze('analyzeSecurity', () => analyzeSecurity(files, htmlContent)) : undefined;
 
   // Phase 4: New analyzers
-  const thirdParty = options.includeThirdParty ? analyzeThirdParty(htmlContent, jsFiles) : undefined;
-  const memory = options.includeMemory ? analyzeMemory(jsFiles) : undefined;
-  const imports = options.includeImports ? analyzeImports(jsFiles) : undefined;
+  const thirdParty = options.includeThirdParty ? safeAnalyze('analyzeThirdParty', () => analyzeThirdParty(htmlContent, jsFiles)) : undefined;
+  const memory = options.includeMemory ? safeAnalyze('analyzeMemory', () => analyzeMemory(jsFiles)) : undefined;
+  const imports = options.includeImports ? safeAnalyze('analyzeImports', () => analyzeImports(jsFiles)) : undefined;
+  
+  console.log('[Pipeline] All analyzers completed');
 
   // Calculate scores
   const score = calculatePerformanceScore(

@@ -1,6 +1,5 @@
 import type { AnalysisReport } from '@/types';
 import { jsPDF } from 'jspdf';
-import { marked } from 'marked';
 
 export type ExportFormat = 'json' | 'pdf' | 'html' | 'markdown';
 

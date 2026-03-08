@@ -1,50 +1,48 @@
-import * as Comlink from 'comlink';
+// Simple worker without Comlink class wrapper
 import { runAnalysisPipeline } from '@/core/pipeline';
-import type { AnalysisReport, AnalysisOptions, AnalysisProgress } from '@/types';
+// Using types from pipeline directly, no need to import here
 
-interface WorkerInput {
-  files: { name: string; content: string; size: number }[];
-  options: AnalysisOptions;
-}
+console.log('[Worker] Worker script loading...');
 
-class AnalysisWorker {
-  private onProgress?: (progress: AnalysisProgress) => void;
-
-  setProgressCallback(callback: (progress: AnalysisProgress) => void) {
-    this.onProgress = callback;
-  }
-
-  async analyze(input: WorkerInput): Promise<AnalysisReport> {
-    const { files, options } = input;
-
-    this.reportProgress('uploading', 10, 'Reading files...');
-    await this.delay(100);
-
-    this.reportProgress('parsing', 30, 'Parsing source files...');
-    await this.delay(200);
-
-    this.reportProgress('analyzing', 60, 'Running analysis...');
-    
-    const report = await runAnalysisPipeline(files, options);
-    
-    await this.delay(100);
-    this.reportProgress('scoring', 90, 'Calculating performance scores...');
-    await this.delay(100);
-
-    this.reportProgress('complete', 100, 'Analysis complete');
-    
-    return report;
-  }
-
-  private reportProgress(stage: AnalysisProgress['stage'], progress: number, message: string) {
-    if (this.onProgress) {
-      this.onProgress({ stage, progress, message });
+// Handle messages directly without Comlink
+self.addEventListener('message', async (event) => {
+  console.log('[Worker] Received message:', event.data);
+  
+  const { type, files, options, id } = event.data;
+  
+  if (type === 'analyze') {
+    try {
+      console.log('[Worker] Starting analysis with', files.length, 'files');
+      
+      // Post progress update
+      self.postMessage({ 
+        type: 'progress', 
+        progress: { stage: 'uploading', progress: 10, message: 'Reading files...' },
+        id 
+      });
+      
+      // Run the analysis
+      const report = await runAnalysisPipeline(files, options);
+      
+      console.log('[Worker] Analysis complete, report ID:', report.id);
+      
+      // Post success result
+      self.postMessage({ 
+        type: 'complete', 
+        report,
+        id 
+      });
+    } catch (error) {
+      console.error('[Worker] Error during analysis:', error);
+      
+      // Post error result
+      self.postMessage({ 
+        type: 'error', 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        id 
+      });
     }
   }
+});
 
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-}
-
-Comlink.expose(AnalysisWorker);
+console.log('[Worker] Worker message handler registered');;

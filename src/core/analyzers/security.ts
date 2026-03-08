@@ -38,7 +38,6 @@ export function analyzeSecurity(
   htmlContent?: string
 ): SecurityAnalysis {
   const vulnerabilities: SecurityVulnerability[] = [];
-  let match: RegExpExecArray | null;
 
   // Analyze all files
   for (const file of files) {
@@ -103,7 +102,8 @@ export function analyzeSecurity(
         pattern.lastIndex = 0;
         const matches = line.match(pattern);
         if (matches && !line.includes('localhost') && !line.includes('127.0.0.1')) {
-          for (const match of matches) {
+          for (const _match of matches) {
+            void _match; // Acknowledge match but we only need count
             vulnerabilities.push({
               type: 'mixed-content',
               file: file.name,
@@ -123,6 +123,7 @@ export function analyzeSecurity(
   if (htmlContent) {
     // Check for inline scripts (CSP concern)
     const inlineScriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
+    let match: RegExpExecArray | null;
 
     while ((match = inlineScriptRegex.exec(htmlContent)) !== null) {
       const scriptContent = match[1].trim();
@@ -163,8 +164,6 @@ export function analyzeSecurity(
     while ((match = externalScriptRegex.exec(htmlContent)) !== null) {
       const src = match[1];
       const hasIntegrity = /integrity=["'][^"']+["']/i.test(match[0]);
-      // Check for crossorigin (not currently used but good for future)
-      void /crossorigin=/i.test(match[0]);
 
       if (!hasIntegrity && !src.includes('localhost') && !src.includes('127.0.0.1')) {
         vulnerabilities.push({

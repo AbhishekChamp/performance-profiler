@@ -111,7 +111,7 @@ export function analyzeMemory(jsFiles: { name: string; content: string }[]): Mem
         estimatedHeapSize += objectMatches.length * 100; // Rough estimate
       }
       
-      const arrayMatches = line.match(/\[[^\[\]]*\]/g);
+      const arrayMatches = line.match(/\[[^\]]*\]/g);
       if (arrayMatches) {
         estimatedHeapSize += arrayMatches.length * 50;
       }

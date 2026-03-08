@@ -21,13 +21,6 @@ function createDOMNode(tag: string, attributes: Record<string, string>, depth: n
   };
 }
 
-function isLargeImage(src: string): boolean {
-  // In a real implementation, we'd check actual file sizes
-  // For now, use heuristics based on URL patterns
-  const largePatterns = [/\.(png|jpg|jpeg)\?.*w=\d{4,}/, /\.(png|jpg|jpeg).*@\dx/i];
-  return largePatterns.some(p => p.test(src));
-}
-
 function analyzeSubtree(node: DOMNode): { nodeCount: number; largestTag: string } {
   let nodeCount = 1;
   let largestCount = 1;

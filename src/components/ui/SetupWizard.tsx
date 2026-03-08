@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  X, 
-  ChevronRight, 
-  ChevronLeft, 
+import {
+  X,
+  ChevronRight,
+  ChevronLeft,
   Check,
   Zap,
   Shield,
@@ -18,7 +18,7 @@ const steps = [
   {
     id: 'welcome',
     title: 'Welcome to Frontend Performance Profiler',
-    description: 'Let\'s get you set up in just a few steps.',
+    description: "Let's get you set up in just a few steps.",
     icon: Zap,
   },
   {
@@ -30,7 +30,7 @@ const steps = [
   {
     id: 'features',
     title: 'Key Features',
-    description: 'Here\'s what you can do with the profiler:',
+    description: "Here's what you can do with the profiler:",
     icon: BarChart3,
   },
   {
@@ -41,7 +41,7 @@ const steps = [
   },
   {
     id: 'ready',
-    title: 'You\'re All Set!',
+    title: "You're All Set!",
     description: 'Start analyzing your frontend performance.',
     icon: FileCode,
   },
@@ -64,12 +64,12 @@ export function SetupWizard() {
       completeSetup();
       setIsVisible(false);
     } else {
-      setCurrentStep((prev) => prev + 1);
+      setCurrentStep(prev => prev + 1);
     }
   };
 
   const handleBack = () => {
-    setCurrentStep((prev) => prev - 1);
+    setCurrentStep(prev => prev - 1);
   };
 
   const handleSkip = () => {
@@ -78,7 +78,7 @@ export function SetupWizard() {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[1000] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-1000 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -97,7 +97,10 @@ export function SetupWizard() {
         </div>
 
         {/* Header */}
-        <button onClick={handleSkip} className="absolute top-4 right-4 flex items-center justify-center w-9 h-9 rounded-lg bg-transparent hover:bg-dev-hover text-dev-text-muted transition-colors">
+        <button
+          onClick={handleSkip}
+          className="absolute top-4 right-4 flex items-center justify-center w-9 h-9 rounded-lg bg-transparent hover:bg-dev-hover text-dev-text-muted transition-colors"
+        >
           <X size={20} />
         </button>
 
@@ -210,8 +213,11 @@ function FeaturesContent() {
   return (
     <ul className="grid gap-3 p-0 m-0 list-none">
       {features.map((feature, index) => (
-        <li key={index} className="flex items-center gap-3 p-2.5 bg-dev-bg rounded-lg text-sm text-dev-text-subtle">
-          <Check size={16} className="text-emerald-500 flex-shrink-0" />
+        <li
+          key={index}
+          className="flex items-center gap-3 p-2.5 bg-dev-bg rounded-lg text-sm text-dev-text-subtle"
+        >
+          <Check size={16} className="text-emerald-500 shrink-0" />
           {feature}
         </li>
       ))}
@@ -241,11 +247,14 @@ function ReadyContent() {
     <div className="py-4 text-center">
       <div className="text-5xl mb-4">🚀</div>
       <p className="text-sm text-dev-text-subtle">
-        You&apos;re ready to start profiling! Upload a project or try it with a
-        sample analysis.
+        You&apos;re ready to start profiling! Upload a project or try it with a sample analysis.
       </p>
       <div className="mt-4 p-3 bg-dev-accent/10 rounded-lg text-sm text-dev-accent">
-        <strong>Tip:</strong> Press <kbd className="inline-block px-1.5 py-0.5 bg-dev-surface border border-dev-border rounded font-mono text-xs">?</kbd> anytime to see keyboard shortcuts.
+        <strong>Tip:</strong> Press{' '}
+        <kbd className="inline-block px-1.5 py-0.5 bg-dev-surface border border-dev-border rounded font-mono text-xs">
+          ?
+        </kbd>{' '}
+        anytime to see keyboard shortcuts.
       </div>
     </div>
   );

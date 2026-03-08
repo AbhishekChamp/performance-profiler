@@ -22,18 +22,44 @@ export function useAnalysis(): UseAnalysisReturn {
   ) => {
     const analysisOptions = options || store.options;
     
+    console.log('[useAnalysis] Starting analysis with files:', files.length);
+    console.log('[useAnalysis] File names:', files.map(f => f.name));
+    
     setIsAnalyzing(true);
     store.setStatus('uploading');
     store.setError(null);
 
     try {
+      // Validate files before sending
+      if (!files || files.length === 0) {
+        throw new Error('No files provided for analysis');
+      }
+
+      // Map files and validate content
+      const mappedFiles = files.map(f => {
+        if (!f.content && f.size > 0) {
+          console.warn(`[useAnalysis] File ${f.name} has size but no content`);
+        }
+        return { 
+          name: f.name, 
+          content: f.content || '', 
+          size: f.size 
+        };
+      });
+
+      console.log('[useAnalysis] Calling runAnalysis with', mappedFiles.length, 'files');
+      
       const report = await runAnalysis(
-        files.map(f => ({ name: f.name, content: f.content, size: f.size })),
+        mappedFiles,
         analysisOptions,
         (progress: AnalysisProgress) => {
+          console.log('[useAnalysis] Progress:', progress);
           store.setProgress(progress);
         }
       );
+
+      console.log('[useAnalysis] Report received:', report.id);
+      console.log('[useAnalysis] Report summary:', report.summary);
 
       store.setReport(report);
       store.addToHistory(report);
@@ -53,9 +79,17 @@ export function useAnalysis(): UseAnalysisReturn {
       store.setProject(project);
 
     } catch (err) {
+      console.error('[useAnalysis] Error during analysis:', err);
+      // Log full error details
+      if (err instanceof Error) {
+        console.error('[useAnalysis] Error name:', err.name);
+        console.error('[useAnalysis] Error message:', err.message);
+        console.error('[useAnalysis] Error stack:', err.stack);
+      }
       const errorMessage = err instanceof Error ? err.message : 'Analysis failed';
       store.setError(errorMessage);
       store.setStatus('error');
+      throw err; // Re-throw so component can handle it
     } finally {
       setIsAnalyzing(false);
     }

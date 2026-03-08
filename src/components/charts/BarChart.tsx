@@ -89,26 +89,27 @@ export function BarChart({
       .delay((d, i) => i * 50 + 300)
       .style('opacity', 1);
 
-    function wrap(text: d3.Selection<SVGTextElement, string, SVGGElement, unknown>, width: number) {
-      text.each(function(this: SVGTextElement) {
-        const self = d3.select(this);
-        const words = self.text().split(/\s+/).reverse();
+    function wrap(textSelection: d3.Selection<SVGTextElement, string, SVGGElement, unknown>, wrapWidth: number) {
+      textSelection.each(function() {
+        const text = d3.select(this);
+        const words = text.text().split(/\s+/).reverse();
         let word: string | undefined;
         let line: string[] = [];
         let lineNumber = 0;
         const lineHeight = 1.1;
-        const y = self.attr('y');
-        const dy = parseFloat(self.attr('dy')) || 0;
-        let tspan = self.text(null).append('tspan').attr('x', -10).attr('y', y).attr('dy', dy + 'em');
+        const y = text.attr('y');
+        const dy = parseFloat(text.attr('dy')) || 0;
+        let tspan = text.text(null).append('tspan').attr('x', -10).attr('y', y).attr('dy', dy + 'em');
         
+        // eslint-disable-next-line no-cond-assign
         while (word = words.pop()) {
           line.push(word);
           tspan.text(line.join(' '));
-          if ((tspan.node()?.getComputedTextLength() || 0) > width) {
+          if ((tspan.node()?.getComputedTextLength() || 0) > wrapWidth) {
             line.pop();
             tspan.text(line.join(' '));
             line = [word];
-            tspan = self.append('tspan').attr('x', -10).attr('y', y).attr('dy', ++lineNumber * lineHeight + dy + 'em').text(word);
+            tspan = text.append('tspan').attr('x', -10).attr('y', y).attr('dy', ++lineNumber * lineHeight + dy + 'em').text(word);
           }
         }
       });

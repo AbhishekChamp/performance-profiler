@@ -84,15 +84,18 @@ export const useThemeStore = create<ThemeState>()(
 );
 
 // Listen for system theme changes
+function handleSystemThemeChange(e: MediaQueryListEvent) {
+  const store = useThemeStore.getState();
+  if (store.mode === 'system') {
+    const newMode = e.matches ? 'dark' : 'light';
+    applyTheme(newMode);
+    useThemeStore.setState({ resolvedMode: newMode });
+  }
+}
+
 if (typeof window !== 'undefined') {
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-    const store = useThemeStore.getState();
-    if (store.mode === 'system') {
-      const newMode = e.matches ? 'dark' : 'light';
-      applyTheme(newMode);
-      useThemeStore.setState({ resolvedMode: newMode });
-    }
-  });
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  mediaQuery.addEventListener('change', handleSystemThemeChange);
 }
 
 // Selectors
