@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .vscode
+
+AGENTS.md
+FEATURES_ROADMAP.md
+TASKLIST.md

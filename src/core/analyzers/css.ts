@@ -1,4 +1,3 @@
-import postcss from 'postcss';
 import type { CSSAnalysis, CSSRule, CSSFile, CSSWarning } from '@/types';
 
 function parseCSSContent(content: string): { rules: CSSRule[]; importantCount: number } {
@@ -6,27 +5,36 @@ function parseCSSContent(content: string): { rules: CSSRule[]; importantCount: n
   let importantCount = 0;
 
   try {
-    const root = postcss.parse(content);
+    // Simple regex-based parsing - works reliably in browser
+    const ruleRegex = /([^{]+)\{([^}]*)\}/g;
+    const declRegex = /([^:]+):\s*([^;]+);?/g;
     
-    root.walkRules((rule) => {
-      const selectors = rule.selector.split(',').map(s => s.trim());
+    let match;
+    while ((match = ruleRegex.exec(content)) !== null) {
+      const selector = match[1].trim();
+      const declarationsBlock = match[2];
       const declarations: string[] = [];
       
-      rule.walkDecls((decl) => {
-        declarations.push(`${decl.prop}: ${decl.value}`);
-        if (decl.important) {
+      let declMatch;
+      while ((declMatch = declRegex.exec(declarationsBlock)) !== null) {
+        const prop = declMatch[1].trim();
+        const value = declMatch[2].trim();
+        declarations.push(`${prop}: ${value}`);
+        if (value.includes('!important')) {
           importantCount++;
         }
-      });
-
-      for (const selector of selectors) {
+      }
+      
+      // Split combined selectors
+      const selectors = selector.split(',').map(s => s.trim()).filter(s => s);
+      for (const sel of selectors) {
         rules.push({
-          selector,
+          selector: sel,
           declarations: [...declarations],
-          used: false, // Would need to cross-reference with HTML
+          used: false,
         });
       }
-    });
+    }
   } catch (error) {
     console.error('CSS parsing error:', error);
   }

@@ -9,6 +9,7 @@ interface UseAnalysisReturn {
   error: string | null;
   run: (files: UploadedFile[], options?: AnalysisOptions) => Promise<void>;
   cancel: () => void;
+  clearError: () => void;
 }
 
 export function useAnalysis(): UseAnalysisReturn {
@@ -66,11 +67,16 @@ export function useAnalysis(): UseAnalysisReturn {
     setIsAnalyzing(false);
   }, [store]);
 
+  const clearError = useCallback(() => {
+    store.setError(null);
+  }, [store]);
+
   return {
     isAnalyzing,
     progress: store.progress,
     error: store.error,
     run,
     cancel,
+    clearError,
   };
 }

@@ -5,7 +5,7 @@
 @source "./**/*.ts";
 @source "./**/*.html";
 
-/* Custom theme colors */
+/* Custom theme colors - Dark (default) */
 :root {
   --dev-bg: #0d1117;
   --dev-surface: #161b22;
@@ -24,6 +24,27 @@
   --dev-danger: #da3633;
   --dev-danger-bright: #f85149;
   --dev-info: #1f6feb;
+}
+
+/* Light theme */
+.light {
+  --dev-bg: #ffffff;
+  --dev-surface: #f6f8fa;
+  --dev-surface-hover: #f3f4f6;
+  --dev-border: #d0d7de;
+  --dev-border-subtle: #e1e4e8;
+  --dev-text: #24292f;
+  --dev-text-muted: #57606a;
+  --dev-text-subtle: #6e7781;
+  --dev-accent: #0969da;
+  --dev-accent-hover: #0550ae;
+  --dev-success: #1a7f37;
+  --dev-success-bright: #2da44e;
+  --dev-warning: #9a6700;
+  --dev-warning-bright: #bf8700;
+  --dev-danger: #cf222e;
+  --dev-danger-bright: #a40e26;
+  --dev-info: #0969da;
 }
 
 /* Base styles */

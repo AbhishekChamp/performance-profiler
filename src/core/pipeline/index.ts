@@ -10,6 +10,17 @@ import type {
   CSSAnalysis,
   AssetAnalysis,
   ReactAnalysis,
+  WebVitalsAnalysis,
+  NetworkAnalysis,
+  ImageAnalysis,
+  FontAnalysis,
+  AccessibilityAnalysis,
+  SEOAnalysis,
+  TypeScriptAnalysis,
+  SecurityAnalysis,
+  ThirdPartyAnalysis,
+  MemoryAnalysis,
+  ImportAnalysis,
 } from '@/types';
 import { analyzeBundle } from '../analyzers/bundle';
 import { analyzeDOM } from '../analyzers/dom';
@@ -17,6 +28,17 @@ import { analyzeCSS } from '../analyzers/css';
 import { analyzeAssets } from '../analyzers/assets';
 import { analyzeJavaScript } from '../analyzers/javascript';
 import { analyzeReact } from '../analyzers/react';
+import { analyzeWebVitals } from '../analyzers/webVitals';
+import { analyzeNetwork } from '../analyzers/network';
+import { analyzeImages } from '../analyzers/images';
+import { analyzeFonts } from '../analyzers/fonts';
+import { analyzeAccessibility } from '../analyzers/accessibility';
+import { analyzeSEO } from '../analyzers/seo';
+import { analyzeTypeScript } from '../analyzers/typescript';
+import { analyzeSecurity } from '../analyzers/security';
+import { analyzeThirdParty } from '../analyzers/thirdParty';
+import { analyzeMemory } from '../analyzers/memory';
+import { analyzeImports } from '../analyzers/imports';
 import { calculatePerformanceScore, calculateRenderRisk } from '../scoring';
 
 interface FileInput {
@@ -115,7 +137,18 @@ function generateOptimizations(
   css?: CSSAnalysis,
   assets?: AssetAnalysis,
   js?: JSFileAnalysis[],
-  react?: ReactAnalysis
+  react?: ReactAnalysis,
+  webVitals?: WebVitalsAnalysis,
+  network?: NetworkAnalysis,
+  images?: ImageAnalysis,
+  fonts?: FontAnalysis,
+  accessibility?: AccessibilityAnalysis,
+  seo?: SEOAnalysis,
+  typescript?: TypeScriptAnalysis,
+  security?: SecurityAnalysis,
+  thirdParty?: ThirdPartyAnalysis,
+  memory?: MemoryAnalysis,
+  imports?: ImportAnalysis
 ): Optimization[] {
   const optimizations: Optimization[] = [];
 
@@ -140,7 +173,8 @@ function generateOptimizations(
         description: `${lib.name} appears ${lib.instances} times in your bundle.`,
         impact: 'high',
         effort: 'low',
-        code: `npm ls ${lib.name}  # Check versions\nnpm dedupe  # Try deduplication`,
+        code: `npm ls ${lib.name}  # Check versions
+npm dedupe  # Try deduplication`,
       });
     }
 
@@ -266,6 +300,144 @@ function generateOptimizations(
     }
   }
 
+  // Web Vitals optimizations
+  if (webVitals) {
+    const lcp = webVitals.metrics.find(m => m.name === 'LCP');
+    if (lcp && lcp.score !== 'good') {
+      optimizations.push({
+        category: 'webVitals',
+        title: 'Improve LCP (Largest Contentful Paint)',
+        description: `Estimated LCP is ${lcp.value}ms. ${lcp.factors.join(', ')}`,
+        impact: 'high',
+        effort: 'medium',
+        code: `// Optimize images\n// Use CDN\n// Preload LCP image`,
+      });
+    }
+
+    const cls = webVitals.metrics.find(m => m.name === 'CLS');
+    if (cls && cls.score !== 'good') {
+      optimizations.push({
+        category: 'webVitals',
+        title: 'Improve CLS (Cumulative Layout Shift)',
+        description: `Estimated CLS is ${cls.value}. ${cls.factors.join(', ')}`,
+        impact: 'high',
+        effort: 'low',
+        code: `// Add width/height to images\n// Reserve space for dynamic content`,
+      });
+    }
+  }
+
+  // Network optimizations
+  if (network) {
+    if (network.renderBlocking.length > 0) {
+      optimizations.push({
+        category: 'bundle',
+        title: 'Eliminate Render-Blocking Resources',
+        description: `${network.renderBlocking.length} resources are blocking initial render.`,
+        impact: 'high',
+        effort: 'medium',
+        code: `// Add async/defer to scripts\n<link rel="preload" href="critical.css" as="style">`,
+      });
+    }
+
+    if (network.missingHints.length > 0) {
+      optimizations.push({
+        category: 'bundle',
+        title: 'Add Resource Hints',
+        description: `${network.missingHints.length} resource hints missing.`,
+        impact: 'medium',
+        effort: 'low',
+        code: `<link rel="preconnect" href="https://fonts.gstatic.com">`,
+      });
+    }
+  }
+
+  // Image optimizations
+  if (images) {
+    if (images.recommendations.length > 0) {
+      optimizations.push({
+        category: 'images',
+        title: 'Optimize Images',
+        description: images.recommendations[0],
+        impact: 'high',
+        effort: 'low',
+        code: `// Convert to WebP\n// Use responsive images with srcset`,
+      });
+    }
+  }
+
+  // Font optimizations
+  if (fonts) {
+    if (fonts.fontsWithoutDisplay > 0) {
+      optimizations.push({
+        category: 'fonts',
+        title: 'Add font-display: swap',
+        description: `${fonts.fontsWithoutDisplay} fonts missing font-display property.`,
+        impact: 'medium',
+        effort: 'low',
+        code: `@font-face {\n  font-family: 'MyFont';\n  src: url('font.woff2') format('woff2');\n  font-display: swap;\n}`,
+      });
+    }
+  }
+
+  // Accessibility optimizations
+  if (accessibility) {
+    const criticalA11y = accessibility.violations.filter(v => v.severity === 'critical' || v.severity === 'serious');
+    if (criticalA11y.length > 0) {
+      optimizations.push({
+        category: 'accessibility',
+        title: 'Fix Critical Accessibility Issues',
+        description: `${criticalA11y.length} critical/serious accessibility violations found.`,
+        impact: 'high',
+        effort: 'medium',
+        code: criticalA11y[0]?.fix || '// See detailed report',
+      });
+    }
+  }
+
+  // SEO optimizations
+  if (seo) {
+    if (seo.issues.length > 0) {
+      const criticalSeo = seo.issues.filter(i => i.includes('Missing') || i.includes('title') || i.includes('description'));
+      if (criticalSeo.length > 0) {
+        optimizations.push({
+          category: 'seo',
+          title: 'Fix Critical SEO Issues',
+          description: criticalSeo[0],
+          impact: 'high',
+          effort: 'low',
+        });
+      }
+    }
+  }
+
+  // Security optimizations
+  if (security) {
+    if (security.stats.critical > 0 || security.stats.high > 0) {
+      optimizations.push({
+        category: 'security',
+        title: 'Address Security Vulnerabilities',
+        description: `${security.stats.critical} critical and ${security.stats.high} high severity issues found.`,
+        impact: 'high',
+        effort: 'medium',
+      });
+    }
+  }
+
+  // TypeScript optimizations
+  if (typescript) {
+    if (!typescript.strictMode) {
+      optimizations.push({
+        category: 'javascript',
+        title: 'Enable TypeScript Strict Mode',
+        description: 'Strict mode is disabled. Enable for better type safety.',
+        impact: 'medium',
+        effort: 'low',
+        code: `// tsconfig.json\n"compilerOptions": {\n  "strict": true\n}`,
+      });
+    }
+  }
+
   return optimizations.sort((a, b) => {
     const impactOrder = { high: 0, medium: 1, low: 2 };
     return impactOrder[a.impact] - impactOrder[b.impact];
@@ -280,8 +452,11 @@ export async function runAnalysisPipeline(
   const htmlFiles = files.filter(f => f.name.endsWith('.html'));
   const jsFiles = files.filter(f => /\.(js|jsx|ts|tsx|mjs)$/.test(f.name));
   const cssFiles = files.filter(f => /\.(css|scss|sass|less)$/.test(f.name));
-  
+  const tsConfigFile = files.find(f => f.name === 'tsconfig.json');
+
   const htmlContent = htmlFiles[0]?.content || '';
+  const hasCSS = cssFiles.length > 0;
+  const hasJS = jsFiles.length > 0;
 
   // Run analyzers
   const bundle = options.includeBundle ? analyzeBundle(files) : undefined;
@@ -291,8 +466,28 @@ export async function runAnalysisPipeline(
   const js = options.includeJS ? analyzeJavaScript(jsFiles) : undefined;
   const react = (options.includeReact && js) ? analyzeReact(js) : undefined;
 
+  // Phase 1: New analyzers
+  const webVitals = options.includeWebVitals ? analyzeWebVitals(files, dom, bundle, assets, hasCSS, hasJS) : undefined;
+  const network = options.includeNetwork && htmlContent ? analyzeNetwork(htmlContent) : undefined;
+  const images = options.includeImages && htmlContent ? analyzeImages(htmlContent) : undefined;
+  const fonts = options.includeFonts ? analyzeFonts(cssFiles) : undefined;
+
+  // Phase 2: New analyzers
+  const accessibility = options.includeAccessibility && htmlContent ? analyzeAccessibility(htmlContent) : undefined;
+  const seo = options.includeSEO && htmlContent ? analyzeSEO(htmlContent) : undefined;
+  const typescript = options.includeTypeScript ? analyzeTypeScript(files, tsConfigFile?.content) : undefined;
+  const security = options.includeSecurity ? analyzeSecurity(files, htmlContent) : undefined;
+
+  // Phase 4: New analyzers
+  const thirdParty = options.includeThirdParty ? analyzeThirdParty(htmlContent, jsFiles) : undefined;
+  const memory = options.includeMemory ? analyzeMemory(jsFiles) : undefined;
+  const imports = options.includeImports ? analyzeImports(jsFiles) : undefined;
+
   // Calculate scores
-  const score = calculatePerformanceScore(bundle, dom, css, assets, js);
+  const score = calculatePerformanceScore(
+    bundle, dom, css, assets, js,
+    webVitals, accessibility, seo, security
+  );
   const renderRisk = calculateRenderRisk(score, bundle, dom, css);
 
   // Generate timeline
@@ -304,20 +499,32 @@ export async function runAnalysisPipeline(
   );
 
   // Generate optimizations
-  const optimizations = generateOptimizations(bundle, dom, css, assets, js, react);
+  const optimizations = generateOptimizations(
+    bundle, dom, css, assets, js, react,
+    webVitals, network, images, fonts,
+    accessibility, seo, typescript, security,
+    thirdParty, memory, imports
+  );
 
   // Calculate summary
-  const totalIssues = 
+  const totalIssues =
     (bundle?.duplicateLibraries.length || 0) +
     (dom?.warnings.length || 0) +
     (css?.warnings.length || 0) +
     (js?.reduce((sum, f) => sum + f.warnings.length, 0) || 0) +
-    (react?.warnings.length || 0);
+    (react?.warnings.length || 0) +
+    (accessibility?.violations.length || 0) +
+    (security?.vulnerabilities.length || 0) +
+    (typescript?.issues.length || 0) +
+    (memory?.leakRisks.length || 0) +
+    (imports?.duplicateImports.length || 0);
 
-  const criticalIssues = 
+  const criticalIssues =
     (dom?.warnings.filter(w => w.severity === 'error').length || 0) +
     (css?.warnings.filter(w => w.severity === 'error').length || 0) +
-    (js?.reduce((sum, f) => sum + f.warnings.filter(w => w.severity === 'error').length, 0) || 0);
+    (js?.reduce((sum, f) => sum + f.warnings.filter(w => w.severity === 'error').length, 0) || 0) +
+    (accessibility?.violations.filter(v => v.severity === 'critical').length || 0) +
+    (security?.stats.critical || 0);
 
   return {
     id: `report-${Date.now()}`,
@@ -329,6 +536,17 @@ export async function runAnalysisPipeline(
     assets,
     javascript: js,
     react,
+    webVitals,
+    network,
+    images,
+    fonts,
+    accessibility,
+    seo,
+    typescript,
+    security,
+    thirdParty,
+    memory,
+    imports,
     score,
     renderRisk,
     timeline,

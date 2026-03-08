@@ -1,0 +1,173 @@
+import { create } from 'zustand';
+import { devtools, persist } from 'zustand/middleware';
+import type { PerformanceBudget, BudgetAlert, BudgetStatus } from '@/types';
+import { set, get } from 'idb-keyval';
+
+interface BudgetState {
+  // Budget configuration
+  budget: PerformanceBudget;
+  alerts: BudgetAlert[];
+  
+  // Actions
+  setBudget: (budget: Partial<PerformanceBudget>) => void;
+  resetBudget: () => void;
+  checkBudget: (metrics: {
+    bundleSize?: number;
+    imageSize?: number;
+    cssSize?: number;
+    jsSize?: number;
+    domNodes?: number;
+    maxDepth?: number;
+    unusedCSS?: number;
+    overallScore?: number;
+  }) => BudgetStatus[];
+  clearAlerts: () => void;
+  exportBudget: () => string;
+  importBudget: (json: string) => void;
+}
+
+const defaultBudget: PerformanceBudget = {
+  bundleSize: 500 * 1024, // 500 KB
+  imageSize: 2 * 1024 * 1024, // 2 MB
+  cssSize: 100 * 1024, // 100 KB
+  jsSize: 500 * 1024, // 500 KB
+  domNodes: 1500,
+  maxDepth: 32,
+  unusedCSS: 50, // 50%
+  overallScore: 70,
+};
+
+// Custom storage using idb-keyval for IndexedDB
+const idbStorage = {
+  getItem: async (name: string): Promise<string | null> => {
+    const value = await get(name);
+    return value ?? null;
+  },
+  setItem: async (name: string, value: string): Promise<void> => {
+    await set(name, value);
+  },
+  removeItem: async (name: string): Promise<void> => {
+    await set(name, undefined);
+  },
+};
+
+export const useBudgetStore = create<BudgetState>()(
+  devtools(
+    persist(
+      (setState, getState) => ({
+        // Initial state
+        budget: defaultBudget,
+        alerts: [],
+
+        // Actions
+        setBudget: (budget) => {
+          setState((state) => ({
+            budget: { ...state.budget, ...budget },
+          }));
+        },
+
+        resetBudget: () => {
+          setState({
+            budget: defaultBudget,
+            alerts: [],
+          });
+        },
+
+        checkBudget: (metrics) => {
+          const { budget } = getState();
+          const statuses: BudgetStatus[] = [];
+          const newAlerts: BudgetAlert[] = [];
+
+          const checks = [
+            { key: 'bundleSize', label: 'Bundle Size', value: metrics.bundleSize, limit: budget.bundleSize },
+            { key: 'imageSize', label: 'Image Size', value: metrics.imageSize, limit: budget.imageSize },
+            { key: 'cssSize', label: 'CSS Size', value: metrics.cssSize, limit: budget.cssSize },
+            { key: 'jsSize', label: 'JS Size', value: metrics.jsSize, limit: budget.jsSize },
+            { key: 'domNodes', label: 'DOM Nodes', value: metrics.domNodes, limit: budget.domNodes },
+            { key: 'maxDepth', label: 'Max Depth', value: metrics.maxDepth, limit: budget.maxDepth },
+            { key: 'unusedCSS', label: 'Unused CSS', value: metrics.unusedCSS, limit: budget.unusedCSS },
+            { key: 'overallScore', label: 'Overall Score', value: metrics.overallScore, limit: budget.overallScore, inverse: true },
+          ];
+
+          for (const check of checks) {
+            if (check.value === undefined) continue;
+
+            const percentage = check.inverse
+              ? (check.value / check.limit) * 100
+              : (check.value / check.limit) * 100;
+
+            let status: BudgetStatus['status'];
+            if (check.inverse) {
+              status = percentage >= 100 ? 'pass' : percentage >= 80 ? 'warning' : 'fail';
+            } else {
+              status = percentage <= 100 ? 'pass' : percentage <= 120 ? 'warning' : 'fail';
+            }
+
+            statuses.push({
+              metric: check.label,
+              limit: check.limit,
+              current: check.value,
+              percentage: Math.round(percentage),
+              status,
+            });
+
+            // Generate alerts
+            if (status === 'fail') {
+              newAlerts.push({
+                type: 'error',
+                metric: check.label,
+                message: `${check.label} exceeds budget (${check.value} > ${check.limit})`,
+                current: check.value,
+                limit: check.limit,
+              });
+            } else if (status === 'warning') {
+              newAlerts.push({
+                type: 'warning',
+                metric: check.label,
+                message: `${check.label} approaching budget limit`,
+                current: check.value,
+                limit: check.limit,
+              });
+            }
+          }
+
+          setState({ alerts: newAlerts });
+          return statuses;
+        },
+
+        clearAlerts: () => {
+          setState({ alerts: [] });
+        },
+
+        exportBudget: () => {
+          const { budget } = getState();
+          return JSON.stringify({
+            version: '1.0',
+            budget,
+            exportedAt: new Date().toISOString(),
+          }, null, 2);
+        },
+
+        importBudget: (json) => {
+          try {
+            const data = JSON.parse(json);
+            if (data.budget) {
+              setState({ budget: { ...defaultBudget, ...data.budget } });
+            }
+          } catch (error) {
+            console.error('Failed to import budget:', error);
+          }
+        },
+      }),
+      {
+        name: 'PerformanceBudget',
+        storage: idbStorage as never,
+      }
+    ),
+    { name: 'BudgetStore' }
+  )
+);
+
+// Selectors
+export const selectBudget = (state: BudgetState) => state.budget;
+export const selectBudgetAlerts = (state: BudgetState) => state.alerts;

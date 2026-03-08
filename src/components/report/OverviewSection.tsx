@@ -1,6 +1,6 @@
 import { ScoreGauge } from '@/components/charts/ScoreGauge';
 import type { AnalysisReport } from '@/types';
-import { AlertTriangle, CheckCircle, Lightbulb, Zap } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Lightbulb, Zap, Shield, Accessibility, Search, Gauge } from 'lucide-react';
 
 interface OverviewSectionProps {
   report: AnalysisReport;
@@ -29,14 +29,40 @@ function getRiskBadge(level: string) {
   }
 }
 
+function ScoreCard({ 
+  label, 
+  score, 
+  icon: Icon 
+}: { 
+  label: string; 
+  score: number | undefined; 
+  icon: React.ElementType;
+}) {
+  if (score === undefined) return null;
+  
+  return (
+    <div className="metric-card flex flex-col justify-center">
+      <div className="flex items-center gap-1 mb-1">
+        <Icon className="w-3 h-3 text-dev-text-subtle" />
+        <span className="metric-label text-xs">{label}</span>
+      </div>
+      <span className="metric-value" style={{ 
+        color: score >= 70 ? '#3fb950' : score >= 50 ? '#d29922' : '#f85149' 
+      }}>
+        {score}
+      </span>
+    </div>
+  );
+}
+
 export function OverviewSection({ report }: OverviewSectionProps) {
-  const { score, renderRisk, summary, bundle } = report;
+  const { score, renderRisk, summary, bundle, webVitals, accessibility, seo, security } = report;
 
   return (
     <div className="space-y-6">
       {/* Score Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <div className="col-span-2 md:col-span-3 lg:col-span-2 dev-panel p-6 flex items-center gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="col-span-2 dev-panel p-6 flex items-center gap-6">
           <ScoreGauge score={score.overall} size={140} />
           <div>
             <h3 className="text-lg font-semibold text-dev-text mb-1">Overall Score</h3>
@@ -54,34 +80,42 @@ export function OverviewSection({ report }: OverviewSectionProps) {
           </div>
         </div>
 
-        <div className="metric-card flex flex-col justify-center">
-          <span className="metric-label">Bundle</span>
-          <span className="metric-value" style={{ color: score.bundle >= 70 ? '#3fb950' : score.bundle >= 50 ? '#d29922' : '#f85149' }}>
-            {score.bundle}
-          </span>
-        </div>
-
-        <div className="metric-card flex flex-col justify-center">
-          <span className="metric-label">DOM</span>
-          <span className="metric-value" style={{ color: score.dom >= 70 ? '#3fb950' : score.dom >= 50 ? '#d29922' : '#f85149' }}>
-            {score.dom}
-          </span>
-        </div>
-
-        <div className="metric-card flex flex-col justify-center">
-          <span className="metric-label">CSS</span>
-          <span className="metric-value" style={{ color: score.css >= 70 ? '#3fb950' : score.css >= 50 ? '#d29922' : '#f85149' }}>
-            {score.css}
-          </span>
-        </div>
-
-        <div className="metric-card flex flex-col justify-center">
-          <span className="metric-label">Assets</span>
-          <span className="metric-value" style={{ color: score.assets >= 70 ? '#3fb950' : score.assets >= 50 ? '#d29922' : '#f85149' }}>
-            {score.assets}
-          </span>
-        </div>
+        <ScoreCard label="Bundle" score={score.bundle} icon={Zap} />
+        <ScoreCard label="DOM" score={score.dom} icon={CheckCircle} />
+        <ScoreCard label="CSS" score={score.css} icon={CheckCircle} />
+        <ScoreCard label="Assets" score={score.assets} icon={CheckCircle} />
+        <ScoreCard label="JavaScript" score={score.javascript} icon={CheckCircle} />
+        <ScoreCard label="Web Vitals" score={score.webVitals} icon={Gauge} />
+        <ScoreCard label="Accessibility" score={score.accessibility} icon={Accessibility} />
+        <ScoreCard label="SEO" score={score.seo} icon={Search} />
+        <ScoreCard label="Security" score={score.security} icon={Shield} />
       </div>
+
+      {/* Web Vitals Quick View */}
+      {webVitals && (
+        <div className="dev-panel p-4">
+          <h3 className="text-sm font-semibold text-dev-text mb-3 flex items-center gap-2">
+            <Gauge className="w-4 h-4 text-dev-accent" />
+            Web Vitals Summary
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            {webVitals.metrics.map((metric) => (
+              <div key={metric.name} className="text-center">
+                <div className={`
+                  text-2xl font-mono font-semibold
+                  ${metric.score === 'good' ? 'text-green-400' :
+                    metric.score === 'needs-improvement' ? 'text-yellow-400' :
+                    'text-red-400'}
+                `}>
+                  {metric.value}
+                  <span className="text-xs text-dev-text-subtle ml-0.5">{metric.unit}</span>
+                </div>
+                <div className="text-xs text-dev-text-muted">{metric.name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -134,6 +168,72 @@ export function OverviewSection({ report }: OverviewSectionProps) {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Additional Status Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {accessibility && (
+          <div className={`dev-panel p-4 border-l-4 ${
+            accessibility.score >= 80 ? 'border-green-400' : 
+            accessibility.score >= 60 ? 'border-yellow-400' : 'border-red-400'
+          }`}>
+            <div className="flex items-center gap-2 mb-1">
+              <Accessibility className="w-4 h-4 text-dev-accent" />
+              <span className="text-xs text-dev-text-muted">Accessibility</span>
+            </div>
+            <p className="text-lg font-semibold text-dev-text">{accessibility.score}/100</p>
+            <p className="text-xs text-dev-text-subtle">WCAG {accessibility.wcagLevel}</p>
+          </div>
+        )}
+        
+        {seo && (
+          <div className={`dev-panel p-4 border-l-4 ${
+            seo.score >= 80 ? 'border-green-400' : 
+            seo.score >= 60 ? 'border-yellow-400' : 'border-red-400'
+          }`}>
+            <div className="flex items-center gap-2 mb-1">
+              <Search className="w-4 h-4 text-dev-accent" />
+              <span className="text-xs text-dev-text-muted">SEO</span>
+            </div>
+            <p className="text-lg font-semibold text-dev-text">{seo.score}/100</p>
+            <p className="text-xs text-dev-text-subtle">
+              {seo.issues.length} {seo.issues.length === 1 ? 'issue' : 'issues'}
+            </p>
+          </div>
+        )}
+        
+        {security && (
+          <div className={`dev-panel p-4 border-l-4 ${
+            security.score >= 80 ? 'border-green-400' : 
+            security.score >= 60 ? 'border-yellow-400' : 
+            security.score >= 40 ? 'border-orange-400' : 'border-red-400'
+          }`}>
+            <div className="flex items-center gap-2 mb-1">
+              <Shield className="w-4 h-4 text-dev-accent" />
+              <span className="text-xs text-dev-text-muted">Security</span>
+            </div>
+            <p className="text-lg font-semibold text-dev-text">{security.score}/100</p>
+            <p className="text-xs text-dev-text-subtle">
+              {security.stats.critical + security.stats.high} high severity
+            </p>
+          </div>
+        )}
+        
+        {webVitals && (
+          <div className={`dev-panel p-4 border-l-4 ${
+            webVitals.overallScore >= 80 ? 'border-green-400' : 
+            webVitals.overallScore >= 60 ? 'border-yellow-400' : 'border-red-400'
+          }`}>
+            <div className="flex items-center gap-2 mb-1">
+              <Gauge className="w-4 h-4 text-dev-accent" />
+              <span className="text-xs text-dev-text-muted">Web Vitals</span>
+            </div>
+            <p className="text-lg font-semibold text-dev-text">{webVitals.overallScore}/100</p>
+            <p className="text-xs text-dev-text-subtle">
+              {webVitals.criticalIssues.length} critical
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Risk Analysis */}

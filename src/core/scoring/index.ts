@@ -6,7 +6,10 @@ import type {
   CSSAnalysis,
   AssetAnalysis,
   JSFileAnalysis,
-  ReactAnalysis,
+  WebVitalsAnalysis,
+  AccessibilityAnalysis,
+  SEOAnalysis,
+  SecurityAnalysis,
 } from '@/types';
 
 interface ScoringWeights {
@@ -15,14 +18,22 @@ interface ScoringWeights {
   css: number;
   assets: number;
   javascript: number;
+  webVitals: number;
+  accessibility: number;
+  seo: number;
+  security: number;
 }
 
 const DEFAULT_WEIGHTS: ScoringWeights = {
-  bundle: 0.35,
-  dom: 0.25,
-  css: 0.15,
-  assets: 0.15,
+  bundle: 0.20,
+  dom: 0.15,
+  css: 0.10,
+  assets: 0.10,
   javascript: 0.10,
+  webVitals: 0.15,
+  accessibility: 0.05,
+  seo: 0.03,
+  security: 0.02,
 };
 
 const BUNDLE_THRESHOLDS = {
@@ -234,12 +245,36 @@ function calculateJSScore(js: JSFileAnalysis[] | undefined): number {
   return fileCount > 0 ? Math.round(totalScore / fileCount) : 50;
 }
 
+function calculateWebVitalsScore(webVitals?: WebVitalsAnalysis): number {
+  if (!webVitals) return 50;
+  return webVitals.overallScore;
+}
+
+function calculateAccessibilityScore(accessibility?: AccessibilityAnalysis): number {
+  if (!accessibility) return 50;
+  return accessibility.score;
+}
+
+function calculateSEOScore(seo?: SEOAnalysis): number {
+  if (!seo) return 50;
+  return seo.score;
+}
+
+function calculateSecurityScore(security?: SecurityAnalysis): number {
+  if (!security) return 50;
+  return security.score;
+}
+
 export function calculatePerformanceScore(
   bundle?: BundleAnalysis,
   dom?: DOMAnalysis,
   css?: CSSAnalysis,
   assets?: AssetAnalysis,
   js?: JSFileAnalysis[],
+  webVitals?: WebVitalsAnalysis,
+  accessibility?: AccessibilityAnalysis,
+  seo?: SEOAnalysis,
+  security?: SecurityAnalysis,
   weights: Partial<ScoringWeights> = {}
 ): PerformanceScore {
   const finalWeights = { ...DEFAULT_WEIGHTS, ...weights };
@@ -249,14 +284,41 @@ export function calculatePerformanceScore(
   const cssScore = calculateCSSScore(css);
   const assetScore = calculateAssetScore(assets);
   const jsScore = calculateJSScore(js);
+  const webVitalsScore = calculateWebVitalsScore(webVitals);
+  const accessibilityScore = calculateAccessibilityScore(accessibility);
+  const seoScore = calculateSEOScore(seo);
+  const securityScore = calculateSecurityScore(security);
 
-  const overall = Math.round(
+  // Calculate weighted overall score
+  let overall = Math.round(
     bundleScore * finalWeights.bundle +
     domScore * finalWeights.dom +
     cssScore * finalWeights.css +
     assetScore * finalWeights.assets +
-    jsScore * finalWeights.javascript
+    jsScore * finalWeights.javascript +
+    webVitalsScore * finalWeights.webVitals +
+    accessibilityScore * finalWeights.accessibility +
+    seoScore * finalWeights.seo +
+    securityScore * finalWeights.security
   );
+
+  // Adjust weights if some scores are not available
+  const hasWebVitals = webVitals !== undefined;
+  const hasAccessibility = accessibility !== undefined;
+  const hasSEO = seo !== undefined;
+  const hasSecurity = security !== undefined;
+
+  if (!hasWebVitals) {
+    // Redistribute webVitals weight to other categories
+    const redistribute = finalWeights.webVitals / 5;
+    overall = Math.round(
+      bundleScore * (finalWeights.bundle + redistribute) +
+      domScore * (finalWeights.dom + redistribute) +
+      cssScore * (finalWeights.css + redistribute) +
+      assetScore * (finalWeights.assets + redistribute) +
+      jsScore * (finalWeights.javascript + redistribute)
+    );
+  }
 
   return {
     overall: Math.max(0, Math.min(100, overall)),
@@ -265,6 +327,10 @@ export function calculatePerformanceScore(
     css: cssScore,
     assets: assetScore,
     javascript: jsScore,
+    webVitals: webVitalsScore,
+    accessibility: accessibilityScore,
+    seo: seoScore,
+    security: securityScore,
   };
 }
 
@@ -351,6 +417,33 @@ export function calculateRenderRisk(
     riskScore += 10;
   }
 
+  // Additional risks from new scores (use void to acknowledge we're checking the score exists)
+  const hasWebVitals = score.webVitals !== undefined;
+  const hasAccessibility = score.accessibility !== undefined;
+  const hasSEO = score.seo !== undefined;
+  const hasSecurity = score.security !== undefined;
+  
+  void hasWebVitals;
+  void hasSEO;
+
+  if (score.webVitals !== undefined && score.webVitals < 50) {
+    reasons.push('Poor Web Vitals scores');
+    recommendations.push('Optimize Core Web Vitals (LCP, FID, CLS)');
+    riskScore += 15;
+  }
+
+  if (hasAccessibility && score.accessibility !== undefined && score.accessibility < 50) {
+    reasons.push('Low accessibility score');
+    recommendations.push('Fix critical accessibility issues');
+    riskScore += 10;
+  }
+
+  if (hasSecurity && score.security !== undefined && score.security < 50) {
+    reasons.push('Security vulnerabilities detected');
+    recommendations.push('Address security issues immediately');
+    riskScore += 20;
+  }
+
   // Determine risk level
   let level: RenderRisk['level'];
   if (riskScore >= 70) {
@@ -383,4 +476,17 @@ export function getScoreLabel(score: number): string {
   if (score >= 70) return 'Good';
   if (score >= 50) return 'Fair';
   return 'Poor';
+}
+
+export function getWebVitalsScoreColor(score: 'good' | 'needs-improvement' | 'poor'): string {
+  switch (score) {
+    case 'good':
+      return '#3fb950';
+    case 'needs-improvement':
+      return '#d29922';
+    case 'poor':
+      return '#f85149';
+    default:
+      return '#8b949e';
+  }
 }
