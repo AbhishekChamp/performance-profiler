@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useAnalysisStore } from '@/stores/analysisStore';
+import { useTemplateStore } from '@/stores/templateStore';
+import { useTrendStore } from '@/stores/trendStore';
 import { runAnalysis } from '@/workers';
 import type { AnalysisOptions, UploadedFile, UploadedProject, AnalysisProgress } from '@/types';
 
@@ -14,13 +16,18 @@ interface UseAnalysisReturn {
 
 export function useAnalysis(): UseAnalysisReturn {
   const store = useAnalysisStore();
+  const templateStore = useTemplateStore();
+  const trendStore = useTrendStore();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const run = useCallback(async (
     files: UploadedFile[],
     options?: AnalysisOptions
   ) => {
-    const analysisOptions = options || store.options;
+    // Merge template options with provided options or store options
+    const templateOptions = templateStore.currentTemplate?.options || {};
+    const baseOptions = options || store.options;
+    const analysisOptions = { ...baseOptions, ...templateOptions };
     
     console.log('[useAnalysis] Starting analysis with files:', files.length);
     console.log('[useAnalysis] File names:', files.map(f => f.name));
@@ -63,6 +70,9 @@ export function useAnalysis(): UseAnalysisReturn {
 
       store.setReport(report);
       store.addToHistory(report);
+      
+      // Add to trend data for historical analysis
+      trendStore.addReport(report);
       
       // Create project record
       const project: UploadedProject = {

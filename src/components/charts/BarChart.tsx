@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
+import { useThemeStore } from '@/stores/themeStore';
 
 interface BarData {
   label: string;
@@ -23,6 +24,8 @@ export function BarChart({
   formatValue = (v) => v.toString()
 }: BarChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const { resolvedMode } = useThemeStore();
+  const isDark = resolvedMode === 'dark';
 
   useEffect(() => {
     if (!svgRef.current || data.length === 0) return;
@@ -36,6 +39,11 @@ export function BarChart({
 
     const g = svg.append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
+
+    // Get theme-aware colors
+    const textColor = isDark ? '#c9d1d9' : '#24292f';
+    const textMutedColor = isDark ? '#8b949e' : '#57606a';
+    const defaultBarColor = isDark ? '#58a6ff' : '#0969da';
 
     // Scales
     const xScale = d3.scaleLinear()
@@ -56,7 +64,7 @@ export function BarChart({
       .attr('y', d => yScale(d.label) || 0)
       .attr('width', 0)
       .attr('height', yScale.bandwidth())
-      .attr('fill', d => d.color || '#58a6ff')
+      .attr('fill', d => d.color || defaultBarColor)
       .attr('rx', 2)
       .transition()
       .duration(750)
@@ -68,7 +76,7 @@ export function BarChart({
     yAxis.call(d3.axisLeft(yScale).tickSize(0));
     yAxis.select('.domain').remove();
     yAxis.selectAll<SVGTextElement, string>('text')
-      .style('fill', '#c9d1d9')
+      .style('fill', textColor)
       .style('font-size', '11px')
       .call(wrap, margin.left - 10);
 
@@ -80,7 +88,7 @@ export function BarChart({
       .attr('x', d => xScale(d.value) + 5)
       .attr('y', d => (yScale(d.label) || 0) + yScale.bandwidth() / 2)
       .attr('dy', '0.35em')
-      .style('fill', '#8b949e')
+      .style('fill', textMutedColor)
       .style('font-size', '11px')
       .style('opacity', 0)
       .text(d => formatValue(d.value))
@@ -115,7 +123,7 @@ export function BarChart({
       });
     }
 
-  }, [data, width, height, maxValue, formatValue]);
+  }, [data, width, height, maxValue, formatValue, isDark]);
 
   return <svg ref={svgRef} width={width} height={height} />;
 }

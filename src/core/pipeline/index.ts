@@ -22,6 +22,15 @@ import type {
   MemoryAnalysis,
   ImportAnalysis,
 } from '@/types';
+/**
+ * Analysis Pipeline
+ * 
+ * Orchestrates the analysis of uploaded files through multiple analyzers.
+ * Each analyzer focuses on a specific aspect of the codebase.
+ * 
+ * @module core/pipeline
+ */
+
 import { analyzeBundle } from '../analyzers/bundle';
 import { analyzeDOM } from '../analyzers/dom';
 import { analyzeCSS } from '../analyzers/css';

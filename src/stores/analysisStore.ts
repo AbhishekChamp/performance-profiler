@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { set, get as idbGet } from 'idb-keyval';
+import { storeReport, deleteStoredReport } from '@/utils/offlineStorage';
 import type {
   AnalysisReport,
   AnalysisOptions,
@@ -143,6 +144,11 @@ export const useAnalysisStore = create<AnalysisState>()(
           set({
             history: [...pinned, ...unpinned],
           });
+          
+          // Also store for offline access
+          storeReport(report).catch((error) => {
+            console.error('[AnalysisStore] Failed to store report for offline access:', error);
+          });
         },
 
         clearHistory: () => {
@@ -247,6 +253,11 @@ export const useAnalysisStore = create<AnalysisState>()(
           
           set({
             history: history.filter((r) => r.id !== reportId),
+          });
+          
+          // Also delete from offline storage
+          deleteStoredReport(reportId).catch((error) => {
+            console.error('[AnalysisStore] Failed to delete stored report:', error);
           });
         },
 

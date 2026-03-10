@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import { useThemeStore } from '@/stores/themeStore';
 
 interface PieData {
   label: string;
@@ -22,6 +23,8 @@ export function PieChart({
 }: PieChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoveredSlice, setHoveredSlice] = useState<PieData | null>(null);
+  const { resolvedMode } = useThemeStore();
+  const isDark = resolvedMode === 'dark';
 
   useEffect(() => {
     if (!svgRef.current || data.length === 0) return;
@@ -34,6 +37,9 @@ export function PieChart({
 
     const g = svg.append('g')
       .attr('transform', `translate(${width / 2},${height / 2})`);
+
+    // Theme-aware stroke color
+    const strokeColor = isDark ? '#0d1117' : '#ffffff';
 
     // Create pie generator
     const pie = d3.pie<PieData>()
@@ -54,7 +60,7 @@ export function PieChart({
       .data(pie(data))
       .join('path')
       .attr('fill', d => d.data.color)
-      .attr('stroke', '#0d1117')
+      .attr('stroke', strokeColor)
       .attr('stroke-width', 2)
       .attr('d', arc)
       .on('mouseover', function(_event: MouseEvent, d: d3.PieArcDatum<PieData>) {
@@ -90,7 +96,7 @@ export function PieChart({
         };
       });
 
-  }, [data, width, height, innerRadius]);
+  }, [data, width, height, innerRadius, isDark]);
 
   const total = data.reduce((sum, d) => sum + d.value, 0);
 

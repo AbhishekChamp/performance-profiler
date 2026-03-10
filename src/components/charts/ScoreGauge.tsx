@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { getScoreColor, getScoreLabel } from '@/core/scoring';
+import { useThemeStore } from '@/stores/themeStore';
 
 interface ScoreGaugeProps {
   score: number;
@@ -13,6 +14,8 @@ export function ScoreGauge({ score, size = 120, label, showLabel = true }: Score
   const svgRef = useRef<SVGSVGElement>(null);
   const color = getScoreColor(score);
   const scoreLabel = getScoreLabel(score);
+  const { resolvedMode } = useThemeStore();
+  const isDark = resolvedMode === 'dark';
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -28,6 +31,10 @@ export function ScoreGauge({ score, size = 120, label, showLabel = true }: Score
       .append('g')
       .attr('transform', `translate(${size / 2}, ${size / 2})`);
 
+    // Get theme-aware colors from CSS variables
+    const bgColor = isDark ? '#30363d' : '#d0d7de';
+    const labelColor = isDark ? '#8b949e' : '#57606a';
+
     // Background arc
     const arc = d3.arc()
       .innerRadius(innerRadius)
@@ -37,7 +44,7 @@ export function ScoreGauge({ score, size = 120, label, showLabel = true }: Score
 
     g.append('path')
       .attr('d', arc.endAngle(Math.PI / 2) as unknown as string)
-      .attr('fill', '#30363d');
+      .attr('fill', bgColor);
 
     // Score arc
     const scoreAngle = -Math.PI / 2 + (score / 100) * Math.PI;
@@ -82,11 +89,11 @@ export function ScoreGauge({ score, size = 120, label, showLabel = true }: Score
         .attr('text-anchor', 'middle')
         .attr('dy', '1.2em')
         .style('font-size', '11px')
-        .style('fill', '#8b949e')
+        .style('fill', labelColor)
         .text(scoreLabel);
     }
 
-  }, [score, size, color, showLabel, scoreLabel]);
+  }, [score, size, color, showLabel, scoreLabel, isDark]);
 
   return (
     <div className="flex flex-col items-center">

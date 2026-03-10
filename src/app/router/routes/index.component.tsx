@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useAnalysis } from '@/hooks/useAnalysis';
 import { useFileUpload } from '@/hooks/useFileUpload';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { FileUpload } from '@/components/upload/FileUpload';
-import { Sidebar } from '@/components/layout/Sidebar';
+import { Sidebar, sections, getSectionByIndex, getNextSection, getPreviousSection } from '@/components/layout/Sidebar';
 import { OverviewSection } from '@/components/report/OverviewSection';
 import { BundleSection } from '@/components/report/BundleSection';
 import { DOMSection } from '@/components/report/DOMSection';
@@ -26,6 +27,11 @@ import { MemorySection } from '@/components/report/MemorySection';
 import { ImportsSection } from '@/components/report/ImportsSection';
 import { BudgetSettings } from '@/components/settings/BudgetSettings';
 import { ReportComparison } from '@/components/compare/ReportComparison';
+import { TemplateSelector } from '@/components/templates';
+import { TrendDashboard } from '@/components/trends/TrendDashboard';
+import { GraphSection } from '@/components/graph';
+import { CICDConfigGenerator } from '@/components/cicd';
+import { CodePlayground } from '@/components/playground';
 import type { AnalysisSection } from '@/components/layout/types';
 import { Activity, Zap, Shield, BarChart3, Code2, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -417,6 +423,34 @@ export function IndexComponent() {
   const { files, isDragging, addFiles, removeFile, clearFiles, setIsDragging } = useFileUpload();
   const { isAnalyzing, progress, run, error } = useAnalysis();
   const { currentReport } = useAnalysisStore();
+  const mainRef = useRef<HTMLElement>(null);
+
+  // Handle section navigation with keyboard
+  const handleNextSection = useCallback(() => {
+    if (!currentReport) return;
+    const next = getNextSection(activeSection);
+    if (next) setActiveSection(next);
+  }, [activeSection, currentReport]);
+
+  const handlePreviousSection = useCallback(() => {
+    if (!currentReport) return;
+    const prev = getPreviousSection(activeSection);
+    if (prev) setActiveSection(prev);
+  }, [activeSection, currentReport]);
+
+  const handleGoToSection = useCallback((index: number) => {
+    if (!currentReport) return;
+    const section = getSectionByIndex(index);
+    if (section) setActiveSection(section);
+  }, [currentReport]);
+
+  // Register keyboard shortcuts for navigation
+  useKeyboardShortcuts({
+    onNextSection: handleNextSection,
+    onPreviousSection: handlePreviousSection,
+    onGoToSection: handleGoToSection,
+    enabled: !!currentReport && !isAnalyzing,
+  });
 
   // Show error toast if analysis fails
   useEffect(() => {
@@ -610,6 +644,8 @@ export function IndexComponent() {
               ) : (
                 <NoData section="Imports" />
               );
+            case 'graph':
+              return <GraphSection />;
             case 'timeline':
               return <TimelineSection timeline={currentReport.timeline} />;
             case 'risks':
@@ -621,8 +657,20 @@ export function IndexComponent() {
               );
             case 'budget':
               return <BudgetSettings report={currentReport} />;
+            case 'templates':
+              return (
+                <div className="p-6">
+                  <TemplateSelector />
+                </div>
+              );
             case 'compare':
               return <ReportComparison />;
+            case 'trends':
+              return <TrendDashboard />;
+            case 'cicd':
+              return <CICDConfigGenerator />;
+            case 'playground':
+              return <CodePlayground />;
             default:
               return null;
           }
@@ -640,7 +688,12 @@ export function IndexComponent() {
           hasReport={!!currentReport}
         />
       )}
-      <main className="flex-1 overflow-y-auto">
+      <main 
+        ref={mainRef}
+        className="flex-1 overflow-y-auto focus:outline-none"
+        tabIndex={-1}
+        aria-label="Report content"
+      >
         <div className={currentReport ? 'max-w-5xl mx-auto p-6' : ''}>{renderContent()}</div>
       </main>
 

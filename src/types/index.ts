@@ -1,3 +1,12 @@
+/**
+ * Core TypeScript Type Definitions
+ * 
+ * This file contains all shared interfaces and types used throughout
+ * the Frontend Performance Profiler application.
+ * 
+ * @module types
+ */
+
 export interface BundleModule {
   id: string;
   name: string;
@@ -682,6 +691,93 @@ export interface ReportTemplate {
   id: string;
   name: string;
   description: string;
+  icon: string;
+  color: string;
+  category: 'ecommerce' | 'spa' | 'blog' | 'dashboard' | 'landing' | 'library' | 'custom';
   suggestedFiles: string[];
   options: Partial<AnalysisOptions>;
+  budget?: Partial<PerformanceBudget>;
+  weights?: Partial<PerformanceScore>;
+  priorityRecommendations?: string[];
+  isBuiltIn: boolean;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface TemplateDetectionResult {
+  templateId: string;
+  confidence: number;
+  reasons: string[];
+}
+
+// Feature 5: Historical Trend Analysis
+export interface TrendDataPoint {
+  timestamp: number;
+  reportId: string;
+  projectName: string;
+  overallScore: number;
+  bundleScore?: number;
+  domScore?: number;
+  cssScore?: number;
+  assetsScore?: number;
+  javascriptScore?: number;
+  webVitalsScore?: number;
+  accessibilityScore?: number;
+  seoScore?: number;
+  securityScore?: number;
+  totalIssues: number;
+  criticalIssues: number;
+  bundleSize?: number;
+  domNodes?: number;
+  cssSize?: number;
+  jsSize?: number;
+  imageSize?: number;
+  commitHash?: string;
+  version?: string;
+  branch?: string;
+}
+
+export interface TrendSeries {
+  metric: string;
+  label: string;
+  color: string;
+  data: { x: number; y: number }[];
+}
+
+export interface RegressionPoint {
+  timestamp: number;
+  metric: string;
+  previousValue: number;
+  currentValue: number;
+  delta: number;
+  percentageChange: number;
+  severity: 'critical' | 'warning' | 'info';
+  message: string;
+}
+
+export interface TrendSummary {
+  startDate: number;
+  endDate: number;
+  totalReports: number;
+  averageScore: number;
+  trendDirection: 'improving' | 'declining' | 'stable';
+  improvementRate: number; // points per week
+  bestScore: { value: number; timestamp: number };
+  worstScore: { value: number; timestamp: number };
+  regressions: RegressionPoint[];
+}
+
+export interface TrendFilters {
+  dateRange: '7d' | '30d' | '90d' | 'all' | 'custom';
+  startDate?: number;
+  endDate?: number;
+  projectName?: string;
+  branch?: string;
+  metrics: string[];
+}
+
+export interface ProjectTrend {
+  projectName: string;
+  reports: TrendDataPoint[];
+  summary: TrendSummary;
 }

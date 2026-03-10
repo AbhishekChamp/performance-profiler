@@ -24,6 +24,12 @@
   --dev-danger: #da3633;
   --dev-danger-bright: #f85149;
   --dev-info: #1f6feb;
+  
+  /* Chart colors - Dark theme */
+  --chart-text: #c9d1d9;
+  --chart-text-muted: #8b949e;
+  --chart-grid: #30363d;
+  --chart-bg: #161b22;
 }
 
 /* Light theme */
@@ -45,17 +51,38 @@
   --dev-danger: #cf222e;
   --dev-danger-bright: #a40e26;
   --dev-info: #0969da;
+  
+  /* Chart colors - Light theme */
+  --chart-text: #24292f;
+  --chart-text-muted: #57606a;
+  --chart-grid: #d0d7de;
+  --chart-bg: #f6f8fa;
 }
 
-/* Base styles */
+/* Smooth theme transitions */
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+  transition: background-color 0.3s ease,
+              color 0.3s ease,
+              border-color 0.3s ease,
+              fill 0.3s ease,
+              stroke 0.3s ease,
+              box-shadow 0.3s ease !important;
+}
+
+/* Base styles with theme-aware transitions */
 * {
   border-color: var(--dev-border);
+  transition: border-color 0.3s ease;
 }
 
 html {
   background-color: var(--dev-bg);
   color: var(--dev-text);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 body {
@@ -65,6 +92,7 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 code, pre, .font-mono {
@@ -82,11 +110,13 @@ code, pre, .font-mono {
 
 ::-webkit-scrollbar-track {
   background-color: var(--dev-surface);
+  transition: background-color 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb {
   background-color: var(--dev-border);
   border-radius: 2px;
+  transition: background-color 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -98,16 +128,22 @@ code, pre, .font-mono {
   background-color: rgba(22, 27, 34, 0.8);
   backdrop-filter: blur(12px);
   border: 1px solid var(--dev-border);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.light .glass-panel {
+  background-color: rgba(246, 248, 250, 0.9);
 }
 
 .dev-panel {
   background-color: var(--dev-surface);
   border: 1px solid var(--dev-border);
   border-radius: 0.5rem;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .dev-panel-hover {
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .dev-panel-hover:hover {
@@ -122,7 +158,7 @@ code, pre, .font-mono {
   border-radius: 0.25rem;
   font-size: 0.875rem;
   font-weight: 500;
-  transition: all 0.2s;
+  transition: all 0.2s ease, background-color 0.3s ease, color 0.3s ease;
 }
 
 .dev-button:hover {
@@ -148,7 +184,7 @@ code, pre, .font-mono {
   border-radius: 0.25rem;
   font-size: 0.875rem;
   font-weight: 500;
-  transition: all 0.2s;
+  transition: all 0.2s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .dev-button-secondary:hover {
@@ -163,7 +199,7 @@ code, pre, .font-mono {
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   color: var(--dev-text);
-  transition: all 0.2s;
+  transition: all 0.2s ease, background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .dev-input::placeholder {
@@ -181,6 +217,7 @@ code, pre, .font-mono {
   border: 1px solid var(--dev-border);
   border-radius: 0.5rem;
   padding: 1rem;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .metric-value {
@@ -188,6 +225,7 @@ code, pre, .font-mono {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-weight: 600;
   color: var(--dev-text);
+  transition: color 0.3s ease;
 }
 
 .metric-label {
@@ -195,6 +233,7 @@ code, pre, .font-mono {
   color: var(--dev-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  transition: color 0.3s ease;
 }
 
 .section-header {
@@ -204,6 +243,7 @@ code, pre, .font-mono {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.75rem;
+  transition: color 0.3s ease;
 }
 
 .status-badge {
@@ -213,6 +253,7 @@ code, pre, .font-mono {
   border-radius: 0.25rem;
   font-size: 0.75rem;
   font-weight: 500;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .status-badge-success {
@@ -247,7 +288,7 @@ code, pre, .font-mono {
   border-radius: 0.25rem;
   font-size: 0.875rem;
   color: var(--dev-text-muted);
-  transition: background-color 0.15s;
+  transition: background-color 0.15s ease, color 0.15s ease;
   cursor: pointer;
 }
 
@@ -289,13 +330,258 @@ code, pre, .font-mono {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  transition: background 0.3s ease;
 }
 
-/* Missing hover background utility */
+/* Hover background utility */
 .bg-dev-hover {
   background-color: var(--dev-surface-hover);
 }
 
 .hover\:bg-dev-hover:hover {
   background-color: var(--dev-surface-hover);
+}
+
+/* Theme-specific utility classes */
+.text-dev {
+  color: var(--dev-text);
+}
+
+.text-dev-muted {
+  color: var(--dev-text-muted);
+}
+
+.text-dev-subtle {
+  color: var(--dev-text-subtle);
+}
+
+.bg-dev {
+  background-color: var(--dev-bg);
+}
+
+.bg-dev-surface {
+  background-color: var(--dev-surface);
+}
+
+.border-dev {
+  border-color: var(--dev-border);
+}
+
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only.focusable:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only.focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Print styles - always use light theme for printing */
+@media print {
+  :root,
+  .dark,
+  .light {
+    --dev-bg: #ffffff;
+    --dev-surface: #f6f8fa;
+    --dev-surface-hover: #f3f4f6;
+    --dev-border: #d0d7de;
+    --dev-border-subtle: #e1e4e8;
+    --dev-text: #24292f;
+    --dev-text-muted: #57606a;
+    --dev-text-subtle: #6e7781;
+    --dev-accent: #0969da;
+    --dev-accent-hover: #0550ae;
+    --dev-success: #1a7f37;
+    --dev-success-bright: #2da44e;
+    --dev-warning: #9a6700;
+    --dev-warning-bright: #bf8700;
+    --dev-danger: #cf222e;
+    --dev-danger-bright: #a40e26;
+    --dev-info: #0969da;
+    --chart-text: #24292f;
+    --chart-text-muted: #57606a;
+    --chart-grid: #d0d7de;
+    --chart-bg: #f6f8fa;
+  }
+  
+  * {
+    background-color: transparent !important;
+    color: #24292f !important;
+    border-color: #d0d7de !important;
+  }
+  
+  body {
+    background-color: #ffffff !important;
+  }
+  
+  /* Hide interactive elements when printing */
+  .no-print,
+  button:not([data-printable]),
+  .theme-toggle,
+  .sidebar,
+  .keyboard-shortcuts-help {
+    display: none !important;
+  }
+  
+  /* Ensure charts are visible */
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Page breaks */
+  .report-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  h1, h2, h3 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .theme-transitioning,
+  .theme-transitioning *,
+  .theme-transitioning *::before,
+  .theme-transitioning *::after {
+    transition: none !important;
+  }
+}
+
+/* Responsive design utilities */
+@media (max-width: 640px) {
+  /* Mobile styles */
+  html {
+    font-size: 14px;
+  }
+  
+  .metric-value {
+    font-size: 1.25rem;
+  }
+  
+  .glass-panel {
+    backdrop-filter: none;
+  }
+  
+  /* Touch-friendly tap targets */
+  .dev-button,
+  .dev-button-secondary {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Hide scrollbar on mobile for cleaner look */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Tablet styles */
+  html {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 1025px) {
+  /* Desktop styles */
+  html {
+    font-size: 16px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print,
+  .glass-panel,
+  .dev-button,
+  .dev-button-secondary {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .metric-card,
+  .dev-panel {
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --dev-border: #000000;
+    --dev-text: #000000;
+    --dev-text-muted: #333333;
+  }
+  
+  .light {
+    --dev-border: #000000;
+    --dev-text: #000000;
+  }
+}
+
+/* Focus visible for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--dev-accent);
+  outline-offset: 2px;
+}
+
+/* Remove focus outline for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
 }

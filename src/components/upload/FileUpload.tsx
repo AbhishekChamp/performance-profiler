@@ -1,6 +1,9 @@
-import { Upload, X, File, FileCode, FileType, FolderUp, FileJson, Trash2 } from 'lucide-react';
-import { useCallback, useState, useRef } from 'react';
+import { Upload, X, File, FileCode, FileType, FolderUp, FileJson, Trash2, Sparkles } from 'lucide-react';
+import { useCallback, useState, useRef, useEffect } from 'react';
+import { useTemplateStore } from '@/stores/templateStore';
+import { TemplateSelectorCompact } from '@/components/templates';
 import type { UploadedFile } from '@/types';
+import toast from 'react-hot-toast';
 
 interface FileUploadProps {
   files: UploadedFile[];
@@ -47,6 +50,22 @@ export function FileUpload({
   const [isFolderMode, setIsFolderMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
+  const { detectTemplate, autoDetectEnabled, lastDetectedTemplate } = useTemplateStore();
+
+  // Auto-detect template when files change
+  useEffect(() => {
+    if (files.length > 0 && autoDetectEnabled) {
+      const result = detectTemplate(files);
+      
+      if (result.confidence > 0.3) {
+        const templateName = result.templateId.charAt(0).toUpperCase() + result.templateId.slice(1);
+        toast.success(
+          `Detected ${templateName} template (${Math.round(result.confidence * 100)}% confidence)`,
+          { duration: 3000, icon: '✨' }
+        );
+      }
+    }
+  }, [files, autoDetectEnabled, detectTemplate]);
 
   const handleDragOver = useCallback(
     (e: React.DragEvent) => {
@@ -263,9 +282,33 @@ export function FileUpload({
         </div>
       </div>
 
+      {/* Template Selection & Auto-detection */}
+      {files?.length > 0 && (
+        <div className="mt-6">
+          <div className="bg-dev-surface border border-dev-border rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-4 h-4 text-dev-accent" />
+              <span className="text-sm font-medium text-dev-text">Analysis Template</span>
+              {lastDetectedTemplate && lastDetectedTemplate.confidence > 0.3 && (
+                <span className="text-xs px-2 py-0.5 bg-dev-accent/10 text-dev-accent rounded-full">
+                  Auto-detected ({Math.round(lastDetectedTemplate.confidence * 100)}%)
+                </span>
+              )}
+            </div>
+            <TemplateSelectorCompact />
+            {lastDetectedTemplate && lastDetectedTemplate.reasons.length > 0 && (
+              <div className="mt-2 text-xs text-dev-text-subtle">
+                <span className="font-medium">Detected:</span>{' '}
+                {lastDetectedTemplate.reasons.slice(0, 2).join(', ')}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* File List with 3D Cards */}
       {files?.length > 0 && (
-        <div className="mt-8">
+        <div className="mt-6">
           <div className="bg-gray-900/80 backdrop-blur-xl rounded-2xl border border-gray-700/50 overflow-hidden shadow-2xl shadow-black/30">
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-700/50 flex items-center justify-between bg-linear-to-r from-gray-800/50 to-transparent">

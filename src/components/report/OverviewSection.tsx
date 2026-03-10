@@ -59,13 +59,13 @@ export function OverviewSection({ report }: OverviewSectionProps) {
   const { score, renderRisk, summary, bundle, webVitals, accessibility, seo, security } = report;
 
   return (
-    <div className="space-y-6">
+    <section aria-labelledby="overview-heading" className="space-y-6">
       {/* Score Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <div className="col-span-2 dev-panel p-6 flex items-center gap-6">
-          <ScoreGauge score={score.overall} size={140} />
+          <ScoreGauge score={score.overall} size={140} aria-label={`Overall performance score: ${score.overall} out of 100`} />
           <div>
-            <h3 className="text-lg font-semibold text-dev-text mb-1">Overall Score</h3>
+            <h2 id="overview-heading" className="text-lg font-semibold text-dev-text mb-1">Overall Score</h2>
             <p className="text-sm text-dev-text-muted mb-3">
               {score.overall >= 70 
                 ? 'Performance is good' 
@@ -93,9 +93,9 @@ export function OverviewSection({ report }: OverviewSectionProps) {
 
       {/* Web Vitals Quick View */}
       {webVitals && (
-        <div className="dev-panel p-4">
-          <h3 className="text-sm font-semibold text-dev-text mb-3 flex items-center gap-2">
-            <Gauge className="w-4 h-4 text-dev-accent" />
+        <section aria-labelledby="webvitals-heading" className="dev-panel p-4">
+          <h3 id="webvitals-heading" className="text-sm font-semibold text-dev-text mb-3 flex items-center gap-2">
+            <Gauge className="w-4 h-4 text-dev-accent" aria-hidden="true" />
             Web Vitals Summary
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
@@ -114,11 +114,11 @@ export function OverviewSection({ report }: OverviewSectionProps) {
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <section aria-label="Summary statistics" className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="dev-panel p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-dev-surface-hover flex items-center justify-center">
@@ -168,9 +168,9 @@ export function OverviewSection({ report }: OverviewSectionProps) {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Additional Status Summary */}
+      {/* Additional Status Summary -->
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {accessibility && (
           <div className={`dev-panel p-4 border-l-4 ${
@@ -236,10 +236,10 @@ export function OverviewSection({ report }: OverviewSectionProps) {
         )}
       </div>
 
-      {/* Risk Analysis */}
+      {/* Risk Analysis -->
       {renderRisk.reasons.length > 0 && (
-        <div className="dev-panel p-4">
-          <h3 className="text-sm font-semibold text-dev-text mb-3">Risk Factors</h3>
+        <section aria-labelledby="risk-heading" className="dev-panel p-4">
+          <h3 id="risk-heading" className="text-sm font-semibold text-dev-text mb-3">Risk Factors</h3>
           <div className="space-y-2">
             {renderRisk.reasons.map((reason, i) => (
               <div key={i} className="flex items-start gap-2">
@@ -248,13 +248,13 @@ export function OverviewSection({ report }: OverviewSectionProps) {
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Top Recommendations */}
       {summary.optimizations.length > 0 && (
-        <div className="dev-panel p-4">
-          <h3 className="text-sm font-semibold text-dev-text mb-3">Top Recommendations</h3>
+        <section aria-labelledby="recommendations-heading" className="dev-panel p-4">
+          <h3 id="recommendations-heading" className="text-sm font-semibold text-dev-text mb-3">Top Recommendations</h3>
           <div className="space-y-3">
             {summary.optimizations.slice(0, 5).map((opt, i) => (
               <div key={i} className="flex items-start gap-3 p-3 bg-dev-surface-hover rounded-lg">
@@ -276,8 +276,8 @@ export function OverviewSection({ report }: OverviewSectionProps) {
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
-    </div>
+    </section>
   );
 }

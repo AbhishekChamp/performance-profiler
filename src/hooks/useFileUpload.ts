@@ -54,8 +54,7 @@ export function useFileUpload(): UseFileUploadReturn {
       }
 
       // Get the relative path (for folder uploads) or just filename
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const relativePath = (file as any).webkitRelativePath || file.name;
+      const relativePath = (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name;
       
       // Skip duplicates
       if (processedPaths.has(relativePath)) {

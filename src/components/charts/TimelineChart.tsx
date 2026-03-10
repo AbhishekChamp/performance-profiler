@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import type { PerformanceTimeline, TimelineEvent } from '@/types';
+import { useThemeStore } from '@/stores/themeStore';
 
 interface TimelineChartProps {
   timeline: PerformanceTimeline;
@@ -18,6 +19,8 @@ const TYPE_COLORS: Record<string, string> = {
 
 export function TimelineChart({ timeline, width = 700, height = 180 }: TimelineChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const { resolvedMode } = useThemeStore();
+  const isDark = resolvedMode === 'dark';
 
   useEffect(() => {
     if (!svgRef.current || timeline.events.length === 0) return;
@@ -31,6 +34,12 @@ export function TimelineChart({ timeline, width = 700, height = 180 }: TimelineC
 
     const g = svg.append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`);
+
+    // Theme-aware colors
+    const gridColor = isDark ? '#30363d' : '#d0d7de';
+    const textColor = isDark ? '#c9d1d9' : '#24292f';
+    const textMutedColor = isDark ? '#8b949e' : '#57606a';
+    const criticalColor = isDark ? '#f85149' : '#cf222e';
 
     // Scales
     const xScale = d3.scaleLinear()
@@ -51,7 +60,7 @@ export function TimelineChart({ timeline, width = 700, height = 180 }: TimelineC
       .attr('x2', (d: number) => xScale(d))
       .attr('y1', 0)
       .attr('y2', chartHeight)
-      .attr('stroke', '#30363d')
+      .attr('stroke', gridColor)
       .attr('stroke-dasharray', '3,3');
 
     // X axis
@@ -66,7 +75,7 @@ export function TimelineChart({ timeline, width = 700, height = 180 }: TimelineC
 
     xAxis.select('.domain').remove();
     xAxis.selectAll('text')
-      .style('fill', '#8b949e')
+      .style('fill', textMutedColor)
       .style('font-size', '11px');
 
     // Y axis
@@ -74,7 +83,7 @@ export function TimelineChart({ timeline, width = 700, height = 180 }: TimelineC
     yAxis.call(d3.axisLeft(yScale).tickSize(0));
     yAxis.select('.domain').remove();
     yAxis.selectAll('text')
-      .style('fill', '#c9d1d9')
+      .style('fill', textColor)
       .style('font-size', '11px');
 
     // Bars
@@ -101,7 +110,7 @@ export function TimelineChart({ timeline, width = 700, height = 180 }: TimelineC
       .attr('x', (d: TimelineEvent) => xScale(d.end) + 5)
       .attr('y', (d: TimelineEvent) => (yScale(d.name) || 0) + yScale.bandwidth() / 2)
       .attr('dy', '0.35em')
-      .style('fill', '#8b949e')
+      .style('fill', textMutedColor)
       .style('font-size', '10px')
       .style('opacity', 0)
       .text((d: TimelineEvent) => `${Math.round(d.duration)}ms`)
@@ -123,14 +132,14 @@ export function TimelineChart({ timeline, width = 700, height = 180 }: TimelineC
         g.append('text')
           .attr('x', chartWidth + 10)
           .attr('y', avgY + yScale.bandwidth())
-          .style('fill', '#f85149')
+          .style('fill', criticalColor)
           .style('font-size', '10px')
           .style('font-weight', 'bold')
           .text('⚡ Critical');
       }
     }
 
-  }, [timeline, width, height]);
+  }, [timeline, width, height, isDark]);
 
   return (
     <div className="relative">

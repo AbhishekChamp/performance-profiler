@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import type { BundleModule } from '@/types';
+import { useThemeStore } from '@/stores/themeStore';
 
 interface TreemapProps {
   modules: BundleModule[];
@@ -27,12 +28,20 @@ function formatBytes(bytes: number): string {
 export function Treemap({ modules, width = 600, height = 400 }: TreemapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; content: BundleModule | null }>({ x: 0, y: 0, content: null });
+  const { resolvedMode } = useThemeStore();
+  const isDark = resolvedMode === 'dark';
 
   useEffect(() => {
     if (!svgRef.current || modules.length === 0) return;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
+
+    // Theme-aware colors
+    const vendorColor = isDark ? '#58a6ff' : '#0969da';
+    const entryColor = isDark ? '#3fb950' : '#1a7f37';
+    const textColor = isDark ? '#c9d1d9' : '#24292f';
+    const textMutedColor = isDark ? '#8b949e' : '#57606a';
 
     // Prepare data
     const root = d3.hierarchy<TreemapDatum>({ children: modules })
@@ -59,11 +68,11 @@ export function Treemap({ modules, width = 600, height = 400 }: TreemapProps) {
       .attr('width', (d) => d.x1 - d.x0)
       .attr('height', (d) => d.y1 - d.y0)
       .attr('fill', (d) => {
-        const baseColor = d.data.type === 'vendor' ? '#58a6ff' : '#3fb950';
+        const baseColor = d.data.type === 'vendor' ? vendorColor : entryColor;
         return d3.color(baseColor)!.copy({ opacity: 0.7 }).toString();
       })
       .attr('stroke', (d) => {
-        const baseColor = d.data.type === 'vendor' ? '#58a6ff' : '#3fb950';
+        const baseColor = d.data.type === 'vendor' ? vendorColor : entryColor;
         return baseColor;
       })
       .attr('stroke-width', 1)
@@ -95,7 +104,7 @@ export function Treemap({ modules, width = 600, height = 400 }: TreemapProps) {
         return w > 60 ? d.data.name.slice(0, 15) : '';
       })
       .style('font-size', '10px')
-      .style('fill', '#c9d1d9')
+      .style('fill', textColor)
       .style('pointer-events', 'none');
 
     leaf.append('text')
@@ -106,10 +115,10 @@ export function Treemap({ modules, width = 600, height = 400 }: TreemapProps) {
         return w > 60 ? formatBytes(d.data.size) : '';
       })
       .style('font-size', '9px')
-      .style('fill', '#8b949e')
+      .style('fill', textMutedColor)
       .style('pointer-events', 'none');
 
-  }, [modules, width, height]);
+  }, [modules, width, height, isDark]);
 
   return (
     <div className="relative">

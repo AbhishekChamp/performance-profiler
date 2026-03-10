@@ -1,12 +1,23 @@
 import { Outlet } from '@tanstack/react-router';
 import { Header } from '@/components/layout/Header';
+import { SkipToContent } from '@/components/ui/SkipToContent';
+import { InstallPrompt } from '@/components/ui/InstallPrompt';
 import { useAnalysisStore } from '@/stores/analysisStore';
-import { useCallback } from 'react';
+import { useThemeStore } from '@/stores/themeStore';
+import { useCallback, useEffect, useRef } from 'react';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { usePWA } from '@/hooks/usePWA';
+import toast from 'react-hot-toast';
 
 export function RootComponent() {
   const { currentReport, reset } = useAnalysisStore();
+  const { toggleMode, mode } = useThemeStore();
   const { confirm, dialog } = useConfirm();
+  const mainRef = useRef<HTMLDivElement>(null);
+
+  // Initialize PWA functionality
+  const { isOnline, isInstalled } = usePWA();
 
   const handleExport = useCallback(() => {
     if (!currentReport) return;
@@ -37,11 +48,60 @@ export function RootComponent() {
     }
   }, [confirm, reset]);
 
+  // Handle theme cycling with keyboard shortcut
+  const handleCycleTheme = useCallback(() => {
+    toggleMode();
+    
+    // Get the new mode after toggle
+    const newMode = mode === 'dark' ? 'light' : mode === 'light' ? 'system' : 'dark';
+    const messages = {
+      dark: 'Dark theme enabled 🌙',
+      light: 'Light theme enabled ☀️',
+      system: 'System theme enabled 🖥️',
+    };
+    
+    toast.success(messages[newMode], { duration: 1500 });
+  }, [toggleMode, mode]);
+
+  // Register global keyboard shortcuts
+  useKeyboardShortcuts({
+    onCycleTheme: handleCycleTheme,
+    onExport: handleExport,
+    enabled: true,
+  });
+
+  // Announce page changes to screen readers
+  useEffect(() => {
+    const announcePageLoad = () => {
+      const announcement = document.createElement('div');
+      announcement.setAttribute('role', 'status');
+      announcement.setAttribute('aria-live', 'polite');
+      announcement.className = 'sr-only';
+      announcement.textContent = 'Frontend Performance Profiler loaded';
+      document.body.appendChild(announcement);
+      setTimeout(() => document.body.removeChild(announcement), 1000);
+    };
+
+    announcePageLoad();
+  }, []);
+
   return (
     <div className="flex flex-col h-screen bg-dev-bg">
+      <SkipToContent />
       <Header onExport={handleExport} onClear={handleClear} />
-      <Outlet />
+      <div 
+        ref={mainRef}
+        id="main-content"
+        className="flex-1 overflow-hidden flex"
+        role="main"
+        tabIndex={-1}
+      >
+        <Outlet />
+      </div>
       {dialog}
+      
+      {/* PWA Install Prompt */}
+      <InstallPrompt />
     </div>
   );
 }

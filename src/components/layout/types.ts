@@ -17,7 +17,12 @@ export type AnalysisSection =
   | 'thirdparty'
   | 'memory'
   | 'imports'
+  | 'graph'
   | 'timeline'
   | 'risks'
   | 'budget'
-  | 'compare';
+  | 'templates'
+  | 'compare'
+  | 'trends'
+  | 'cicd'
+  | 'playground';
