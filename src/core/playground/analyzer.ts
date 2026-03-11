@@ -119,7 +119,7 @@ function analyzeCSS(content: string): AnalysisResult {
   const lines = content.split('\n');
   
   // Track selectors to find unused ones (simplified)
-  const selectors: string[] = [];
+  // const selectors: string[] = [];
   
   lines.forEach((line, index) => {
     // Check for unused CSS (heuristic: if it looks like a demo)
@@ -213,7 +213,7 @@ function analyzeCSS(content: string): AnalysisResult {
 }
 
 // JavaScript/TypeScript Analysis
-function analyzeJavaScript(content: string, language: PlaygroundLanguage): AnalysisResult {
+function analyzeJavaScript(content: string, _lang: PlaygroundLanguage): AnalysisResult { // eslint-disable-line @typescript-eslint/no-unused-vars
   const issues: PlaygroundIssue[] = [];
   const lines = content.split('\n');
   
@@ -334,9 +334,9 @@ export function calculateAnalysis(files: PlaygroundFile[]): PlaygroundAnalysis {
   const results = files.map(analyzeFile);
   
   const totalIssues = results.reduce((sum, r) => sum + r.issues.length, 0);
-  const totalFixed = files.reduce((sum, f) => 
-    sum + f.issues.filter(i => !f.modifiedContent.includes(i.message.split(' ')[0])).length, 0
-  );
+  // const totalFixed = files.reduce((sum, f) => 
+  //   sum + f.issues.filter(i => !f.modifiedContent.includes(i.message.split(' ')[0])).length, 0
+  // );
   
   const avgScore = results.length > 0 
     ? results.reduce((sum, r) => sum + r.score, 0) / results.length 

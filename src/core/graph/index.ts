@@ -5,7 +5,6 @@ import type {
   ModuleType,
   GraphStats,
   GraphFilter,
-  LayoutAlgorithm,
   GraphLayout 
 } from '@/types/graph';
 
@@ -167,7 +166,7 @@ export function buildDependencyGraph(
   
   // Detect duplicates (same label, different paths)
   const duplicates = detectDuplicates(Array.from(nodes.values()));
-  duplicates.forEach(({ original, duplicates }) => {
+  duplicates.forEach(({ duplicates }) => {
     duplicates.forEach(dup => {
       const node = nodes.get(dup.id);
       if (node) node.isDuplicate = true;
@@ -201,9 +200,8 @@ function parseExports(content: string): string[] {
     exports.push(match[1]);
   }
   
-  // Export from
-  const exportFromRegex = /export\s+(?:\{[^}]*\}|\*\s*(?:as\s+\w+)?)\s+from\s+['"][^'"]+['"];?/g;
-  // These don't add named exports, just re-export
+  // Export from - these don't add named exports, just re-export
+  // const exportFromRegex = /export\s+(?:\{[^}]*\}|\*\s*(?:as\s+\w+)?)\s+from\s+['"][^'"]+['"];?/g;
   
   return [...new Set(exports)];
 }
@@ -336,7 +334,7 @@ function detectDuplicates(nodes: GraphNode[]): { original: GraphNode; duplicates
   
   const duplicates: { original: GraphNode; duplicates: GraphNode[] }[] = [];
   
-  byName.forEach((moduleNodes, name) => {
+  byName.forEach((moduleNodes) => {
     if (moduleNodes.length > 1) {
       // Sort by size, largest is considered "original"
       moduleNodes.sort((a, b) => b.size - a.size);

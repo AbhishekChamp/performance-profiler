@@ -17,7 +17,7 @@ export function usePWA() {
     setIsOnline,
     setWasOffline,
     setHasUpdate,
-    setWaitingWorker,
+
     installApp,
     skipWaiting,
     isOnline,
@@ -30,12 +30,10 @@ export function usePWA() {
   // Register service worker with auto-update
   const {
     offlineReady: [offlineReady, setOfflineReady],
-    needRefresh: [needRefresh, setNeedRefresh],
+    needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(swUrl, r) {
-      console.log('[PWA] Service Worker registered:', swUrl);
-      
       // Check for updates every 60 minutes
       if (r) {
         setInterval(() => {
@@ -43,11 +41,10 @@ export function usePWA() {
         }, 60 * 60 * 1000);
       }
     },
-    onRegisterError(error) {
-      console.error('[PWA] Service Worker registration error:', error);
+    onRegisterError() {
+      // Registration error handled silently
     },
     onOfflineReady() {
-      console.log('[PWA] App ready to work offline');
       setOfflineReady(true);
       toast.success('App is ready to work offline!', {
         icon: '✈️',
@@ -90,8 +87,6 @@ export function usePWA() {
       // Store the event for later use
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setCanInstall(true);
-      
-      console.log('[PWA] App can be installed');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -118,7 +113,6 @@ export function usePWA() {
 
     // Listen for appinstalled event
     const handleAppInstalled = () => {
-      console.log('[PWA] App was installed');
       setIsInstalled(true);
       setCanInstall(false);
       setDeferredPrompt(null);
@@ -139,7 +133,6 @@ export function usePWA() {
   // Listen for online/offline events
   useEffect(() => {
     const handleOnline = () => {
-      console.log('[PWA] App is online');
       setIsOnline(true);
       
       // Show reconnection toast
@@ -150,7 +143,6 @@ export function usePWA() {
     };
 
     const handleOffline = () => {
-      console.log('[PWA] App is offline');
       setIsOnline(false);
       
       // Show offline toast

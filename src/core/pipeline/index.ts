@@ -458,15 +458,12 @@ npm dedupe  # Try deduplication`,
   });
 }
 
-// Helper to safely run analyzers with error logging
+// Helper to safely run analyzers with error handling
 function safeAnalyze<T>(name: string, fn: () => T): T | undefined {
   try {
-    console.log(`[Pipeline] Running ${name}...`);
     const result = fn();
-    console.log(`[Pipeline] ${name} completed`);
     return result;
-  } catch (error) {
-    console.error(`[Pipeline] ${name} failed:`, error);
+  } catch {
     return undefined;
   }
 }
@@ -475,17 +472,11 @@ export async function runAnalysisPipeline(
   files: FileInput[],
   options: AnalysisOptions
 ): Promise<AnalysisReport> {
-  console.log('[Pipeline] Starting analysis pipeline with', files.length, 'files');
-  
   // Categorize files
   const htmlFiles = files.filter(f => f.name.endsWith('.html'));
   const jsFiles = files.filter(f => /\.(js|jsx|ts|tsx|mjs)$/.test(f.name));
   const cssFiles = files.filter(f => /\.(css|scss|sass|less)$/.test(f.name));
   const tsConfigFile = files.find(f => f.name === 'tsconfig.json');
-
-  console.log('[Pipeline] HTML files:', htmlFiles.length);
-  console.log('[Pipeline] JS files:', jsFiles.length);
-  console.log('[Pipeline] CSS files:', cssFiles.length);
 
   const htmlContent = htmlFiles[0]?.content || '';
   const hasCSS = cssFiles.length > 0;
@@ -515,8 +506,6 @@ export async function runAnalysisPipeline(
   const thirdParty = options.includeThirdParty ? safeAnalyze('analyzeThirdParty', () => analyzeThirdParty(htmlContent, jsFiles)) : undefined;
   const memory = options.includeMemory ? safeAnalyze('analyzeMemory', () => analyzeMemory(jsFiles)) : undefined;
   const imports = options.includeImports ? safeAnalyze('analyzeImports', () => analyzeImports(jsFiles)) : undefined;
-  
-  console.log('[Pipeline] All analyzers completed');
 
   // Calculate scores
   const score = calculatePerformanceScore(

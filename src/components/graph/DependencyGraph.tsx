@@ -17,17 +17,11 @@ import '@xyflow/react/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
-  Filter,
-  LayoutGrid,
-  Maximize,
   AlertTriangle,
   Package,
   Layers,
   GitCommit,
   X,
-  ZoomIn,
-  ZoomOut,
-  RotateCcw,
 } from 'lucide-react';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { ModuleNode } from './ModuleNode';
@@ -39,7 +33,7 @@ import {
   getConnectedNodes,
   generateReactFlowElements,
 } from '@/core/graph';
-import { calculateLayout, fitToViewport, type LayoutAlgorithm } from '@/core/graph/layout';
+import { calculateLayout, type LayoutAlgorithm } from '@/core/graph/layout';
 import type { GraphFilter, GraphNode, GraphOptions } from '@/types/graph';
 import { Button } from '@/components/ui/Button';
 

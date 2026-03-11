@@ -41,7 +41,7 @@ function forceDirectedLayout(
   // Initialize positions randomly
   const positions: Map<string, { x: number; y: number; vx: number; vy: number }> = new Map();
   
-  nodes.forEach((node, i) => {
+  nodes.forEach((node) => {
     positions.set(node.id, {
       x: Math.random() * width * 0.8 + width * 0.1,
       y: Math.random() * height * 0.8 + height * 0.1,

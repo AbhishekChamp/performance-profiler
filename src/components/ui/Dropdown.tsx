@@ -31,6 +31,7 @@ export function Dropdown({ children, className = '' }: DropdownProps) {
   // Reset active index when closing
   useEffect(() => {
     if (!isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveIndex(-1);
     }
   }, [isOpen]);
@@ -88,7 +89,7 @@ interface DropdownMenuProps {
 }
 
 export function DropdownMenu({ children, className = '' }: DropdownMenuProps) {
-  const { isOpen, setIsOpen, activeIndex, setActiveIndex, registerItem } = useDropdown();
+  const { isOpen, setIsOpen, activeIndex, setActiveIndex } = useDropdown();
   const menuRef = useRef<HTMLDivElement>(null);
 
   const handleKeyDown = useCallback(

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Package, Code2, Zap, Accessibility } from 'lucide-react';
+import { TrendingUp, Package, Code2, Zap, Accessibility } from 'lucide-react';
 import type { PlaygroundAnalysis } from '@/types/playground';
 
 interface ScoreComparisonProps {

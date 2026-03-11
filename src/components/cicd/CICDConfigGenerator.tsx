@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Copy, 
@@ -7,24 +7,22 @@ import {
   FileCode, 
   Terminal, 
   AlertCircle,
-  RefreshCw,
-  ChevronRight,
+
   Package,
   Zap,
   Image,
   Type,
   Settings
 } from 'lucide-react';
-import { PlatformSelector, PlatformCard } from './PlatformSelector';
+import { PlatformCard } from './PlatformSelector';
 import { Button } from '@/components/ui/Button';
 import { 
   generateConfig, 
   generateBudgetCheckScript, 
   getAllPlatforms,
-  validateBudget,
-  PLATFORMS 
+  validateBudget
 } from '@/core/ci-cd';
-import { createCodeBlock, getLanguageFromFilename, type Language } from '@/utils/syntaxHighlight';
+import { createCodeBlock, getLanguageFromFilename } from '@/utils/syntaxHighlight';
 import type { CIPlatform, BudgetConfig, PerformanceBudget } from '@/types/cicd';
 import toast from 'react-hot-toast';
 
@@ -191,7 +189,7 @@ export function CICDConfigGenerator() {
       setCopied(true);
       toast.success('Config copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch {
       toast.error('Failed to copy config');
     }
   };

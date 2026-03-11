@@ -1,3 +1,4 @@
 export { Header } from './Header';
-export { Sidebar, sections, getSectionIndex, getSectionByIndex, getNextSection, getPreviousSection } from './Sidebar';
+export { Sidebar } from './Sidebar';
+export { sections, getSectionIndex, getSectionByIndex, getNextSection, getPreviousSection } from './sidebarData';
 export type { AnalysisSection } from './types';

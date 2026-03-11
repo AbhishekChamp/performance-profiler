@@ -17,7 +17,7 @@ export function RootComponent() {
   const mainRef = useRef<HTMLDivElement>(null);
 
   // Initialize PWA functionality
-  const { isOnline, isInstalled } = usePWA();
+  usePWA();
 
   const handleExport = useCallback(() => {
     if (!currentReport) return;
@@ -48,16 +48,15 @@ export function RootComponent() {
     }
   }, [confirm, reset]);
 
-  // Handle theme cycling with keyboard shortcut
+  // Handle theme toggle with keyboard shortcut
   const handleCycleTheme = useCallback(() => {
     toggleMode();
     
-    // Get the new mode after toggle
-    const newMode = mode === 'dark' ? 'light' : mode === 'light' ? 'system' : 'dark';
+    // Get the new mode after toggle - now simple dark <-> light
+    const newMode = mode === 'dark' ? 'light' : 'dark';
     const messages = {
       dark: 'Dark theme enabled 🌙',
       light: 'Light theme enabled ☀️',
-      system: 'System theme enabled 🖥️',
     };
     
     toast.success(messages[newMode], { duration: 1500 });

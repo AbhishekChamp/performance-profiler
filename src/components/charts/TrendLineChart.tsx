@@ -65,7 +65,7 @@ export function TrendLineChart({
     // Add grid lines
     const yAxisGrid = d3.axisLeft(yScale)
       .tickSize(-chartWidth)
-      .tickFormat('' as any)
+      .tickFormat(() => '')
       .ticks(5);
 
     g.append('g')
@@ -79,13 +79,17 @@ export function TrendLineChart({
     g.select('.grid').select('.domain').remove();
 
     // Add X axis
-    const xAxis = d3.axisBottom(xScale)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const xAxis = d3.axisBottom(xScale as any)
       .ticks(5)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .tickFormat(d3.timeFormat('%b %d') as any);
 
     g.append('g')
+      .attr('class', 'x-axis')
       .attr('transform', `translate(0,${chartHeight})`)
-      .call(xAxis)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .call(xAxis as any)
       .selectAll('text')
       .style('fill', textColor)
       .style('font-size', '11px');
@@ -226,14 +230,16 @@ export function TrendLineChart({
           const newXScale = event.transform.rescaleX(xScale);
           
           // Update axes
-          g.select<SVGGElement>('.x-axis')?.call(d3.axisBottom(newXScale) as any);
+          g.select<SVGGElement>('.x-axis')?.call(d3.axisBottom(newXScale));
           
           // Update lines
           g.selectAll('path.line')
-            .attr('d', line.x(d => newXScale(d.x)) as any);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .attr('d', line.x((d: any) => newXScale(d.x)) as any);
           
           // Update dots
           g.selectAll('[class^="dot-"]')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .attr('cx', (d: any) => newXScale(d.x));
         });
 

@@ -56,7 +56,7 @@ function ScoreCard({
 }
 
 export function OverviewSection({ report }: OverviewSectionProps) {
-  const { score, renderRisk, summary, bundle, webVitals, accessibility, seo, security } = report;
+  const { score, renderRisk, summary, bundle, webVitals } = report;
 
   return (
     <section aria-labelledby="overview-heading" className="space-y-6">

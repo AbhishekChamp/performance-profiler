@@ -1,4 +1,4 @@
-import { get, set, del, keys, clear } from 'idb-keyval';
+import { get, set, del } from 'idb-keyval';
 import type { AnalysisReport } from '@/types';
 
 // Storage keys

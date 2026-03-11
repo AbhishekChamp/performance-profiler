@@ -10,8 +10,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
     try {
       const item = window.localStorage.getItem(key);
       return item ? (JSON.parse(item) as T) : initialValue;
-    } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
+    } catch {
       return initialValue;
     }
   }, [key, initialValue]);
@@ -34,8 +33,8 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
         // Dispatch a custom event so other hooks can listen for changes
         window.dispatchEvent(new StorageEvent('local-storage', { key }));
       }
-    } catch (error) {
-      console.warn(`Error setting localStorage key "${key}":`, error);
+    } catch {
+      // Error setting localStorage - handled silently
     }
   }, [key, storedValue]);
 
@@ -45,8 +44,8 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
       if (event.key === key && event.newValue !== null) {
         try {
           setStoredValue(JSON.parse(event.newValue) as T);
-        } catch (error) {
-          console.warn(`Error parsing localStorage change for key "${key}":`, error);
+        } catch {
+          // Error parsing localStorage change - handled silently
         }
       }
     };

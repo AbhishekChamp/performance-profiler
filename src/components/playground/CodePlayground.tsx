@@ -1,8 +1,7 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Editor from '@monaco-editor/react';
 import { 
-  Play, 
   RotateCcw, 
   Download, 
   Copy, 
@@ -10,18 +9,14 @@ import {
   FileCode, 
   X,
   Plus,
-  Trash2,
-  Zap,
   FileJson,
-  FileType,
   FileText,
   ChevronRight,
-  AlertCircle,
   Code2,
 } from 'lucide-react';
 import { usePlaygroundStore, SAMPLE_FILES } from '@/stores/playgroundStore';
 import { analyzeFile, calculateAnalysis, applyQuickFix } from '@/core/playground/analyzer';
-import { createPatch, generateCommitMessage } from '@/core/playground/transformer';
+import { createPatch } from '@/core/playground/transformer';
 import { ScoreComparison } from './ScoreComparison';
 import { OptimizationPanel } from './OptimizationPanel';
 import { IssueList } from './IssueList';
@@ -93,7 +88,6 @@ export function CodePlayground() {
   const {
     files,
     activeFileId,
-    isAnalyzing,
     analysis,
     addFile,
     removeFile,
@@ -112,6 +106,7 @@ export function CodePlayground() {
     if (files.length === 0) {
       importFiles(SAMPLE_FILES);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   // Analyze file when content changes
@@ -124,6 +119,7 @@ export function CodePlayground() {
     }, 300);
     
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFile?.modifiedContent]);
   
   // Calculate overall analysis
@@ -191,7 +187,7 @@ export function CodePlayground() {
       setCopied(true);
       toast.success('Code copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch {
       toast.error('Failed to copy code');
     }
   }, [activeFile]);

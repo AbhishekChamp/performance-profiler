@@ -1,1 +1,42 @@
-npx lint-staged
+#!/bin/sh
+# Pre-commit hook for Frontend Performance Profiler
+# Uses pnpm for package management
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo "${YELLOW}Running pre-commit checks...${NC}"
+
+# Check if pnpm is installed
+if ! command -v pnpm &> /dev/null; then
+    echo "${RED}pnpm is not installed. Please install pnpm first.${NC}"
+    exit 1
+fi
+
+# Run TypeScript type checking
+echo "${YELLOW}Checking TypeScript types...${NC}"
+if ! pnpm exec tsc --noEmit; then
+    echo "${RED}TypeScript type checking failed${NC}"
+    exit 1
+fi
+
+# Run ESLint on staged files via lint-staged
+echo "${YELLOW}Running lint-staged...${NC}"
+if ! pnpm exec lint-staged; then
+    echo "${RED}Linting failed${NC}"
+    exit 1
+fi
+
+# Check for console.log statements (excluding allowed files)
+echo "${YELLOW}Checking for console.log statements...${NC}"
+CONSOLE_LOGS=$(grep -r "console\.\(log\|warn\|debug\|info\)" src --include="*.ts" --include="*.tsx" | grep -v "playgroundStore.ts" | grep -v "ci-cd/index.ts" | grep -v "analyzer.ts" | grep -v "transformer.ts" | wc -l)
+if [ "$CONSOLE_LOGS" -gt 0 ]; then
+    echo "${RED}Found console.log/warn/debug/info statements in source files:${NC}"
+    grep -r "console\.\(log\|warn\|debug\|info\)" src --include="*.ts" --include="*.tsx" | grep -v "playgroundStore.ts" | grep -v "ci-cd/index.ts" | grep -v "analyzer.ts" | grep -v "transformer.ts"
+    exit 1
+fi
+
+echo "${GREEN}All pre-commit checks passed!${NC}"

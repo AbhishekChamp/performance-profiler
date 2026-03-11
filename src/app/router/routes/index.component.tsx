@@ -4,7 +4,8 @@ import { useAnalysis } from '@/hooks/useAnalysis';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { FileUpload } from '@/components/upload/FileUpload';
-import { Sidebar, sections, getSectionByIndex, getNextSection, getPreviousSection } from '@/components/layout/Sidebar';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { getSectionByIndex, getNextSection, getPreviousSection } from '@/components/layout/sidebarData';
 import { OverviewSection } from '@/components/report/OverviewSection';
 import { BundleSection } from '@/components/report/BundleSection';
 import { DOMSection } from '@/components/report/DOMSection';
@@ -33,13 +34,40 @@ import { GraphSection } from '@/components/graph';
 import { CICDConfigGenerator } from '@/components/cicd';
 import { CodePlayground } from '@/components/playground';
 import type { AnalysisSection } from '@/components/layout/types';
-import { Activity, Zap, Shield, BarChart3, Code2, Sparkles } from 'lucide-react';
+import {
+  Activity,
+  Zap,
+  Shield,
+  BarChart3,
+  Code2,
+  Sparkles,
+  Gauge,
+  Layers,
+  Cpu,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ThemeToggleSimple } from '@/components/ui/ThemeToggle';
 
-// Animated background particles
-function ParticleBackground() {
+// Animated Background with Gradient Mesh - Theme Aware
+function GradientMeshBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDark, setIsDark] = useState(true);
+
+  useEffect(() => {
+    const checkTheme = () => {
+      const dark = document.documentElement.classList.contains('dark') ||
+        (!document.documentElement.classList.contains('light') &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches);
+      setIsDark(dark);
+    };
+    
+    checkTheme();
+    
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -49,14 +77,143 @@ function ParticleBackground() {
     if (!ctx) return;
 
     let animationId: number;
-    let particles: Array<{
+    let time = 0;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    const getThemeColors = () => {
+      return {
+        orb1: isDark 
+          ? ['rgba(59, 130, 246, 0.15)', 'rgba(6, 182, 212, 0.05)']
+          : ['rgba(37, 99, 235, 0.08)', 'rgba(8, 145, 178, 0.03)'],
+        orb2: isDark
+          ? ['rgba(139, 92, 246, 0.12)', 'rgba(236, 72, 153, 0.04)']
+          : ['rgba(124, 58, 237, 0.08)', 'rgba(219, 39, 119, 0.02)'],
+        orb3: isDark
+          ? ['rgba(16, 185, 129, 0.1)', 'rgba(20, 184, 166, 0.03)']
+          : ['rgba(5, 150, 105, 0.06)', 'rgba(13, 148, 136, 0.02)'],
+        noise: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.015)',
+      };
+    };
+
+    const drawGradientOrb = (
+      x: number,
+      y: number,
+      radius: number,
+      color1: string,
+      color2: string
+    ) => {
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+      gradient.addColorStop(0, color1);
+      gradient.addColorStop(0.5, color2);
+      gradient.addColorStop(1, 'transparent');
+
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    const animate = () => {
+      const colors = getThemeColors();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      time += 0.005;
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+
+      drawGradientOrb(
+        centerX + Math.sin(time) * 200,
+        centerY + Math.cos(time * 0.7) * 150,
+        400,
+        colors.orb1[0],
+        colors.orb1[1]
+      );
+
+      drawGradientOrb(
+        centerX + Math.cos(time * 0.8) * 250,
+        centerY + Math.sin(time * 1.2) * 180,
+        350,
+        colors.orb2[0],
+        colors.orb2[1]
+      );
+
+      drawGradientOrb(
+        centerX + Math.sin(time * 1.1 + Math.PI) * 180,
+        centerY + Math.cos(time * 0.9) * 200,
+        300,
+        colors.orb3[0],
+        colors.orb3[1]
+      );
+
+      ctx.fillStyle = colors.noise;
+      for (let i = 0; i < 100; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        ctx.fillRect(x, y, 1, 1);
+      }
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    resize();
+    animate();
+
+    window.addEventListener('resize', resize);
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener('resize', resize);
+    };
+  }, [isDark]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: 0 }}
+    />
+  );
+}
+
+// Floating particles with connections - Theme Aware
+function FloatingParticles() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDark, setIsDark] = useState(true);
+
+  useEffect(() => {
+    const checkTheme = () => {
+      const dark = document.documentElement.classList.contains('dark') ||
+        (!document.documentElement.classList.contains('light') &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches);
+      setIsDark(dark);
+    };
+    
+    checkTheme();
+    
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationId: number;
+    const particles: Array<{
       x: number;
       y: number;
       vx: number;
       vy: number;
       size: number;
-      alpha: number;
-      color: string;
+      opacity: number;
     }> = [];
 
     const resize = () => {
@@ -64,27 +221,30 @@ function ParticleBackground() {
       canvas.height = window.innerHeight;
     };
 
+    const getThemeColor = () => {
+      return isDark ? [148, 163, 184] : [100, 116, 139];
+    };
+
     const createParticles = () => {
-      particles = [];
-      const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4'];
-      for (let i = 0; i < 50; i++) {
+      particles.length = 0;
+      const count = Math.min(50, Math.floor((canvas.width * canvas.height) / 25000));
+      for (let i = 0; i < count; i++) {
         particles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.5,
-          vy: (Math.random() - 0.5) * 0.5,
-          size: Math.random() * 2 + 1,
-          alpha: Math.random() * 0.5 + 0.2,
-          color: colors[Math.floor(Math.random() * colors.length)],
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: (Math.random() - 0.5) * 0.3,
+          size: Math.random() * 2 + 0.5,
+          opacity: Math.random() * 0.5 + 0.1,
         });
       }
     };
 
     const animate = () => {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.02)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const [r, g, b] = getThemeColor();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      particles.forEach(p => {
+      particles.forEach((p, i) => {
         p.x += p.vx;
         p.y += p.vy;
 
@@ -93,27 +253,24 @@ function ParticleBackground() {
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity})`;
         ctx.fill();
 
-        // Draw connections
-        particles.forEach(p2 => {
+        particles.slice(i + 1).forEach(p2 => {
           const dx = p.x - p2.x;
           const dy = p.y - p2.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 150) {
+          if (dist < 120) {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = p.color;
-            ctx.globalAlpha = (1 - dist / 150) * 0.1;
+            ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.1 * (1 - dist / 120)})`;
+            ctx.lineWidth = 0.5;
             ctx.stroke();
           }
         });
       });
 
-      ctx.globalAlpha = 1;
       animationId = requestAnimationFrame(animate);
     };
 
@@ -121,216 +278,241 @@ function ParticleBackground() {
     createParticles();
     animate();
 
-    window.addEventListener('resize', resize);
-    return () => {
-      cancelAnimationFrame(animationId);
-      window.removeEventListener('resize', resize);
-    };
-  }, []);
+    window.addEventListener('resize', () => {
+      resize();
+      createParticles();
+    });
+    return () => cancelAnimationFrame(animationId);
+  }, [isDark]);
 
   return (
-    <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }} />
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: 1 }}
+    />
   );
 }
 
-// 3D Floating Card Component
-function FloatingCard({
+// Modern Feature Card with hover effects
+function FeatureCard({
   icon: Icon,
   title,
   description,
-  color,
+  gradient,
   delay = 0,
 }: {
   icon: React.ElementType;
   title: string;
   description: string;
-  color: string;
+  gradient: string;
   delay?: number;
 }) {
-  const [transform, setTransform] = useState('rotateX(0deg) rotateY(0deg)');
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const rotateX = (y - centerY) / 10;
-    const rotateY = (centerX - x) / 10;
-    setTransform(`rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`);
-  };
-
-  const handleMouseLeave = () => {
-    setTransform('rotateX(0deg) rotateY(0deg) scale(1)');
-  };
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="relative group cursor-pointer"
-      style={{
-        perspective: '1000px',
-        animationDelay: `${delay}ms`,
-      }}
+      className="relative group"
+      style={{ animationDelay: `${delay}ms` }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className="relative bg-gray-900/60 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50 transition-all duration-200 ease-out"
-        style={{
-          transform: transform,
-          transformStyle: 'preserve-3d',
-        }}
-      >
-        {/* Glow Effect */}
+        className={`absolute -inset-0.5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-lg ${gradient}`}
+      />
+
+      <div className="relative h-full bg-(--dev-surface)/60 backdrop-blur-xl rounded-2xl p-6 border border-(--dev-border)/50 group-hover:border-(--dev-border) transition-all duration-300 overflow-hidden">
         <div
-          className={`absolute -inset-0.5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl ${color}`}
+          className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${gradient}`}
+          style={{ opacity: 0.05 }}
+        />
+
+        <div
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+          style={{
+            background:
+              'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%)',
+            transform: isHovered ? 'translateX(100%)' : 'translateX(-100%)',
+            transition: 'transform 0.7s ease-out',
+          }}
         />
 
         <div className="relative">
           <div
-            className={`w-14 h-14 rounded-xl ${color.replace('bg-linear-to-br', '').replace('from-', 'bg-').split(' ')[0]} bg-opacity-20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}
+            className={`w-12 h-12 rounded-xl ${gradient} p-[1px] mb-4 group-hover:scale-110 transition-transform duration-300`}
           >
-            <Icon
-              className={`w-7 h-7 ${color.includes('blue') ? 'text-blue-400' : color.includes('purple') ? 'text-purple-400' : color.includes('pink') ? 'text-pink-400' : color.includes('cyan') ? 'text-cyan-400' : 'text-emerald-400'}`}
-            />
+            <div className="w-full h-full rounded-xl bg-(--dev-surface) flex items-center justify-center">
+              <Icon className="w-6 h-6 text-(--dev-text)" />
+            </div>
           </div>
-          <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-          <p className="text-sm text-gray-400">{description}</p>
+
+          <h3 className="text-lg font-semibold text-(--dev-text) mb-2 group-hover:text-(--dev-accent) transition-colors">
+            {title}
+          </h3>
+          <p className="text-sm text-(--dev-text-muted) leading-relaxed">
+            {description}
+          </p>
         </div>
       </div>
     </div>
   );
 }
 
-// Hero Section with 3D Elements
+// Animated Counter using requestAnimationFrame
+function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: string }) {
+  const [displayValue, setDisplayValue] = useState(0);
+  const frameRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    const duration = 1500;
+    const startTime = performance.now();
+    const startValue = 0;
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+      const current = Math.round(startValue + (value - startValue) * easeOutQuart);
+      
+      setDisplayValue(current);
+
+      if (progress < 1) {
+        frameRef.current = requestAnimationFrame(animate);
+      }
+    };
+
+    frameRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
+  }, [value]);
+
+  return (
+    <span className="font-mono font-bold text-2xl text-(--dev-text)">
+      {displayValue}
+      {suffix}
+    </span>
+  );
+}
+
+// Stats Bar
+function StatsBar() {
+  const stats = [
+    { icon: Gauge, value: 16, suffix: '+', label: 'Analyzers' },
+    { icon: Layers, value: 50, suffix: '+', label: 'Metrics' },
+    { icon: Cpu, value: 100, suffix: '%', label: 'Client-side' },
+  ];
+
+  return (
+    <div className="flex flex-wrap justify-center gap-8 mt-10">
+      {stats.map(({ icon: Icon, value, suffix, label }) => (
+        <div
+          key={label}
+          className="flex items-center gap-3 px-5 py-3 bg-(--dev-surface)/40 backdrop-blur-sm rounded-full border border-(--dev-border)/30"
+        >
+          <Icon className="w-5 h-5 text-(--dev-accent)" />
+          <div className="flex items-baseline gap-1">
+            <AnimatedCounter value={value} suffix={suffix} />
+            <span className="text-sm text-(--dev-text-muted)">{label}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Modern Hero Section
 function HeroSection() {
   return (
-    <div className="relative text-center mb-12">
-      {/* Theme Toggle - Top Right */}
-      <div className="absolute top-0 right-0 z-20">
+    <div className="relative text-center mb-8 pt-16">
+      <div className="absolute top-4 right-0 z-20">
         <ThemeToggleSimple size="md" />
       </div>
 
-      {/* Animated Background Rings */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 pointer-events-none">
-        <div className="absolute inset-0 border border-blue-500/20 rounded-full animate-pulse" />
-        <div
-          className="absolute inset-8 border border-purple-500/20 rounded-full animate-pulse"
-          style={{ animationDelay: '0.5s' }}
-        />
-        <div
-          className="absolute inset-16 border border-pink-500/20 rounded-full animate-pulse"
-          style={{ animationDelay: '1s' }}
-        />
-        <div
-          className="absolute inset-24 border border-cyan-500/20 rounded-full animate-pulse"
-          style={{ animationDelay: '1.5s' }}
-        />
-      </div>
-
-      {/* 3D Logo Container */}
       <div className="relative inline-block mb-8">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute w-32 h-32 border border-blue-500/20 rounded-full animate-ping" style={{ animationDuration: '3s' }} />
+          <div className="absolute w-40 h-40 border border-purple-500/10 rounded-full animate-ping" style={{ animationDuration: '3s', animationDelay: '0.5s' }} />
+        </div>
+
         <div
-          className="relative w-32 h-32 mx-auto"
+          className="relative w-24 h-24 mx-auto"
           style={{
-            transformStyle: 'preserve-3d',
-            animation: 'float 6s ease-in-out infinite',
+            animation: 'float-gentle 4s ease-in-out infinite',
           }}
         >
-          {/* Main Logo */}
-          <div
-            className="absolute inset-0 rounded-3xl bg-linear-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-2xl shadow-purple-500/30"
-            style={{ transform: 'translateZ(30px)' }}
-          >
-            <Activity className="w-16 h-16 text-white" />
+          <div className="absolute inset-0 rounded-2xl bg-linear-to-br from-blue-500 via-purple-500 to-pink-500 shadow-2xl shadow-purple-500/20 flex items-center justify-center">
+            <Activity className="w-12 h-12 text-white" />
           </div>
 
-          {/* Side Faces for 3D Effect */}
           <div
-            className="absolute inset-y-0 left-0 w-8 bg-linear-to-r from-blue-600 to-purple-600 rounded-l-3xl"
-            style={{ transform: 'rotateY(-90deg) translateZ(64px)' }}
-          />
-          <div
-            className="absolute inset-y-0 right-0 w-8 bg-linear-to-l from-purple-600 to-pink-600 rounded-r-3xl"
-            style={{ transform: 'rotateY(90deg) translateZ(64px)' }}
-          />
-          <div
-            className="absolute inset-x-0 top-0 h-8 bg-linear-to-b from-blue-400 to-purple-400 rounded-t-3xl"
-            style={{ transform: 'rotateX(90deg) translateZ(64px)' }}
-          />
-          <div
-            className="absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-purple-600 to-pink-600 rounded-b-3xl"
-            style={{ transform: 'rotateX(-90deg) translateZ(64px)' }}
-          />
-
-          {/* Floating Elements */}
-          <div
-            className="absolute -top-4 -right-4 w-10 h-10 bg-cyan-400 rounded-xl flex items-center justify-center shadow-lg"
-            style={{
-              transform: 'translateZ(50px)',
-              animation: 'orbit 8s linear infinite',
-            }}
+            className="absolute -top-2 -right-2 w-8 h-8 bg-cyan-400 rounded-lg flex items-center justify-center shadow-lg"
+            style={{ animation: 'float-orbit 6s ease-in-out infinite' }}
           >
-            <Zap className="w-5 h-5 text-gray-900" />
+            <Zap className="w-4 h-4 text-gray-900" />
           </div>
           <div
-            className="absolute -bottom-2 -left-6 w-8 h-8 bg-pink-400 rounded-lg flex items-center justify-center shadow-lg"
-            style={{
-              transform: 'translateZ(40px)',
-              animation: 'orbit 10s linear infinite reverse',
-            }}
+            className="absolute -bottom-1 -left-3 w-6 h-6 bg-pink-400 rounded-md flex items-center justify-center shadow-lg"
+            style={{ animation: 'float-orbit 8s ease-in-out infinite reverse' }}
           >
-            <Sparkles className="w-4 h-4 text-gray-900" />
+            <Sparkles className="w-3 h-3 text-gray-900" />
           </div>
         </div>
       </div>
 
-      {/* Title with Gradient Text */}
-      <h1 className="text-5xl md:text-6xl font-bold mb-4">
-        <span className="bg-linear-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-          Frontend Performance
-        </span>
-        <br />
-        <span className="text-white">Profiler</span>
-      </h1>
+      <div className="space-y-2 mb-6">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight">
+          <span className="bg-linear-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            Frontend
+          </span>{' '}
+          <span className="text-(--dev-text)">Performance</span>
+        </h1>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-(--dev-text)">
+          Profiler
+        </h1>
+      </div>
 
-      <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
+      <p className="text-lg md:text-xl text-(--dev-text-muted) max-w-2xl mx-auto mb-8 leading-relaxed">
         Analyze your application's performance with{' '}
-        <span className="text-cyan-400 font-semibold">16 specialized analyzers</span>. Detect
-        bottlenecks, optimize bundles, and ship faster.
+        <span className="text-(--dev-accent) font-medium">
+          16 specialized analyzers
+        </span>
+        . Detect bottlenecks, optimize bundles, and ship faster code.
       </p>
 
-      {/* Feature Cards Grid */}
+      <StatsBar />
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto mt-12">
-        <FloatingCard
+        <FeatureCard
           icon={BarChart3}
           title="Performance"
-          description="Bundle analysis, Web Vitals, memory leaks"
-          color="bg-linear-to-br from-blue-500 to-cyan-500"
+          description="Bundle analysis, Web Vitals metrics, and memory leak detection"
+          gradient="bg-linear-to-br from-blue-500 to-cyan-500"
           delay={0}
         />
-        <FloatingCard
+        <FeatureCard
           icon={Shield}
           title="Security"
-          description="XSS detection, secrets scanning"
-          color="bg-linear-to-br from-emerald-500 to-green-500"
+          description="XSS vulnerability detection and secrets scanning"
+          gradient="bg-linear-to-br from-emerald-500 to-green-500"
           delay={100}
         />
-        <FloatingCard
+        <FeatureCard
           icon={Code2}
           title="Code Quality"
-          description="TypeScript, React patterns, a11y"
-          color="bg-linear-to-br from-purple-500 to-pink-500"
+          description="TypeScript checks, React patterns, and accessibility audits"
+          gradient="bg-linear-to-br from-purple-500 to-pink-500"
           delay={200}
         />
-        <FloatingCard
+        <FeatureCard
           icon={Zap}
           title="Optimization"
-          description="Images, fonts, network hints"
-          color="bg-linear-to-br from-orange-500 to-red-500"
+          description="Image compression, font optimization, and network hints"
+          gradient="bg-linear-to-br from-orange-500 to-red-500"
           delay={300}
         />
       </div>
@@ -338,68 +520,53 @@ function HeroSection() {
   );
 }
 
-// Analysis Progress with 3D Effect
+// Analysis Progress with modern design
 function AnalysisProgress({
   progress,
 }: {
   progress: { message: string; progress: number } | null;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center h-full relative">
-      {/* 3D Rotating Rings */}
-      <div className="relative w-40 h-40 mb-8" style={{ perspective: '1000px' }}>
+    <div className="flex flex-col items-center justify-center h-full relative px-4">
+      <div className="relative w-32 h-32 mb-8">
         <div
-          className="absolute inset-0 border-4 border-blue-500/30 rounded-full"
-          style={{
-            transform: 'rotateX(60deg) rotateZ(0deg)',
-            animation: 'spin3d 4s linear infinite',
-          }}
+          className="absolute inset-0 border-4 border-blue-500/20 rounded-full"
+          style={{ animation: 'spin-slow 8s linear infinite' }}
         />
         <div
-          className="absolute inset-4 border-4 border-purple-500/30 rounded-full"
-          style={{
-            transform: 'rotateX(60deg) rotateZ(45deg)',
-            animation: 'spin3d 6s linear infinite reverse',
-          }}
+          className="absolute inset-2 border-4 border-purple-500/20 rounded-full"
+          style={{ animation: 'spin-slow 6s linear infinite reverse' }}
         />
         <div
-          className="absolute inset-8 border-4 border-pink-500/30 rounded-full"
-          style={{
-            transform: 'rotateX(60deg) rotateZ(90deg)',
-            animation: 'spin3d 8s linear infinite',
-          }}
+          className="absolute inset-4 border-4 border-pink-500/20 rounded-full"
+          style={{ animation: 'spin-slow 4s linear infinite' }}
         />
 
-        {/* Center Logo */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <Activity className="w-12 h-12 text-cyan-400 animate-pulse" />
+          <div className="w-16 h-16 rounded-full bg-linear-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+            <Activity className="w-8 h-8 text-white animate-pulse" />
+          </div>
         </div>
       </div>
 
-      <h3 className="text-2xl font-bold text-white mb-2">Analyzing Performance</h3>
+      <h3 className="text-2xl font-bold text-(--dev-text) mb-2">
+        Analyzing Performance
+      </h3>
 
       {progress && (
         <>
-          <p className="text-gray-400 mb-6">{progress.message}</p>
+          <p className="text-(--dev-text-muted) mb-6 text-center">{progress.message}</p>
 
-          {/* 3D Progress Bar */}
-          <div
-            className="w-80 h-4 bg-gray-800 rounded-full overflow-hidden relative"
-            style={{ perspective: '500px' }}
-          >
+          <div className="w-full max-w-md h-2 bg-(--dev-border)/50 rounded-full overflow-hidden">
             <div
-              className="h-full bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full transition-all duration-300 relative"
-              style={{
-                width: `${progress.progress}%`,
-                transform: 'translateZ(10px)',
-                boxShadow: '0 0 20px rgba(139, 92, 246, 0.5)',
-              }}
-            >
-              <div className="absolute inset-0 bg-white/20 animate-pulse" />
-            </div>
+              className="h-full bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full transition-all duration-300"
+              style={{ width: `${progress.progress}%` }}
+            />
           </div>
 
-          <p className="text-3xl font-bold text-white mt-4">{progress.progress}%</p>
+          <p className="text-2xl font-bold text-(--dev-text) mt-4">
+            {progress.progress}%
+          </p>
         </>
       )}
     </div>
@@ -409,11 +576,13 @@ function AnalysisProgress({
 function NoData({ section }: { section: string }) {
   return (
     <div className="flex flex-col items-center justify-center h-64 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-gray-800 flex items-center justify-center mb-4">
-        <Activity className="w-8 h-8 text-gray-600" />
+      <div className="w-16 h-16 rounded-2xl bg-(--dev-surface) flex items-center justify-center mb-4">
+        <Activity className="w-8 h-8 text-(--dev-text-subtle)" />
       </div>
-      <p className="text-gray-400 mb-2">No {section} data available</p>
-      <p className="text-sm text-gray-500">Upload {section.toLowerCase()} files to see analysis</p>
+      <p className="text-(--dev-text-muted) mb-2">No {section} data available</p>
+      <p className="text-sm text-(--dev-text-subtle)">
+        Upload {section.toLowerCase()} files to see analysis
+      </p>
     </div>
   );
 }
@@ -425,7 +594,6 @@ export function IndexComponent() {
   const { currentReport } = useAnalysisStore();
   const mainRef = useRef<HTMLElement>(null);
 
-  // Handle section navigation with keyboard
   const handleNextSection = useCallback(() => {
     if (!currentReport) return;
     const next = getNextSection(activeSection);
@@ -438,13 +606,15 @@ export function IndexComponent() {
     if (prev) setActiveSection(prev);
   }, [activeSection, currentReport]);
 
-  const handleGoToSection = useCallback((index: number) => {
-    if (!currentReport) return;
-    const section = getSectionByIndex(index);
-    if (section) setActiveSection(section);
-  }, [currentReport]);
+  const handleGoToSection = useCallback(
+    (index: number) => {
+      if (!currentReport) return;
+      const section = getSectionByIndex(index);
+      if (section) setActiveSection(section);
+    },
+    [currentReport]
+  );
 
-  // Register keyboard shortcuts for navigation
   useKeyboardShortcuts({
     onNextSection: handleNextSection,
     onPreviousSection: handlePreviousSection,
@@ -452,56 +622,32 @@ export function IndexComponent() {
     enabled: !!currentReport && !isAnalyzing,
   });
 
-  // Show error toast if analysis fails
   useEffect(() => {
     if (error) {
-      try {
-        toast.error(error, { duration: 5000 });
-      } catch (e) {
-        console.error('Failed to show error toast:', e);
-      }
+      toast.error(error, { duration: 5000 });
     }
   }, [error]);
 
   const handleAnalyze = async () => {
     if (files.length === 0) {
-      try {
-        toast.error('Please upload at least one file to analyze');
-      } catch (e) {
-        console.error('Failed to show toast:', e);
-      }
+      toast.error('Please upload at least one file to analyze');
       return;
     }
 
-    // Dismiss any existing toast first
     toast.dismiss('analysis');
-    
-    try {
-      toast.loading('Starting analysis...', { id: 'analysis' });
-    } catch (e) {
-      console.error('Failed to show loading toast:', e);
-    }
+    toast.loading('Starting analysis...', { id: 'analysis' });
 
     try {
       await run(files);
-      try {
-        toast.success('Analysis complete! 🎉', { id: 'analysis', duration: 3000 });
-      } catch (e) {
-        console.error('Failed to show success toast:', e);
-      }
+      toast.success('Analysis complete! 🎉', { id: 'analysis', duration: 3000 });
       clearFiles();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Analysis failed';
-      try {
-        toast.error(message, { id: 'analysis', duration: 5000 });
-      } catch (e) {
-        console.error('Failed to show error toast:', e);
-      }
+      toast.error(message, { id: 'analysis', duration: 5000 });
     }
   };
 
   const renderContent = () => {
-    // Show analysis progress when analyzing
     if (isAnalyzing) {
       return (
         <div className="h-full flex items-center justify-center">
@@ -510,11 +656,11 @@ export function IndexComponent() {
       );
     }
 
-    // Show upload form when no report exists
     if (!currentReport) {
       return (
-        <div className="relative min-h-[calc(100vh-200px)] flex flex-col items-center justify-center p-8">
-          <ParticleBackground />
+        <div className="relative min-h-[calc(100vh-200px)] flex flex-col items-center justify-center p-8 bg-(--dev-bg)">
+          <GradientMeshBackground />
+          <FloatingParticles />
 
           <div className="relative z-10 w-full max-w-4xl">
             <HeroSection />
@@ -535,7 +681,6 @@ export function IndexComponent() {
       );
     }
 
-    // Show report view when report exists
     return (
       <div className="animate-in fade-in duration-500">
         {(() => {
@@ -688,34 +833,42 @@ export function IndexComponent() {
           hasReport={!!currentReport}
         />
       )}
-      <main 
+      <main
         ref={mainRef}
         className="flex-1 overflow-y-auto focus:outline-none"
         tabIndex={-1}
         aria-label="Report content"
       >
-        <div className={currentReport ? 'max-w-5xl mx-auto p-6' : ''}>{renderContent()}</div>
+        <div className={currentReport ? 'max-w-5xl mx-auto p-6' : ''}>
+          {renderContent()}
+        </div>
       </main>
 
-      {/* Global CSS Animations */}
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0) rotateX(10deg) rotateY(-10deg); }
-          50% { transform: translateY(-20px) rotateX(10deg) rotateY(10deg); }
+        @keyframes float-gentle {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-10px) rotate(2deg); }
         }
         
-        @keyframes orbit {
-          0% { transform: translateZ(50px) rotate(0deg) translateX(60px) rotate(0deg); }
-          100% { transform: translateZ(50px) rotate(360deg) translateX(60px) rotate(-360deg); }
+        @keyframes float-orbit {
+          0%, 100% { transform: translate(0, 0); }
+          25% { transform: translate(5px, -5px); }
+          50% { transform: translate(0, -10px); }
+          75% { transform: translate(-5px, -5px); }
         }
         
-        @keyframes spin3d {
-          0% { transform: rotateX(60deg) rotateZ(0deg); }
-          100% { transform: rotateX(60deg) rotateZ(360deg); }
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
         
-        .perspective-1000 {
-          perspective: 1000px;
+        .animate-in {
+          animation: fade-in 0.5s ease-out;
+        }
+        
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

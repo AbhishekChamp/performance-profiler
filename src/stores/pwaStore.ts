@@ -74,7 +74,6 @@ export const usePWAStore = create<PWAState>()(
         const { deferredPrompt } = get();
         
         if (!deferredPrompt) {
-          console.log('[PWA] No deferred prompt available');
           return false;
         }
 
@@ -86,16 +85,13 @@ export const usePWAStore = create<PWAState>()(
           const result = await deferredPrompt.userChoice;
           
           if (result.outcome === 'accepted') {
-            console.log('[PWA] User accepted the install prompt');
             set({ isInstalled: true, canInstall: false, deferredPrompt: null });
             return true;
           } else {
-            console.log('[PWA] User dismissed the install prompt');
             set({ deferredPrompt: null });
             return false;
           }
-        } catch (error) {
-          console.error('[PWA] Error during install:', error);
+        } catch {
           set({ deferredPrompt: null });
           return false;
         }

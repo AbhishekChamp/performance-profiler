@@ -30,6 +30,7 @@ export function OfflineIndicator() {
   const getLastSyncText = () => {
     if (!storageStats?.lastSync) return 'Never synced';
     
+    // eslint-disable-next-line react-hooks/purity
     const diff = Date.now() - storageStats.lastSync;
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);

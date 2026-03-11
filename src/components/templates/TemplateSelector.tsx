@@ -7,7 +7,7 @@ import {
   Upload, 
   Plus, 
   Trash2, 
-  Edit2, 
+ 
   Sparkles,
   X,
   FileJson,
@@ -18,7 +18,7 @@ import {
   Megaphone,
   Package,
   Settings,
-  Info
+
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -176,7 +176,7 @@ export function TemplateSelector({ onSelect, showCustomOnly = false }: TemplateS
             {/* Analyzer badges */}
             <div className="flex flex-wrap gap-1 mt-2">
               {Object.entries(template.options)
-                .filter(([_, enabled]) => enabled)
+                .filter(([, enabled]) => enabled)
                 .slice(0, 4)
                 .map(([key]) => (
                   <span 

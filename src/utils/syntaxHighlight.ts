@@ -5,10 +5,10 @@
 
 export type Language = 'yaml' | 'json' | 'javascript' | 'bash';
 
-interface Token {
-  type: string;
-  content: string;
-}
+// interface Token {
+//   type: string;
+//   content: string;
+// }
 
 const TOKEN_TYPES: Record<string, string> = {
   keyword: 'color: #ff7b72;',

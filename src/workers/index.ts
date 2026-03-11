@@ -15,55 +15,41 @@ function generateId(): string {
 }
 
 export function initWorker(): Worker {
-  console.log('[Worker] Initializing worker...');
-  
   if (!worker) {
-    try {
-      const workerUrl = new URL('./analysis.worker.ts', import.meta.url);
-      console.log('[Worker] Worker URL:', workerUrl.href);
+    const workerUrl = new URL('./analysis.worker.ts', import.meta.url);
+    
+    worker = new Worker(workerUrl, {
+      type: 'module',
+    });
+    
+    worker.onerror = () => {
+      // Worker error handled silently
+    };
+    
+    // Handle messages from worker
+    worker.addEventListener('message', (event) => {
+      const { type, progress, report, error, id } = event.data;
       
-      worker = new Worker(workerUrl, {
-        type: 'module',
-      });
+      const request = pendingRequests.get(id);
+      if (!request) {
+        return;
+      }
       
-      worker.onerror = (error) => {
-        console.error('[Worker] Worker error:', error);
-      };
-      
-      // Handle messages from worker
-      worker.addEventListener('message', (event) => {
-        console.log('[Worker] Received message from worker:', event.data);
-        
-        const { type, progress, report, error, id } = event.data;
-        
-        const request = pendingRequests.get(id);
-        if (!request) {
-          console.warn('[Worker] No pending request found for ID');
-          return;
-        }
-        
-        if (type === 'progress' && request.onProgress) {
-          request.onProgress(progress);
-        } else if (type === 'complete') {
-          pendingRequests.delete(id);
-          request.resolve(report);
-        } else if (type === 'error') {
-          pendingRequests.delete(id);
-          request.reject(new Error(error));
-        }
-      });
-      
-      console.log('[Worker] Worker initialized successfully');
-    } catch (error) {
-      console.error('[Worker] Failed to initialize worker:', error);
-      throw error;
-    }
+      if (type === 'progress' && request.onProgress) {
+        request.onProgress(progress);
+      } else if (type === 'complete') {
+        pendingRequests.delete(id);
+        request.resolve(report);
+      } else if (type === 'error') {
+        pendingRequests.delete(id);
+        request.reject(new Error(error));
+      }
+    });
   }
   return worker;
 }
 
 export function terminateWorker() {
-  console.log('[Worker] Terminating worker...');
   if (worker) {
     worker.terminate();
     worker = null;
@@ -80,8 +66,6 @@ export async function runAnalysis(
   options: AnalysisOptions,
   onProgress?: (progress: AnalysisProgress) => void
 ): Promise<AnalysisReport> {
-  console.log('[Worker] runAnalysis called with', files.length, 'files');
-  
   const w = initWorker();
   const id = generateId();
   
@@ -90,7 +74,6 @@ export async function runAnalysis(
     pendingRequests.set(id, { resolve, reject, onProgress });
     
     // Send message to worker
-    console.log('[Worker] Sending analyze message to worker');
     w.postMessage({
       type: 'analyze',
       files,

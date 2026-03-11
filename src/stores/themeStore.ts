@@ -7,6 +7,7 @@ interface ThemeState {
   mode: ThemeMode;
   resolvedMode: 'dark' | 'light';
   isTransitioning: boolean;
+  hasInitialized: boolean;
   
   // Actions
   setMode: (mode: ThemeMode) => void;
@@ -14,6 +15,7 @@ interface ThemeState {
   cycleMode: () => void;
   resolveTheme: () => void;
   setTransitioning: (isTransitioning: boolean) => void;
+  setInitialized: (initialized: boolean) => void;
 }
 
 function getSystemTheme(): 'dark' | 'light' {
@@ -61,9 +63,10 @@ export const useThemeStore = create<ThemeState>()(
   devtools(
     persist(
       (set, get) => ({
-        mode: 'system',
+        mode: 'dark',
         resolvedMode: 'dark',
         isTransitioning: false,
+        hasInitialized: false,
 
         setMode: (mode) => {
           const resolvedMode = mode === 'system' ? getSystemTheme() : mode;
@@ -77,21 +80,12 @@ export const useThemeStore = create<ThemeState>()(
         },
 
         toggleMode: () => {
-          const { mode } = get();
-          let newMode: ThemeMode;
+          const { resolvedMode } = get();
+          // Simple toggle: dark <-> light
+          const newMode = resolvedMode === 'dark' ? 'light' : 'dark';
           
-          // Cycle: dark -> light -> system -> dark
-          if (mode === 'dark') {
-            newMode = 'light';
-          } else if (mode === 'light') {
-            newMode = 'system';
-          } else {
-            newMode = 'dark';
-          }
-          
-          const resolvedMode = newMode === 'system' ? getSystemTheme() : newMode;
-          applyTheme(resolvedMode);
-          set({ mode: newMode, resolvedMode, isTransitioning: true });
+          applyTheme(newMode);
+          set({ mode: newMode, resolvedMode: newMode, isTransitioning: true });
           
           setTimeout(() => {
             set({ isTransitioning: false });
@@ -110,20 +104,21 @@ export const useThemeStore = create<ThemeState>()(
         },
 
         setTransitioning: (isTransitioning) => set({ isTransitioning }),
+        
+        setInitialized: (hasInitialized) => set({ hasInitialized }),
       }),
       {
         name: 'ThemeStore',
         storage: idbStorage as never,
         partialize: (state) => ({ 
           mode: state.mode,
-          resolvedMode: state.resolvedMode 
+          resolvedMode: state.resolvedMode,
+          hasInitialized: state.hasInitialized,
         }),
         onRehydrateStorage: () => (state) => {
           // Apply theme when store is rehydrated
           if (state) {
-            const resolvedMode = state.mode === 'system' ? getSystemTheme() : state.mode;
-            applyTheme(resolvedMode);
-            state.resolvedMode = resolvedMode;
+            applyTheme(state.resolvedMode);
           }
         },
       }
@@ -132,36 +127,26 @@ export const useThemeStore = create<ThemeState>()(
   )
 );
 
-// Listen for system theme changes
-function handleSystemThemeChange(e: MediaQueryListEvent) {
-  const store = useThemeStore.getState();
-  if (store.mode === 'system') {
-    const newMode = e.matches ? 'dark' : 'light';
-    applyTheme(newMode);
-    useThemeStore.setState({ resolvedMode: newMode });
-  }
-}
-
-if (typeof window !== 'undefined') {
-  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-  mediaQuery.addEventListener('change', handleSystemThemeChange);
-}
-
 // Initialize theme on load (for SSR compatibility)
 if (typeof document !== 'undefined') {
-  // Check for saved preference or system preference
   const initTheme = async () => {
     try {
       const saved = await get('ThemeStore');
       if (saved) {
         const state = JSON.parse(saved);
-        const mode = state.state?.mode || 'system';
-        const resolvedMode = mode === 'system' ? getSystemTheme() : mode;
-        applyTheme(resolvedMode);
+        // If already initialized before, use saved mode
+        const mode = state.state?.mode || 'dark';
+        applyTheme(mode);
       } else {
-        // First visit - use system preference
+        // First visit - use system preference and save it
         const systemTheme = getSystemTheme();
         applyTheme(systemTheme);
+        // Save the system-detected theme as the initial mode
+        useThemeStore.setState({ 
+          mode: systemTheme, 
+          resolvedMode: systemTheme, 
+          hasInitialized: true 
+        });
       }
     } catch {
       // Fallback to dark theme

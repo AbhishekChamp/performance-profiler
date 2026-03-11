@@ -1,4 +1,4 @@
-import { Upload, X, File, FileCode, FileType, FolderUp, FileJson, Trash2, Sparkles } from 'lucide-react';
+import { Upload, X, File, FileCode, FileType, FolderUp, FileJson, Trash2, Sparkles, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useCallback, useState, useRef, useEffect } from 'react';
 import { useTemplateStore } from '@/stores/templateStore';
 import { TemplateSelectorCompact } from '@/components/templates';
@@ -56,7 +56,7 @@ export function FileUpload({
   useEffect(() => {
     if (files.length > 0 && autoDetectEnabled) {
       const result = detectTemplate(files);
-      
+
       if (result.confidence > 0.3) {
         const templateName = result.templateId.charAt(0).toUpperCase() + result.templateId.slice(1);
         toast.success(
@@ -114,13 +114,13 @@ export function FileUpload({
     <div className="w-full">
       {/* Upload Mode Toggle */}
       <div className="flex justify-center mb-6">
-        <div className="inline-flex bg-gray-800/50 rounded-xl p-1 border border-gray-700/50">
+        <div className="inline-flex bg-(--dev-surface)/60 backdrop-blur-sm rounded-xl p-1 border border-(--dev-border)/50">
           <button
             onClick={() => setIsFolderMode(false)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
               !isFolderMode
                 ? 'bg-linear-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/25'
-                : 'text-gray-400 hover:text-white'
+                : 'text-(--dev-text-muted) hover:text-(--dev-text)'
             }`}
           >
             <File className="w-4 h-4" />
@@ -131,7 +131,7 @@ export function FileUpload({
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
               isFolderMode
                 ? 'bg-linear-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25'
-                : 'text-gray-400 hover:text-white'
+                : 'text-(--dev-text-muted) hover:text-(--dev-text)'
             }`}
           >
             <FolderUp className="w-4 h-4" />
@@ -140,144 +140,113 @@ export function FileUpload({
         </div>
       </div>
 
-      {/* Drop Zone with 3D Effect */}
+      {/* Drop Zone */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`
-          relative group perspective-1000
-        `}
+        className="relative group"
       >
-        {/* 3D Card Container */}
+        {/* Glow effect */}
         <div
-          className={`
-            relative transform-gpu transition-all duration-500 ease-out
-            ${isDragging ? 'scale-[1.02] rotate-x-2' : 'hover:scale-[1.01] hover:-translate-y-1'}
-          `}
-          style={{
-            transformStyle: 'preserve-3d',
-          }}
+          className={`absolute -inset-1 rounded-2xl blur-xl transition-all duration-500 ${
+            isDragging
+              ? 'bg-linear-to-r from-cyan-500 to-blue-500 opacity-40'
+              : 'bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-20'
+          }`}
+        />
+
+        {/* Main card */}
+        <div
+          className={`relative border-2 border-dashed rounded-2xl p-10 md:p-12 text-center transition-all duration-300 bg-(--dev-surface)/40 backdrop-blur-xl ${
+            isDragging
+              ? 'border-cyan-400 shadow-[0_0_40px_rgba(34,211,238,0.2)] scale-[1.02]'
+              : 'border-(--dev-border)/50 hover:border-(--dev-border) hover:shadow-xl'
+          }`}
         >
-          {/* Background Glow Effect */}
-          <div className="absolute -inset-1 bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl opacity-20 group-hover:opacity-40 blur-xl transition-opacity duration-500" />
+          {/* Hidden File Inputs */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            onChange={handleFileInput}
+            className="hidden"
+            accept=".html,.js,.jsx,.ts,.tsx,.css,.scss,.json,.map"
+          />
+          <input
+            ref={folderInputRef}
+            type="file"
+            {...{ webkitdirectory: '', directory: '' }}
+            onChange={handleFolderInput}
+            className="hidden"
+          />
 
-          {/* Main Card */}
-          <div
-            className={`
-              relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300
-              bg-gray-900/80 backdrop-blur-xl
-              ${
+          {/* Icon */}
+          <div className="relative mb-6">
+            <div
+              className={`w-20 h-20 mx-auto rounded-2xl flex items-center justify-center transition-all duration-500 ${
                 isDragging
-                  ? 'border-cyan-400 shadow-[0_0_40px_rgba(34,211,238,0.3)]'
-                  : 'border-gray-700/50 hover:border-gray-600 shadow-2xl shadow-black/50'
-              }
-            `}
+                  ? 'bg-linear-to-br from-cyan-500 to-blue-600 scale-110 shadow-2xl shadow-cyan-500/30'
+                  : 'bg-linear-to-br from-(--dev-surface) to-(--dev-bg) group-hover:scale-105 group-hover:-translate-y-1 shadow-lg'
+              }`}
+            >
+              {isFolderMode ? (
+                <FolderUp
+                  className={`w-10 h-10 transition-colors ${
+                    isDragging ? 'text-white' : 'text-(--dev-text-muted) group-hover:text-(--dev-accent)'
+                  }`}
+                />
+              ) : (
+                <Upload
+                  className={`w-10 h-10 transition-colors ${
+                    isDragging ? 'text-white' : 'text-(--dev-text-muted) group-hover:text-(--dev-accent)'
+                  }`}
+                />
+              )}
+            </div>
+
+            {/* Floating accent dots */}
+            <div
+              className="absolute top-0 right-1/3 w-3 h-3 bg-cyan-400 rounded-full animate-bounce"
+              style={{ animationDelay: '0s', animationDuration: '2s' }}
+            />
+            <div
+              className="absolute bottom-0 left-1/3 w-2 h-2 bg-purple-400 rounded-full animate-bounce"
+              style={{ animationDelay: '0.5s', animationDuration: '2.5s' }}
+            />
+          </div>
+
+          <h3 className="text-xl font-bold text-(--dev-text) mb-2">
+            {isDragging ? 'Drop to upload!' : isFolderMode ? 'Upload build folder' : 'Upload your files'}
+          </h3>
+
+          <p className="text-(--dev-text-muted) mb-6 max-w-md mx-auto">
+            {isFolderMode
+              ? 'Drag and drop your build/dist folder, or click to browse'
+              : 'Drag and drop HTML, JavaScript, CSS, or React build files'}
+          </p>
+
+          {/* Action Button */}
+          <button
+            onClick={() =>
+              isFolderMode ? folderInputRef.current?.click() : fileInputRef.current?.click()
+            }
+            className="inline-flex items-center gap-2 px-6 py-3 bg-linear-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25 hover:scale-105 active:scale-95"
           >
-            {/* Hidden File Inputs */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              onChange={handleFileInput}
-              className="hidden"
-              accept=".html,.js,.jsx,.ts,.tsx,.css,.scss,.json,.map"
-            />
-            <input
-              ref={folderInputRef}
-              type="file"
-              {...{ webkitdirectory: '', directory: '' }}
-              onChange={handleFolderInput}
-              className="hidden"
-            />
+            {isFolderMode ? 'Select Folder' : 'Select Files'}
+            <ArrowRight className="w-4 h-4" />
+          </button>
 
-            {/* 3D Floating Icon */}
-            <div className="relative mb-6">
-              <div
-                className={`
-                  w-24 h-24 mx-auto rounded-2xl flex items-center justify-center
-                  transition-all duration-500 transform-gpu
-                  ${
-                    isDragging
-                      ? 'bg-linear-to-br from-cyan-500 to-blue-600 scale-110 rotate-6 shadow-2xl shadow-cyan-500/50'
-                      : 'bg-linear-to-br from-gray-700 to-gray-800 group-hover:scale-105 group-hover:-translate-y-2 shadow-xl shadow-black/30'
-                  }
-                `}
-                style={{
-                  transform: isDragging ? 'translateZ(50px) rotateY(10deg)' : 'translateZ(30px)',
-                  transformStyle: 'preserve-3d',
-                }}
+          {/* File Type Tags */}
+          <div className="flex flex-wrap justify-center gap-2 mt-6">
+            {['.html', '.js', '.jsx', '.ts', '.tsx', '.css', '.json'].map(ext => (
+              <span
+                key={ext}
+                className="px-3 py-1 text-xs bg-(--dev-bg)/50 text-(--dev-text-muted) rounded-lg border border-(--dev-border)/30"
               >
-                {isFolderMode ? (
-                  <FolderUp
-                    className={`w-12 h-12 ${isDragging ? 'text-white' : 'text-gray-400 group-hover:text-white'} transition-colors`}
-                  />
-                ) : (
-                  <Upload
-                    className={`w-12 h-12 ${isDragging ? 'text-white' : 'text-gray-400 group-hover:text-white'} transition-colors`}
-                  />
-                )}
-
-                {/* Floating Particles */}
-                <div
-                  className="absolute -top-2 -right-2 w-4 h-4 bg-cyan-400 rounded-full animate-bounce"
-                  style={{ animationDelay: '0s', animationDuration: '2s' }}
-                />
-                <div
-                  className="absolute -bottom-1 -left-3 w-3 h-3 bg-purple-400 rounded-full animate-bounce"
-                  style={{ animationDelay: '0.5s', animationDuration: '2.5s' }}
-                />
-                <div
-                  className="absolute top-0 -left-4 w-2 h-2 bg-pink-400 rounded-full animate-bounce"
-                  style={{ animationDelay: '1s', animationDuration: '3s' }}
-                />
-              </div>
-            </div>
-
-            <h3 className="text-2xl font-bold text-white mb-3">
-              {isDragging
-                ? 'Drop to upload!'
-                : isFolderMode
-                  ? 'Upload build folder'
-                  : 'Upload your files'}
-            </h3>
-
-            <p className="text-gray-400 mb-6 max-w-md mx-auto">
-              {isFolderMode
-                ? 'Drag and drop your build/dist folder, or click to browse'
-                : 'Drag and drop HTML, JavaScript, CSS, or React build files'}
-            </p>
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap justify-center gap-3">
-              <button
-                onClick={() =>
-                  isFolderMode ? folderInputRef.current?.click() : fileInputRef.current?.click()
-                }
-                className="
-                  px-6 py-3 bg-linear-to-r from-blue-500 to-cyan-500 
-                  text-white font-semibold rounded-xl
-                  transform-gpu transition-all duration-300
-                  hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25
-                  active:scale-95
-                  border border-white/10
-                "
-              >
-                {isFolderMode ? 'Select Folder' : 'Select Files'}
-              </button>
-            </div>
-
-            {/* File Type Tags */}
-            <div className="flex flex-wrap justify-center gap-2 mt-6 text-xs">
-              {['.html', '.js', '.jsx', '.ts', '.tsx', '.css', '.json'].map(ext => (
-                <span
-                  key={ext}
-                  className="px-2.5 py-1 bg-gray-800/80 text-gray-400 rounded-lg border border-gray-700/50"
-                >
-                  {ext}
-                </span>
-              ))}
-            </div>
+                {ext}
+              </span>
+            ))}
           </div>
         </div>
       </div>
@@ -285,19 +254,19 @@ export function FileUpload({
       {/* Template Selection & Auto-detection */}
       {files?.length > 0 && (
         <div className="mt-6">
-          <div className="bg-dev-surface border border-dev-border rounded-xl p-4">
+          <div className="bg-(--dev-surface)/40 backdrop-blur-sm border border-(--dev-border)/50 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-4 h-4 text-dev-accent" />
-              <span className="text-sm font-medium text-dev-text">Analysis Template</span>
+              <Sparkles className="w-4 h-4 text-(--dev-accent)" />
+              <span className="text-sm font-medium text-(--dev-text)">Analysis Template</span>
               {lastDetectedTemplate && lastDetectedTemplate.confidence > 0.3 && (
-                <span className="text-xs px-2 py-0.5 bg-dev-accent/10 text-dev-accent rounded-full">
+                <span className="text-xs px-2 py-0.5 bg-(--dev-accent)/10 text-(--dev-accent) rounded-full">
                   Auto-detected ({Math.round(lastDetectedTemplate.confidence * 100)}%)
                 </span>
               )}
             </div>
             <TemplateSelectorCompact />
             {lastDetectedTemplate && lastDetectedTemplate.reasons.length > 0 && (
-              <div className="mt-2 text-xs text-dev-text-subtle">
+              <div className="mt-2 text-xs text-(--dev-text-subtle)">
                 <span className="font-medium">Detected:</span>{' '}
                 {lastDetectedTemplate.reasons.slice(0, 2).join(', ')}
               </div>
@@ -306,26 +275,26 @@ export function FileUpload({
         </div>
       )}
 
-      {/* File List with 3D Cards */}
+      {/* File List */}
       {files?.length > 0 && (
         <div className="mt-6">
-          <div className="bg-gray-900/80 backdrop-blur-xl rounded-2xl border border-gray-700/50 overflow-hidden shadow-2xl shadow-black/30">
+          <div className="bg-(--dev-surface)/40 backdrop-blur-sm rounded-2xl border border-(--dev-border)/50 overflow-hidden">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-gray-700/50 flex items-center justify-between bg-linear-to-r from-gray-800/50 to-transparent">
+            <div className="px-6 py-4 border-b border-(--dev-border)/30 flex items-center justify-between bg-linear-to-r from-(--dev-surface)/50 to-transparent">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg">
                   <File className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-white">
+                  <h4 className="text-sm font-semibold text-(--dev-text)">
                     {files?.length || 0} file{(files?.length || 0) !== 1 ? 's' : ''}
                   </h4>
-                  <p className="text-xs text-gray-400">{formatBytes(totalSize)} total</p>
+                  <p className="text-xs text-(--dev-text-muted)">{formatBytes(totalSize)} total</p>
                 </div>
               </div>
               <button
                 onClick={onClearFiles}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 text-xs text-(--dev-danger) hover:bg-(--dev-danger)/10 rounded-lg transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 Clear all
@@ -333,35 +302,33 @@ export function FileUpload({
             </div>
 
             {/* File Items */}
-            <div className="max-h-72 overflow-y-auto">
+            <div className="max-h-64 overflow-y-auto">
               {files?.map((file, index) => (
                 <div
                   key={file.id}
-                  className="group px-6 py-3 flex items-center gap-4 border-b border-gray-700/30 last:border-0 hover:bg-gray-800/50 transition-all duration-300"
-                  style={{
-                    animationDelay: `${index * 50}ms`,
-                  }}
+                  className="group px-6 py-3 flex items-center gap-4 border-b border-(--dev-border)/20 last:border-0 hover:bg-(--dev-surface-hover)/50 transition-all duration-200"
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-gray-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <div className="w-10 h-10 rounded-xl bg-(--dev-bg) flex items-center justify-center group-hover:scale-110 transition-transform">
                     {getFileIcon(file.name)}
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-200 font-medium truncate group-hover:text-white transition-colors">
+                    <p className="text-sm text-(--dev-text) font-medium truncate">
                       {file.name}
                     </p>
-                    <p className="text-xs text-gray-500">{formatBytes(file.size)}</p>
+                    <p className="text-xs text-(--dev-text-muted)">{formatBytes(file.size)}</p>
                   </div>
 
                   {file.path && file.path !== file.name && (
-                    <span className="text-xs text-gray-600 truncate max-w-50 hidden sm:block">
+                    <span className="text-xs text-(--dev-text-subtle) truncate max-w-32 hidden sm:block">
                       {file.path}
                     </span>
                   )}
 
                   <button
                     onClick={() => onRemoveFile(file.id)}
-                    className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                    className="p-2 text-(--dev-text-muted) hover:text-(--dev-danger) hover:bg-(--dev-danger)/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -370,30 +337,18 @@ export function FileUpload({
             </div>
 
             {/* Analyze Button */}
-            <div className="px-6 py-4 border-t border-gray-700/50 bg-linear-to-r from-gray-800/30 to-transparent">
+            <div className="px-6 py-4 border-t border-(--dev-border)/30 bg-linear-to-r from-(--dev-surface)/30 to-transparent">
               <button
                 onClick={onAnalyze}
-                className="
-                  w-full py-4 
-                  bg-linear-to-r from-emerald-500 via-green-500 to-emerald-600
-                  hover:from-emerald-400 hover:via-green-400 hover:to-emerald-500
-                  text-white font-bold text-lg rounded-xl
-                  transform-gpu transition-all duration-300
-                  hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/30
-                  active:scale-[0.98]
-                  cursor-pointer
-                  border border-white/10
-                  relative overflow-hidden
-                  group
-                "
+                className="w-full py-4 bg-linear-to-r from-emerald-500 via-green-500 to-emerald-600 hover:from-emerald-400 hover:via-green-400 hover:to-emerald-500 text-white font-bold text-lg rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/20 active:scale-[0.98] relative overflow-hidden group"
               >
-                {/* Shine Effect */}
+                {/* Shine effect */}
                 <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
 
                 <span className="relative flex items-center justify-center gap-3">
-                  <span className="text-xl">🚀</span>
+                  <CheckCircle2 className="w-6 h-6" />
                   Analyze Performance
-                  <span className="text-xl">⚡</span>
+                  <Sparkles className="w-5 h-5" />
                 </span>
               </button>
             </div>

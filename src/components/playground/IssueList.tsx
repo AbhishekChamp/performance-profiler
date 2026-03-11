@@ -5,7 +5,7 @@ import {
   AlertCircle, 
   Info, 
   ChevronDown, 
-  ChevronUp, 
+ 
   ExternalLink,
   Wand2,
   Check,
@@ -111,7 +111,7 @@ function IssueItem({
 
 export function IssueList({ file, onApplyFix }: IssueListProps) {
   const [filter, setFilter] = useState<'all' | 'error' | 'warning' | 'info'>('all');
-  const [expandedIssue, setExpandedIssue] = useState<string | null>(null);
+
   
   if (!file) {
     return (

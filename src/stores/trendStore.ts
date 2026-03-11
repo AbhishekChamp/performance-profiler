@@ -11,11 +11,9 @@ import type {
 } from '@/types';
 import { 
   reportToTrendData, 
-  groupReportsByProject, 
   calculateTrendSummary,
   detectRegressions,
   filterTrendData,
-  createProjectTrend 
 } from '@/core/trends';
 import { getAllReports } from '@/utils/offlineStorage';
 

@@ -44,6 +44,7 @@ export function OptimizationPanel({ file, onApply }: OptimizationPanelProps) {
   const presets = useMemo(() => {
     if (!file) return [];
     return getApplicablePresets(file.language);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file?.language]);
   
   const sizeChange = useMemo(() => {

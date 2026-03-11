@@ -65,7 +65,6 @@ export function useFileUpload(): UseFileUploadReturn {
       try {
         // Skip binary files and very large files (>10MB)
         if (file.size > 10 * 1024 * 1024) {
-          console.log(`Skipping large file: ${file.name} (${file.size} bytes)`);
           continue;
         }
 
@@ -79,8 +78,8 @@ export function useFileUpload(): UseFileUploadReturn {
           content,
           path: relativePath,
         });
-      } catch (error) {
-        console.error(`Error reading file ${file.name}:`, error);
+      } catch {
+        // Error reading file handled silently
       }
     }
 

@@ -5,7 +5,7 @@ import {
   TrendingDown,
   Calendar,
   Filter,
-  Download,
+
   AlertTriangle,
   CheckCircle,
   Minus,
@@ -16,7 +16,7 @@ import {
   RefreshCw,
   BarChart3,
 } from 'lucide-react';
-import { useTrendStore, selectTrendData, selectAvailableProjects } from '@/stores/trendStore';
+import { useTrendStore, selectAvailableProjects } from '@/stores/trendStore';
 import { TrendLineChart } from '@/components/charts/TrendLineChart';
 import { Button } from '@/components/ui/Button';
 import { Select, SelectItem } from '@/components/ui/Select';

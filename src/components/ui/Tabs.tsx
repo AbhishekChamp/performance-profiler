@@ -55,24 +55,28 @@ export function TabList({ children, className = '' }: TabListProps) {
     const currentIndex = tabs.findIndex(tab => tab === document.activeElement);
 
     switch (event.key) {
-      case 'ArrowRight':
+      case 'ArrowRight': {
         event.preventDefault();
         const nextIndex = (currentIndex + 1) % tabs.length;
         tabs[nextIndex]?.focus();
         break;
-      case 'ArrowLeft':
+      }
+      case 'ArrowLeft': {
         event.preventDefault();
         const prevIndex = currentIndex <= 0 ? tabs.length - 1 : currentIndex - 1;
         tabs[prevIndex]?.focus();
         break;
-      case 'Home':
+      }
+      case 'Home': {
         event.preventDefault();
         tabs[0]?.focus();
         break;
-      case 'End':
+      }
+      case 'End': {
         event.preventDefault();
         tabs[tabs.length - 1]?.focus();
         break;
+      }
     }
   }, []);
 

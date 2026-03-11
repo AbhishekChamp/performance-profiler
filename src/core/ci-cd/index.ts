@@ -1,6 +1,5 @@
 import type { 
   CIPlatform, 
-  ConfigFormat, 
   PerformanceBudget, 
   BudgetConfig, 
   GeneratedConfig,
@@ -67,16 +66,7 @@ export const PLATFORMS: PlatformInfo[] = [
   },
 ];
 
-/**
- * Format bytes to human readable string
- */
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
-}
+
 
 /**
  * Generate GitHub Actions workflow config
@@ -579,34 +569,32 @@ function generateJenkinsConfig(budget: BudgetConfig): GeneratedConfig {
  * Generate Vercel config
  */
 function generateVercelConfig(budget: BudgetConfig): GeneratedConfig {
-  const budgetJson = JSON.stringify(budget.budgets, null, 2);
-  
-  const content = `{
-  \"$schema\": \"https://openapi.vercel.sh/vercel.json\",
-  \"version\": 2,
-  \"buildCommand\": \"npm run build\",
-  \"outputDirectory\": \"dist\",
-  \"framework\": null,
-  \"installCommand\": \"npm ci\",
-  \"functions\": {},
-  \"crons\": [],
-  \\"git\\": {
-    \\"deploymentEnabled\\": {
-      \\"main\\": true,
-      \\"develop\\": true
+  const content = JSON.stringify({
+    $schema: 'https://openapi.vercel.sh/vercel.json',
+    version: 2,
+    buildCommand: 'npm run build',
+    outputDirectory: 'dist',
+    framework: null,
+    installCommand: 'npm ci',
+    functions: {},
+    crons: [],
+    git: {
+      deploymentEnabled: {
+        main: true,
+        develop: true
+      }
+    },
+    performance: {
+      bundleSize: budget.budgets.bundleSize ? budget.budgets.bundleSize * 1024 : 256000,
+      jsSize: budget.budgets.jsSize ? budget.budgets.jsSize * 1024 : 153600,
+      cssSize: budget.budgets.cssSize ? budget.budgets.cssSize * 1024 : 51200
+    },
+    github: {
+      enabled: true,
+      silent: false,
+      autoJobCancelation: true
     }
-  },
-  \\"performance\\": {
-    \\"bundleSize\\": ${budget.budgets.bundleSize ? budget.budgets.bundleSize * 1024 : 256000},
-    \\"jsSize\\": ${budget.budgets.jsSize ? budget.budgets.jsSize * 1024 : 153600},
-    \\"cssSize\\": ${budget.budgets.cssSize ? budget.budgets.cssSize * 1024 : 51200}
-  },
-  \\"github\\": {
-    \\"enabled\\": true,
-    \\"silent\\": false,
-    \\"autoJobCancelation\\": true
-  }
-}`;
+  }, null, 2);
 
   return {
     platform: 'vercel',
@@ -627,8 +615,6 @@ function generateVercelConfig(budget: BudgetConfig): GeneratedConfig {
  * Generate Netlify config
  */
 function generateNetlifyConfig(budget: BudgetConfig): GeneratedConfig {
-  const budgetJson = JSON.stringify(budget.budgets, null, 2);
-  
   const content = `[build]
   command = "npm run build"
   publish = "dist"

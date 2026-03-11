@@ -177,25 +177,7 @@ interface UseKeyboardShortcutsOptions {
 }
 
 export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions) {
-  const {
-    onNavigateUp,
-    onNavigateDown,
-    onNextSection,
-    onPreviousSection,
-    onSelect,
-    onRerun,
-    onNewAnalysis,
-    onExport,
-    onCycleTheme,
-    onShowHelp,
-    onClose,
-    onSearch,
-    onCommandPalette,
-    onToggleSidebar,
-    onFocusUpload,
-    onGoToSection,
-    enabled = true,
-  } = options;
+  const { enabled = true } = options;
 
   // Use refs to always have latest callbacks without re-registering
   const callbacksRef = useRef(options);

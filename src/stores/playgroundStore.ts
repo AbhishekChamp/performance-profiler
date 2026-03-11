@@ -49,14 +49,14 @@ interface PlaygroundStoreState {
   reset: () => void;
 }
 
-const getLanguageFromFilename = (filename: string): PlaygroundLanguage => {
-  if (filename.endsWith('.tsx')) return 'tsx';
-  if (filename.endsWith('.ts')) return 'typescript';
-  if (filename.endsWith('.jsx') || filename.endsWith('.js')) return 'javascript';
-  if (filename.endsWith('.scss') || filename.endsWith('.sass')) return 'scss';
-  if (filename.endsWith('.css')) return 'css';
-  return 'html';
-};
+// const getLanguageFromFilename = (filename: string): PlaygroundLanguage => {
+//   if (filename.endsWith('.tsx')) return 'tsx';
+//   if (filename.endsWith('.ts')) return 'typescript';
+//   if (filename.endsWith('.jsx') || filename.endsWith('.js')) return 'javascript';
+//   if (filename.endsWith('.scss') || filename.endsWith('.sass')) return 'scss';
+//   if (filename.endsWith('.css')) return 'css';
+//   return 'html';
+// };
 
 export const usePlaygroundStore = create<PlaygroundStoreState>()(
   devtools(
@@ -100,7 +100,8 @@ export const usePlaygroundStore = create<PlaygroundStoreState>()(
               : state.activeFileId;
             
             // Clean up editor state
-            const { [id]: _, ...restEditorState } = state.editorState;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { [id]: _removed, ...restEditorState } = state.editorState;
             
             return { files, activeFileId, editorState: restEditorState };
           });
