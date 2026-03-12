@@ -13,19 +13,27 @@ interface HeaderProps {
 export function Header({ onExport, onClear }: HeaderProps) {
   const { currentReport } = useAnalysisStore();
 
+  const handleNavigateHome = () => {
+    window.location.href = '/';
+  };
+
   return (
     <header 
       className="h-14 bg-(--dev-surface) border-b border-(--dev-border) flex items-center justify-between px-4 shrink-0"
       role="banner"
     >
-      <div className="flex items-center gap-3">
+      <button 
+        onClick={handleNavigateHome}
+        className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+        title="Go to Home"
+      >
         <div 
           className="w-8 h-8 bg-linear-to-br from-(--dev-accent) to-(--dev-accent-hover) rounded-lg flex items-center justify-center"
           aria-hidden="true"
         >
           <Activity className="w-5 h-5 text-white" />
         </div>
-        <div>
+        <div className="text-left">
           <h1 className="text-sm font-semibold text-(--dev-text)">
             Frontend Performance Profiler
           </h1>
@@ -33,7 +41,7 @@ export function Header({ onExport, onClear }: HeaderProps) {
             Analyze. Optimize. Ship Faster.
           </p>
         </div>
-      </div>
+      </button>
 
       <div className="flex items-center gap-2">
         {currentReport && (

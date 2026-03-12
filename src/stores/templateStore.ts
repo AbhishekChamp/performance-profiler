@@ -3,6 +3,7 @@ import { devtools, persist } from 'zustand/middleware';
 import { get, set } from 'idb-keyval';
 import type { ReportTemplate, TemplateDetectionResult, UploadedFile } from '@/types';
 import { BUILTIN_TEMPLATES, DEFAULT_TEMPLATE, getTemplateById } from '@/core/templates/presets';
+import { logError } from '@/utils/errorHandler';
 
 interface TemplateState {
   // Current template
@@ -148,7 +149,10 @@ export const useTemplateStore = create<TemplateState>()(
 
             return importedTemplate;
           } catch (error) {
-            console.error('[TemplateStore] Failed to import template:', error);
+            logError(error instanceof Error ? error : new Error('Failed to import template'), {
+              component: 'TemplateStore',
+              action: 'importTemplate',
+            });
             return null;
           }
         },

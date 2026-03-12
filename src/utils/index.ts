@@ -14,6 +14,7 @@ export {
   formatStorageSize,
   getStorageQuota,
   getAllReports,
+  clearAllStorage,
 } from './offlineStorage';
 export { formatDate, formatDuration, formatFileSize } from './formatDate';
 export { downloadFile, downloadJSON, downloadCSV, downloadText } from './downloadFile';

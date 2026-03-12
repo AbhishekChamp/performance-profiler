@@ -16,6 +16,7 @@ import {
   filterTrendData,
 } from '@/core/trends';
 import { getAllReports } from '@/utils/offlineStorage';
+import { logError } from '@/utils/errorHandler';
 
 // Custom IndexedDB storage for zustand persistence
 const idbStorage = {
@@ -158,10 +159,13 @@ export const useTrendStore = create<TrendState>()(
 
         // Set selected project
         setSelectedProject: (project) => {
-          set({ selectedProject: project });
-          // Recompute with new filter
-          const updates = recomputeState(get());
-          set(updates);
+          // Update state and recompute in single batch
+          const currentState = get();
+          const newState: Partial<TrendState> = { selectedProject: project };
+          // Apply filter change and recompute
+          const filtered = filterTrendData(currentState.trendData, { ...currentState.filters });
+          newState.filteredData = filtered;
+          set(newState);
         },
 
         // Set selected metrics
@@ -171,17 +175,21 @@ export const useTrendStore = create<TrendState>()(
 
         // Set filters
         setFilters: (filters) => {
-          const currentFilters = get().filters;
+          const currentState = get();
+          const currentFilters = currentState.filters;
           const newFilters = { ...currentFilters, ...filters };
           // Ensure metrics array is always present
           if (!newFilters.metrics) {
             newFilters.metrics = currentFilters.metrics || ['overallScore'];
           }
-          set({ filters: newFilters });
           
-          // Recompute with new filters
-          const updates = recomputeState(get());
-          set(updates);
+          // Recompute with new filters in single batch
+          const filtered = filterTrendData(currentState.trendData, newFilters);
+          
+          set({ 
+            filters: newFilters,
+            filteredData: filtered
+          });
         },
 
         // Clear all trend data
@@ -213,7 +221,10 @@ export const useTrendStore = create<TrendState>()(
             const updates = recomputeState(get(), merged);
             set(updates);
           } catch (error) {
-            console.error('Failed to refresh trend data from storage:', error);
+            logError(error instanceof Error ? error : new Error('Failed to refresh trend data'), {
+              component: 'TrendStore',
+              action: 'refreshFromStorage',
+            });
           }
         },
       }),
@@ -232,7 +243,7 @@ export const useTrendStore = create<TrendState>()(
   )
 );
 
-// Selectors
+// Selectors - use memoized results to prevent unnecessary re-renders
 export const selectTrendData = (state: TrendState) => 
   state.selectedProject === 'all' 
     ? state.filteredData 
@@ -243,5 +254,18 @@ export const selectCurrentProject = (state: TrendState) =>
     ? null
     : state.projects.find(p => p.projectName === state.selectedProject);
 
-export const selectAvailableProjects = (state: TrendState) =>
-  ['all', ...state.projects.map(p => p.projectName)];
+// Memoized selector to prevent array reference changes
+let cachedProjects: string[] = [];
+let cachedResult: string[] = [];
+export const selectAvailableProjects = (state: TrendState) => {
+  const projectNames = state.projects.map(p => p.projectName);
+  // Only create new array if projects changed
+  if (
+    cachedProjects.length !== projectNames.length ||
+    !cachedProjects.every((p, i) => p === projectNames[i])
+  ) {
+    cachedProjects = projectNames;
+    cachedResult = ['all', ...projectNames];
+  }
+  return cachedResult;
+};

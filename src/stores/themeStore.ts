@@ -137,14 +137,29 @@ export const useThemeStore = create<ThemeState>()(
 if (typeof document !== 'undefined') {
   const initTheme = async () => {
     try {
+      // Check if theme was already set by inline script (avoids race condition)
+      const root = document.documentElement;
+      const hasThemeClass = root.classList.contains('dark') || root.classList.contains('light');
+      
       const saved = await get('ThemeStore');
       if (saved) {
         const state = JSON.parse(saved);
-        // If already initialized before, use saved mode
-        const mode = state.state?.mode || 'dark';
-        applyTheme(mode);
-      } else {
-        // First visit - use system preference and save it
+        const savedMode = state.state?.mode || 'dark';
+        
+        // Only apply if inline script hasn't set it yet, or if they differ
+        if (!hasThemeClass || (savedMode !== 'dark' && savedMode !== 'light')) {
+          applyTheme(savedMode);
+        }
+        
+        // Sync store state with applied theme
+        const appliedMode = root.classList.contains('light') ? 'light' : 'dark';
+        useThemeStore.setState({ 
+          mode: appliedMode, 
+          resolvedMode: appliedMode, 
+          hasInitialized: true 
+        });
+      } else if (!hasThemeClass) {
+        // First visit and inline script didn't run - use system preference
         const systemTheme = getSystemTheme();
         applyTheme(systemTheme);
         // Save the system-detected theme as the initial mode
@@ -155,8 +170,11 @@ if (typeof document !== 'undefined') {
         });
       }
     } catch {
-      // Fallback to dark theme
-      applyTheme('dark');
+      // Fallback to dark theme only if not already set
+      const root = document.documentElement;
+      if (!root.classList.contains('dark') && !root.classList.contains('light')) {
+        applyTheme('dark');
+      }
     }
   };
   initTheme();

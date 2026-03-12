@@ -2,26 +2,15 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import type { PerformanceBudget, BudgetAlert, BudgetStatus } from '@/types';
 import { set, get } from 'idb-keyval';
+import { logError } from '@/utils/errorHandler';
 
 interface BudgetState {
   // Budget configuration
   budget: PerformanceBudget;
-  alerts: BudgetAlert[];
   
   // Actions
   setBudget: (budget: Partial<PerformanceBudget>) => void;
   resetBudget: () => void;
-  checkBudget: (metrics: {
-    bundleSize?: number;
-    imageSize?: number;
-    cssSize?: number;
-    jsSize?: number;
-    domNodes?: number;
-    maxDepth?: number;
-    unusedCSS?: number;
-    overallScore?: number;
-  }) => BudgetStatus[];
-  clearAlerts: () => void;
   exportBudget: () => string;
   importBudget: (json: string) => void;
 }
@@ -57,7 +46,6 @@ export const useBudgetStore = create<BudgetState>()(
       (setState, getState) => ({
         // Initial state
         budget: defaultBudget,
-        alerts: [],
 
         // Actions
         setBudget: (budget) => {
@@ -69,74 +57,7 @@ export const useBudgetStore = create<BudgetState>()(
         resetBudget: () => {
           setState({
             budget: defaultBudget,
-            alerts: [],
           });
-        },
-
-        checkBudget: (metrics) => {
-          const { budget } = getState();
-          const statuses: BudgetStatus[] = [];
-          const newAlerts: BudgetAlert[] = [];
-
-          const checks = [
-            { key: 'bundleSize', label: 'Bundle Size', value: metrics.bundleSize, limit: budget.bundleSize },
-            { key: 'imageSize', label: 'Image Size', value: metrics.imageSize, limit: budget.imageSize },
-            { key: 'cssSize', label: 'CSS Size', value: metrics.cssSize, limit: budget.cssSize },
-            { key: 'jsSize', label: 'JS Size', value: metrics.jsSize, limit: budget.jsSize },
-            { key: 'domNodes', label: 'DOM Nodes', value: metrics.domNodes, limit: budget.domNodes },
-            { key: 'maxDepth', label: 'Max Depth', value: metrics.maxDepth, limit: budget.maxDepth },
-            { key: 'unusedCSS', label: 'Unused CSS', value: metrics.unusedCSS, limit: budget.unusedCSS },
-            { key: 'overallScore', label: 'Overall Score', value: metrics.overallScore, limit: budget.overallScore, inverse: true },
-          ];
-
-          for (const check of checks) {
-            if (check.value === undefined) continue;
-
-            const percentage = check.inverse
-              ? (check.value / check.limit) * 100
-              : (check.value / check.limit) * 100;
-
-            let status: BudgetStatus['status'];
-            if (check.inverse) {
-              status = percentage >= 100 ? 'pass' : percentage >= 80 ? 'warning' : 'fail';
-            } else {
-              status = percentage <= 100 ? 'pass' : percentage <= 120 ? 'warning' : 'fail';
-            }
-
-            statuses.push({
-              metric: check.label,
-              limit: check.limit,
-              current: check.value,
-              percentage: Math.round(percentage),
-              status,
-            });
-
-            // Generate alerts
-            if (status === 'fail') {
-              newAlerts.push({
-                type: 'error',
-                metric: check.label,
-                message: `${check.label} exceeds budget (${check.value} > ${check.limit})`,
-                current: check.value,
-                limit: check.limit,
-              });
-            } else if (status === 'warning') {
-              newAlerts.push({
-                type: 'warning',
-                metric: check.label,
-                message: `${check.label} approaching budget limit`,
-                current: check.value,
-                limit: check.limit,
-              });
-            }
-          }
-
-          setState({ alerts: newAlerts });
-          return statuses;
-        },
-
-        clearAlerts: () => {
-          setState({ alerts: [] });
         },
 
         exportBudget: () => {
@@ -155,13 +76,17 @@ export const useBudgetStore = create<BudgetState>()(
               setState({ budget: { ...defaultBudget, ...data.budget } });
             }
           } catch (error) {
-            console.error('Failed to import budget:', error);
+            logError(error instanceof Error ? error : new Error('Failed to import budget'), {
+              component: 'BudgetStore',
+              action: 'importBudget',
+            });
           }
         },
       }),
       {
         name: 'PerformanceBudget',
         storage: idbStorage as never,
+        partialize: (state) => ({ budget: state.budget }),
       }
     ),
     { name: 'BudgetStore' }
@@ -170,4 +95,76 @@ export const useBudgetStore = create<BudgetState>()(
 
 // Selectors
 export const selectBudget = (state: BudgetState) => state.budget;
-export const selectBudgetAlerts = (state: BudgetState) => state.alerts;
+
+// Pure function to check budget against metrics - returns statuses and alerts without modifying state
+export function checkBudget(
+  budget: PerformanceBudget,
+  metrics: {
+    bundleSize?: number;
+    imageSize?: number;
+    cssSize?: number;
+    jsSize?: number;
+    domNodes?: number;
+    maxDepth?: number;
+    unusedCSS?: number;
+    overallScore?: number;
+  }
+): { statuses: BudgetStatus[]; alerts: BudgetAlert[] } {
+  const statuses: BudgetStatus[] = [];
+  const alerts: BudgetAlert[] = [];
+
+  const checks = [
+    { key: 'bundleSize', label: 'Bundle Size', value: metrics.bundleSize, limit: budget.bundleSize },
+    { key: 'imageSize', label: 'Image Size', value: metrics.imageSize, limit: budget.imageSize },
+    { key: 'cssSize', label: 'CSS Size', value: metrics.cssSize, limit: budget.cssSize },
+    { key: 'jsSize', label: 'JS Size', value: metrics.jsSize, limit: budget.jsSize },
+    { key: 'domNodes', label: 'DOM Nodes', value: metrics.domNodes, limit: budget.domNodes },
+    { key: 'maxDepth', label: 'Max Depth', value: metrics.maxDepth, limit: budget.maxDepth },
+    { key: 'unusedCSS', label: 'Unused CSS', value: metrics.unusedCSS, limit: budget.unusedCSS },
+    { key: 'overallScore', label: 'Overall Score', value: metrics.overallScore, limit: budget.overallScore, inverse: true },
+  ];
+
+  for (const check of checks) {
+    if (check.value === undefined) continue;
+
+    const percentage = check.inverse
+      ? (check.value / check.limit) * 100
+      : (check.value / check.limit) * 100;
+
+    let status: BudgetStatus['status'];
+    if (check.inverse) {
+      status = percentage >= 100 ? 'pass' : percentage >= 80 ? 'warning' : 'fail';
+    } else {
+      status = percentage <= 100 ? 'pass' : percentage <= 120 ? 'warning' : 'fail';
+    }
+
+    statuses.push({
+      metric: check.label,
+      limit: check.limit,
+      current: check.value,
+      percentage: Math.round(percentage),
+      status,
+    });
+
+    // Generate alerts
+    if (status === 'fail') {
+      alerts.push({
+        type: 'error',
+        metric: check.label,
+        message: `${check.label} exceeds budget (${check.value} > ${check.limit})`,
+        current: check.value,
+        limit: check.limit,
+      });
+    } else if (status === 'warning') {
+      alerts.push({
+        type: 'warning',
+        metric: check.label,
+        message: `${check.label} approaching budget limit`,
+        current: check.value,
+        limit: check.limit,
+      });
+    }
+  }
+
+  return { statuses, alerts };
+}

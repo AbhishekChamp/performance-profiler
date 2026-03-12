@@ -6,6 +6,7 @@ import { DependencyGraph } from './DependencyGraph';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { buildDependencyGraph, calculateGraphStats } from '@/core/graph';
 import { Button } from '@/components/ui/Button';
+import { SectionErrorBoundary } from '@/components/ui/SectionErrorBoundary';
 
 export function GraphSection() {
   const { currentReport } = useAnalysisStore();
@@ -137,9 +138,11 @@ export function GraphSection() {
       {/* Graph Container */}
       <div className={`${isFullscreen ? 'flex-1 px-6 pb-6' : ''}`} style={{ height: isFullscreen ? 'calc(100vh - 300px)' : '600px' }}>
         <div className="glass-panel rounded-xl overflow-hidden h-full">
-          <ReactFlowProvider>
-            <DependencyGraph />
-          </ReactFlowProvider>
+          <SectionErrorBoundary sectionName="Dependency Graph">
+            <ReactFlowProvider>
+              <DependencyGraph />
+            </ReactFlowProvider>
+          </SectionErrorBoundary>
         </div>
       </div>
       

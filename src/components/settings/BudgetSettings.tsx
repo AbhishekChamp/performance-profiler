@@ -1,7 +1,7 @@
-import { useBudgetStore } from '@/stores/budgetStore';
+import { useBudgetStore, checkBudget } from '@/stores/budgetStore';
 import type { AnalysisReport } from '@/types';
 import { DollarSign, Download, Upload, AlertTriangle, CheckCircle, RotateCcw } from 'lucide-react';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 interface BudgetSettingsProps {
   report?: AnalysisReport;
@@ -16,7 +16,7 @@ function formatBytes(bytes: number): string {
 }
 
 export function BudgetSettings({ report }: BudgetSettingsProps) {
-  const { budget, setBudget, resetBudget, checkBudget, exportBudget, importBudget } = useBudgetStore();
+  const { budget, setBudget, resetBudget, exportBudget, importBudget } = useBudgetStore();
 
   const handleExport = useCallback(() => {
     const json = exportBudget();
@@ -42,16 +42,20 @@ export function BudgetSettings({ report }: BudgetSettingsProps) {
     }
   }, [importBudget]);
 
-  const budgetStatuses = report ? checkBudget({
-    bundleSize: report.bundle?.totalSize,
-    imageSize: report.images?.totalSize,
-    cssSize: report.css ? report.css.totalRules * 100 : undefined,
-    jsSize: report.javascript?.reduce((sum, f) => sum + f.size, 0),
-    domNodes: report.dom?.totalNodes,
-    maxDepth: report.dom?.maxDepth,
-    unusedCSS: report.css ? (report.css.unusedRules / report.css.totalRules) * 100 : undefined,
-    overallScore: report.score.overall,
-  }) : [];
+  const budgetStatuses = useMemo(() => {
+    if (!report) return [];
+    const result = checkBudget(budget, {
+      bundleSize: report.bundle?.totalSize,
+      imageSize: report.images?.totalSize,
+      cssSize: report.css ? report.css.totalRules * 100 : undefined,
+      jsSize: report.javascript?.reduce((sum, f) => sum + f.size, 0),
+      domNodes: report.dom?.totalNodes,
+      maxDepth: report.dom?.maxDepth,
+      unusedCSS: report.css ? (report.css.unusedRules / report.css.totalRules) * 100 : undefined,
+      overallScore: report.score.overall,
+    });
+    return result.statuses;
+  }, [report, budget]);
 
   return (
     <div className="space-y-6">

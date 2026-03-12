@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { usePWAStore } from '@/stores/pwaStore';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import toast from 'react-hot-toast';
@@ -26,6 +26,9 @@ export function usePWA() {
     canInstall,
     isInstalled,
   } = usePWAStore();
+  
+  // Ref to store interval ID for cleanup
+  const updateIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Register service worker with auto-update
   const {
@@ -36,7 +39,11 @@ export function usePWA() {
     onRegisteredSW(swUrl, r) {
       // Check for updates every 60 minutes
       if (r) {
-        setInterval(() => {
+        // Clear any existing interval first
+        if (updateIntervalRef.current) {
+          clearInterval(updateIntervalRef.current);
+        }
+        updateIntervalRef.current = setInterval(() => {
           r.update();
         }, 60 * 60 * 1000);
       }
@@ -52,6 +59,16 @@ export function usePWA() {
       });
     },
   });
+  
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (updateIntervalRef.current) {
+        clearInterval(updateIntervalRef.current);
+        updateIntervalRef.current = null;
+      }
+    };
+  }, []);
 
   // Handle service worker updates
   useEffect(() => {

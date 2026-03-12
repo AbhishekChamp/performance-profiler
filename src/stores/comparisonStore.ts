@@ -39,12 +39,18 @@ export const useComparisonStore = create<ComparisonState>()(
       // Actions
       setBaseline: (report) => {
         setState({ baseline: report });
-        getState().generateComparison();
+        // Defer comparison generation to avoid setState during render
+        queueMicrotask(() => {
+          getState().generateComparison();
+        });
       },
 
       setCurrent: (report) => {
         setState({ current: report });
-        getState().generateComparison();
+        // Defer comparison generation to avoid setState during render
+        queueMicrotask(() => {
+          getState().generateComparison();
+        });
       },
 
       clearComparison: () => {
@@ -167,7 +173,10 @@ export const useComparisonStore = create<ComparisonState>()(
           baseline: current,
           current: baseline,
         });
-        getState().generateComparison();
+        // Defer comparison generation to avoid setState during render
+        queueMicrotask(() => {
+          getState().generateComparison();
+        });
       },
     }),
     { name: 'ComparisonStore' }

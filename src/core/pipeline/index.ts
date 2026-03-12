@@ -155,15 +155,13 @@ function generateOptimizations(
   seo?: SEOAnalysis,
   typescript?: TypeScriptAnalysis,
   security?: SecurityAnalysis,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   thirdParty?: ThirdPartyAnalysis,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   memory?: MemoryAnalysis,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   imports?: ImportAnalysis
 ): Optimization[] {
-  // Mark these parameters as intentionally received but not yet used
-  void network;
-  void thirdParty;
-  void memory;
-  void imports;
   const optimizations: Optimization[] = [];
 
   // Bundle optimizations

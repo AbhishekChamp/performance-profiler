@@ -1,4 +1,4 @@
-import { get, set, del } from 'idb-keyval';
+import { get, set, del, keys } from 'idb-keyval';
 import type { AnalysisReport } from '@/types';
 
 // Storage keys
@@ -278,4 +278,40 @@ export async function getStorageQuota(): Promise<{
     }
   }
   return null;
+}
+
+/**
+ * Clear all application data from storage
+ * This includes reports, projects, and all IndexedDB data
+ */
+export async function clearAllStorage(): Promise<void> {
+  try {
+    // Clear report metadata
+    await set(STORAGE_KEYS.REPORTS, []);
+    
+    // Get all keys and delete those related to app data
+    const allKeys = await keys();
+    for (const key of allKeys) {
+      const keyStr = String(key);
+      if (
+        keyStr.startsWith('report:') ||
+        keyStr.startsWith('ProjectStore') ||
+        keyStr.startsWith('ProjectData') ||
+        keyStr.startsWith('AnalysisStore') ||
+        keyStr.startsWith('TrendStore') ||
+        keyStr.startsWith('BudgetStore') ||
+        keyStr.startsWith('TemplateStore') ||
+        keyStr.startsWith('ThemeStore') ||
+        keyStr === STORAGE_KEYS.REPORTS ||
+        keyStr === STORAGE_KEYS.REPORT_METADATA ||
+        keyStr === STORAGE_KEYS.LAST_SYNC ||
+        keyStr === STORAGE_KEYS.PENDING_ANALYSES
+      ) {
+        await del(key);
+      }
+    }
+  } catch (error) {
+    console.error('[Storage] Error clearing all storage:', error);
+    throw error;
+  }
 }

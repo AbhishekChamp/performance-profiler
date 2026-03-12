@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp,
@@ -179,8 +179,8 @@ function RegressionList({ regressions }: { regressions: RegressionPoint[] }) {
   );
 }
 
-// Summary stats component
-function TrendSummary() {
+// Summary stats component - memoized to prevent unnecessary re-renders
+const TrendSummary = memo(function TrendSummary() {
   const { projects, selectedProject } = useTrendStore();
 
   const summary = useMemo(() => {
@@ -272,7 +272,7 @@ function TrendSummary() {
       </div>
     </div>
   );
-}
+});
 
 // Main dashboard component
 export function TrendDashboard() {

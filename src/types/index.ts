@@ -526,6 +526,30 @@ export interface UploadedFile {
   path: string;
 }
 
+// Project Types
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: number;
+  updatedAt: number;
+  files: UploadedFile[];
+  reports: AnalysisReport[];
+  lastAnalysisAt?: number;
+}
+
+export interface ProjectSummary {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: number;
+  updatedAt: number;
+  fileCount: number;
+  reportCount: number;
+  lastScore?: number;
+  lastAnalysisAt?: number;
+}
+
 // Phase 3: Performance Budget Types
 export interface PerformanceBudget {
   bundleSize: number;

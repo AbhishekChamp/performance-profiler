@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAnalysisStore } from '@/stores/analysisStore';
+import { useProjectStore } from '@/stores/projectStore';
 import { useAnalysis } from '@/hooks/useAnalysis';
-import { useFileUpload } from '@/hooks/useFileUpload';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import { FileUpload } from '@/components/upload/FileUpload';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { getSectionByIndex, getNextSection, getPreviousSection } from '@/components/layout/sidebarData';
 import { OverviewSection } from '@/components/report/OverviewSection';
@@ -33,6 +32,8 @@ import { TrendDashboard } from '@/components/trends/TrendDashboard';
 import { GraphSection } from '@/components/graph';
 import { CICDConfigGenerator } from '@/components/cicd';
 import { CodePlayground } from '@/components/playground';
+import { ProjectsList, CreateProjectDialog, ProjectDetail } from '@/components/projects';
+import { SectionErrorBoundary } from '@/components/ui/SectionErrorBoundary';
 import type { AnalysisSection } from '@/components/layout/types';
 import {
   Activity,
@@ -44,6 +45,8 @@ import {
   Gauge,
   Layers,
   Cpu,
+  Folder,
+  ArrowRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ThemeToggleSimple } from '@/components/ui/ThemeToggle';
@@ -193,7 +196,7 @@ function StatsBar() {
 }
 
 // Modern Hero Section
-function HeroSection() {
+function HeroSection({ onNavigateToProjects }: { onNavigateToProjects: () => void }) {
   return (
     <div className="relative text-center mb-8 pt-16">
       <div className="absolute top-4 right-0 z-20">
@@ -250,6 +253,18 @@ function HeroSection() {
         </span>
         . Detect bottlenecks, optimize bundles, and ship faster code.
       </p>
+
+      {/* CTA Button */}
+      <div className="flex justify-center mb-8">
+        <button
+          onClick={onNavigateToProjects}
+          className="dev-button flex items-center gap-2 text-lg px-8 py-4"
+        >
+          <Folder className="w-5 h-5" />
+          Go to Projects
+          <ArrowRight className="w-5 h-5" />
+        </button>
+      </div>
 
       <StatsBar />
 
@@ -374,11 +389,20 @@ function NoData({ section }: { section: string }) {
   );
 }
 
+type ViewState = 
+  | { type: 'home' }
+  | { type: 'projects' }
+  | { type: 'project'; projectId: string }
+  | { type: 'report'; projectId: string; reportId: string };
+
 export function IndexComponent() {
   const [activeSection, setActiveSection] = useState<AnalysisSection>('overview');
-  const { files, isDragging, addFiles, removeFile, clearFiles, setIsDragging } = useFileUpload();
-  const { isAnalyzing, progress, run, error } = useAnalysis();
+  const [viewState, setViewState] = useState<ViewState>({ type: 'home' });
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  
+  const { isAnalyzing, progress, error } = useAnalysis();
   const { currentReport } = useAnalysisStore();
+  const { createProject, loadProject } = useProjectStore();
   const mainRef = useRef<HTMLElement>(null);
 
   const handleNextSection = useCallback(() => {
@@ -415,26 +439,51 @@ export function IndexComponent() {
     }
   }, [error]);
 
-  const handleAnalyze = async () => {
-    if (files.length === 0) {
-      toast.error('Please upload at least one file to analyze');
+  const handleCreateProject = (name: string, description?: string) => {
+    const id = createProject(name, description);
+    setViewState({ type: 'project', projectId: id });
+  };
+
+  const handleOpenProject = (projectId: string) => {
+    loadProject(projectId);
+    setViewState({ type: 'project', projectId });
+  };
+
+  const handleViewReport = async (reportId: string, projectId?: string) => {
+    // Load the project and find the report
+    const targetProjectId = projectId || (viewState.type === 'project' ? viewState.projectId : null);
+    if (!targetProjectId) return;
+    
+    // Load project data
+    const project = await useProjectStore.getState().loadProject(targetProjectId);
+    if (!project) return;
+    
+    // Find the specific report
+    const report = project.reports.find(r => r.id === reportId);
+    if (!report) {
+      toast.error('Report not found');
       return;
     }
+    
+    // Set this as the current report for viewing
+    useAnalysisStore.setState({ currentReport: report });
+    setViewState({ type: 'report', projectId: targetProjectId, reportId });
+  };
 
-    toast.dismiss('analysis');
-    toast.loading('Starting analysis...', { id: 'analysis' });
-
-    try {
-      await run(files);
-      toast.success('Analysis complete! 🎉', { id: 'analysis', duration: 3000 });
-      clearFiles();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Analysis failed';
-      toast.error(message, { id: 'analysis', duration: 5000 });
+  const handleBackFromReport = () => {
+    // Clear current report when going back
+    useAnalysisStore.setState({ currentReport: null });
+    if (viewState.type === 'report') {
+      setViewState({ type: 'project', projectId: viewState.projectId });
     }
   };
 
+  const handleBackToProjects = () => {
+    setViewState({ type: 'projects' });
+  };
+
   const renderContent = () => {
+    // Analysis in progress
     if (isAnalyzing) {
       return (
         <div className="min-h-[calc(100vh-200px)] flex items-center justify-center bg-(--dev-bg)">
@@ -443,176 +492,229 @@ export function IndexComponent() {
       );
     }
 
-    if (!currentReport) {
+    // Home view with hero section
+    if (viewState.type === 'home') {
       return (
         <div className="relative min-h-[calc(100vh-200px)] flex flex-col items-center justify-center p-8 bg-(--dev-bg)">
           <StaticBackground />
-
           <div className="relative z-10 w-full max-w-4xl">
-            <HeroSection />
-
-            <div className="mt-8">
-              <FileUpload
-                files={files}
-                isDragging={isDragging}
-                onAddFiles={addFiles}
-                onRemoveFile={removeFile}
-                onClearFiles={clearFiles}
-                onSetDragging={setIsDragging}
-                onAnalyze={handleAnalyze}
-              />
-            </div>
+            <HeroSection onNavigateToProjects={() => setViewState({ type: 'projects' })} />
           </div>
         </div>
       );
     }
 
+    // Projects list view
+    if (viewState.type === 'projects') {
+      return (
+        <div className="h-full bg-(--dev-bg)">
+          <ProjectsList 
+            onCreateProject={() => setShowCreateDialog(true)}
+            onOpenProject={handleOpenProject}
+          />
+          <CreateProjectDialog
+            isOpen={showCreateDialog}
+            onClose={() => setShowCreateDialog(false)}
+            onCreate={handleCreateProject}
+          />
+        </div>
+      );
+    }
+
+    // Project detail view
+    if (viewState.type === 'project') {
+      return (
+        <ProjectDetail
+          projectId={viewState.projectId}
+          onBack={handleBackToProjects}
+          onViewReport={handleViewReport}
+        />
+      );
+    }
+
+    // Report view
+    if (viewState.type === 'report' && currentReport) {
+      return (
+        <div className="bg-(--dev-bg)">
+          {/* Back button and report info */}
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-(--dev-border)">
+            <button
+              onClick={handleBackFromReport}
+              className="dev-button-secondary flex items-center gap-2"
+            >
+              ← Back to Project
+            </button>
+            <div className="text-right">
+              <p className="text-sm text-(--dev-text-muted)">
+                Viewing historical report from {new Date(currentReport.timestamp).toLocaleString()}
+              </p>
+            </div>
+          </div>
+          
+          {(() => {
+            switch (activeSection) {
+              case 'overview':
+                return <OverviewSection report={currentReport} />;
+              case 'bundle':
+                return currentReport.bundle ? (
+                  <BundleSection bundle={currentReport.bundle} />
+                ) : (
+                  <NoData section="Bundle" />
+                );
+              case 'dom':
+                return currentReport.dom ? (
+                  <DOMSection dom={currentReport.dom} />
+                ) : (
+                  <NoData section="DOM" />
+                );
+              case 'css':
+                return currentReport.css ? (
+                  <CSSSection css={currentReport.css} />
+                ) : (
+                  <NoData section="CSS" />
+                );
+              case 'images':
+                return currentReport.images ? (
+                  <ImagesSection images={currentReport.images} />
+                ) : (
+                  <NoData section="Images" />
+                );
+              case 'fonts':
+                return currentReport.fonts ? (
+                  <FontsSection fonts={currentReport.fonts} />
+                ) : (
+                  <NoData section="Fonts" />
+                );
+              case 'assets':
+                return currentReport.assets ? (
+                  <AssetsSection assets={currentReport.assets} />
+                ) : (
+                  <NoData section="Assets" />
+                );
+              case 'javascript':
+                return currentReport.javascript && currentReport.javascript.length > 0 ? (
+                  <JavaScriptSection js={currentReport.javascript} />
+                ) : (
+                  <NoData section="JavaScript" />
+                );
+              case 'react':
+                return currentReport.react ? (
+                  <ReactSection react={currentReport.react} />
+                ) : (
+                  <NoData section="React" />
+                );
+              case 'webvitals':
+                return currentReport.webVitals ? (
+                  <WebVitalsSection webVitals={currentReport.webVitals} />
+                ) : (
+                  <NoData section="Web Vitals" />
+                );
+              case 'network':
+                return currentReport.network ? (
+                  <NetworkSection network={currentReport.network} />
+                ) : (
+                  <NoData section="Network" />
+                );
+              case 'accessibility':
+                return currentReport.accessibility ? (
+                  <AccessibilitySection accessibility={currentReport.accessibility} />
+                ) : (
+                  <NoData section="Accessibility" />
+                );
+              case 'seo':
+                return currentReport.seo ? (
+                  <SEOSection seo={currentReport.seo} />
+                ) : (
+                  <NoData section="SEO" />
+                );
+              case 'typescript':
+                return currentReport.typescript ? (
+                  <TypeScriptSection typescript={currentReport.typescript} />
+                ) : (
+                  <NoData section="TypeScript" />
+                );
+              case 'security':
+                return currentReport.security ? (
+                  <SecuritySection security={currentReport.security} />
+                ) : (
+                  <NoData section="Security" />
+                );
+              case 'thirdparty':
+                return currentReport.thirdParty ? (
+                  <ThirdPartySection thirdParty={currentReport.thirdParty} />
+                ) : (
+                  <NoData section="Third-Party" />
+                );
+              case 'memory':
+                return currentReport.memory ? (
+                  <MemorySection memory={currentReport.memory} />
+                ) : (
+                  <NoData section="Memory" />
+                );
+              case 'imports':
+                return currentReport.imports ? (
+                  <ImportsSection imports={currentReport.imports} />
+                ) : (
+                  <NoData section="Imports" />
+                );
+              case 'graph':
+                return <GraphSection />;
+              case 'timeline':
+                return <TimelineSection timeline={currentReport.timeline} />;
+              case 'risks':
+                return (
+                  <RisksSection
+                    risk={currentReport.renderRisk}
+                    optimizations={currentReport.summary.optimizations}
+                  />
+                );
+              case 'budget':
+                return <BudgetSettings report={currentReport} />;
+              case 'templates':
+                return (
+                  <div className="p-6">
+                    <TemplateSelector />
+                  </div>
+                );
+              case 'compare':
+                return <ReportComparison />;
+              case 'trends':
+                return <TrendDashboard />;
+              case 'cicd':
+                return <CICDConfigGenerator />;
+              case 'playground':
+                return (
+                  <SectionErrorBoundary sectionName="Code Playground">
+                    <CodePlayground />
+                  </SectionErrorBoundary>
+                );
+              default:
+                return null;
+            }
+          })()}
+        </div>
+      );
+    }
+
+    // Default: show projects
     return (
-      <div className="bg-(--dev-bg)">
-        {(() => {
-          switch (activeSection) {
-            case 'overview':
-              return <OverviewSection report={currentReport} />;
-            case 'bundle':
-              return currentReport.bundle ? (
-                <BundleSection bundle={currentReport.bundle} />
-              ) : (
-                <NoData section="Bundle" />
-              );
-            case 'dom':
-              return currentReport.dom ? (
-                <DOMSection dom={currentReport.dom} />
-              ) : (
-                <NoData section="DOM" />
-              );
-            case 'css':
-              return currentReport.css ? (
-                <CSSSection css={currentReport.css} />
-              ) : (
-                <NoData section="CSS" />
-              );
-            case 'images':
-              return currentReport.images ? (
-                <ImagesSection images={currentReport.images} />
-              ) : (
-                <NoData section="Images" />
-              );
-            case 'fonts':
-              return currentReport.fonts ? (
-                <FontsSection fonts={currentReport.fonts} />
-              ) : (
-                <NoData section="Fonts" />
-              );
-            case 'assets':
-              return currentReport.assets ? (
-                <AssetsSection assets={currentReport.assets} />
-              ) : (
-                <NoData section="Assets" />
-              );
-            case 'javascript':
-              return currentReport.javascript && currentReport.javascript.length > 0 ? (
-                <JavaScriptSection js={currentReport.javascript} />
-              ) : (
-                <NoData section="JavaScript" />
-              );
-            case 'react':
-              return currentReport.react ? (
-                <ReactSection react={currentReport.react} />
-              ) : (
-                <NoData section="React" />
-              );
-            case 'webvitals':
-              return currentReport.webVitals ? (
-                <WebVitalsSection webVitals={currentReport.webVitals} />
-              ) : (
-                <NoData section="Web Vitals" />
-              );
-            case 'network':
-              return currentReport.network ? (
-                <NetworkSection network={currentReport.network} />
-              ) : (
-                <NoData section="Network" />
-              );
-            case 'accessibility':
-              return currentReport.accessibility ? (
-                <AccessibilitySection accessibility={currentReport.accessibility} />
-              ) : (
-                <NoData section="Accessibility" />
-              );
-            case 'seo':
-              return currentReport.seo ? (
-                <SEOSection seo={currentReport.seo} />
-              ) : (
-                <NoData section="SEO" />
-              );
-            case 'typescript':
-              return currentReport.typescript ? (
-                <TypeScriptSection typescript={currentReport.typescript} />
-              ) : (
-                <NoData section="TypeScript" />
-              );
-            case 'security':
-              return currentReport.security ? (
-                <SecuritySection security={currentReport.security} />
-              ) : (
-                <NoData section="Security" />
-              );
-            case 'thirdparty':
-              return currentReport.thirdParty ? (
-                <ThirdPartySection thirdParty={currentReport.thirdParty} />
-              ) : (
-                <NoData section="Third-Party" />
-              );
-            case 'memory':
-              return currentReport.memory ? (
-                <MemorySection memory={currentReport.memory} />
-              ) : (
-                <NoData section="Memory" />
-              );
-            case 'imports':
-              return currentReport.imports ? (
-                <ImportsSection imports={currentReport.imports} />
-              ) : (
-                <NoData section="Imports" />
-              );
-            case 'graph':
-              return <GraphSection />;
-            case 'timeline':
-              return <TimelineSection timeline={currentReport.timeline} />;
-            case 'risks':
-              return (
-                <RisksSection
-                  risk={currentReport.renderRisk}
-                  optimizations={currentReport.summary.optimizations}
-                />
-              );
-            case 'budget':
-              return <BudgetSettings report={currentReport} />;
-            case 'templates':
-              return (
-                <div className="p-6">
-                  <TemplateSelector />
-                </div>
-              );
-            case 'compare':
-              return <ReportComparison />;
-            case 'trends':
-              return <TrendDashboard />;
-            case 'cicd':
-              return <CICDConfigGenerator />;
-            case 'playground':
-              return <CodePlayground />;
-            default:
-              return null;
-          }
-        })()}
+      <div className="h-full bg-(--dev-bg)">
+        <ProjectsList 
+          onCreateProject={() => setShowCreateDialog(true)}
+          onOpenProject={handleOpenProject}
+        />
+        <CreateProjectDialog
+          isOpen={showCreateDialog}
+          onClose={() => setShowCreateDialog(false)}
+          onCreate={handleCreateProject}
+        />
       </div>
     );
   };
 
   return (
     <div className="flex flex-1 overflow-hidden">
-      {currentReport && !isAnalyzing && (
+      {currentReport && !isAnalyzing && viewState.type === 'report' && (
         <Sidebar
           activeSection={activeSection}
           onSectionChange={setActiveSection}
@@ -625,7 +727,7 @@ export function IndexComponent() {
         tabIndex={-1}
         aria-label="Report content"
       >
-        <div className={currentReport ? 'max-w-5xl mx-auto p-6 bg-(--dev-bg)' : ''}>
+        <div className={currentReport && viewState.type === 'report' ? 'max-w-5xl mx-auto p-6 bg-(--dev-bg)' : ''}>
           {renderContent()}
         </div>
       </main>

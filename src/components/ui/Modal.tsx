@@ -76,31 +76,32 @@ export function Modal({
     [onClose, closeOnEscape]
   );
 
-  // Handle open/close
+  // Handle open/close - separate the focus management from keyboard handler
   useEffect(() => {
-    if (isOpen) {
-      // Store previous active element
-      previousActiveElement.current = document.activeElement;
-      
-      // Focus first focusable element in modal
-      setTimeout(() => {
-        const modal = modalRef.current;
-        if (modal) {
-          const focusableElement = modal.querySelector<HTMLElement>(
-            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-          );
-          focusableElement?.focus();
-        }
-      }, 100);
+    if (!isOpen) return;
+    
+    // Store previous active element
+    previousActiveElement.current = document.activeElement;
+    
+    // Focus first focusable element in modal after a short delay
+    const focusTimer = setTimeout(() => {
+      const modal = modalRef.current;
+      if (modal) {
+        const focusableElement = modal.querySelector<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        focusableElement?.focus();
+      }
+    }, 50);
 
-      // Add event listener
-      document.addEventListener('keydown', handleKeyDown);
-      
-      // Prevent body scroll
-      document.body.style.overflow = 'hidden';
-    }
-
+    // Add event listener
+    document.addEventListener('keydown', handleKeyDown);
+    
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+    
     return () => {
+      clearTimeout(focusTimer);
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
       
@@ -109,7 +110,8 @@ export function Modal({
         previousActiveElement.current.focus();
       }
     };
-  }, [isOpen, handleKeyDown]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   return (
     <AnimatePresence>
