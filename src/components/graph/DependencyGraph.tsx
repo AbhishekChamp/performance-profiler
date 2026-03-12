@@ -457,18 +457,39 @@ export function DependencyGraph() {
     setHighlightedNodes(new Set());
   }, []);
   
-  // Apply highlighting to nodes
+  // Apply highlighting to nodes - memoized to prevent infinite loops
+  const highlightedNodeIds = useMemo(() => highlightedNodes, [highlightedNodes]);
+  const selectedNodeId = useMemo(() => selectedNode?.id, [selectedNode]);
+  
   useEffect(() => {
-    setNodes((nds: Node[]) => nds.map((node: Node) => ({
-      ...node,
-      data: {
-        ...node.data,
-        isHighlighted: highlightedNodes.has(node.id),
-        isDimmed: highlightedNodes.size > 0 && !highlightedNodes.has(node.id),
-        isSelected: selectedNode?.id === node.id,
-      },
-    })));
-  }, [highlightedNodes, selectedNode, setNodes]);
+    if (!nodes.length) return;
+    
+    setNodes((nds: Node[]) => {
+      // Only update if highlighting actually changed
+      const needsUpdate = nds.some((node: Node) => {
+        const isHighlighted = highlightedNodeIds.has(node.id);
+        const isDimmed = highlightedNodeIds.size > 0 && !highlightedNodeIds.has(node.id);
+        const isSelected = node.id === selectedNodeId;
+        return (
+          node.data?.isHighlighted !== isHighlighted ||
+          node.data?.isDimmed !== isDimmed ||
+          node.data?.isSelected !== isSelected
+        );
+      });
+      
+      if (!needsUpdate) return nds;
+      
+      return nds.map((node: Node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          isHighlighted: highlightedNodeIds.has(node.id),
+          isDimmed: highlightedNodeIds.size > 0 && !highlightedNodeIds.has(node.id),
+          isSelected: node.id === selectedNodeId,
+        },
+      }));
+    });
+  }, [highlightedNodeIds, selectedNodeId]); // eslint-disable-line react-hooks/exhaustive-deps
   
   if (!currentReport) {
     return (

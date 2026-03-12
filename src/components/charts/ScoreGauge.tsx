@@ -1,7 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, memo } from 'react';
 import * as d3 from 'd3';
 import { getScoreColor, getScoreLabel } from '@/core/scoring';
-import { useThemeStore } from '@/stores/themeStore';
 
 interface ScoreGaugeProps {
   score: number;
@@ -10,12 +9,14 @@ interface ScoreGaugeProps {
   showLabel?: boolean;
 }
 
-export function ScoreGauge({ score, size = 120, label, showLabel = true }: ScoreGaugeProps) {
+function ScoreGaugeComponent({ score, size = 120, label, showLabel = true }: ScoreGaugeProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const color = getScoreColor(score);
   const scoreLabel = getScoreLabel(score);
-  const { resolvedMode } = useThemeStore();
-  const isDark = resolvedMode === 'dark';
+  // Get theme from CSS variable instead of store to prevent re-renders
+  const isDark = typeof document !== 'undefined' 
+    ? document.documentElement.classList.contains('dark')
+    : true;
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -104,3 +105,5 @@ export function ScoreGauge({ score, size = 120, label, showLabel = true }: Score
     </div>
   );
 }
+
+export const ScoreGauge = memo(ScoreGaugeComponent);

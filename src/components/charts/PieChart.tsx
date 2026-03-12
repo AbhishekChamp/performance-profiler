@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, memo } from 'react';
 import * as d3 from 'd3';
-import { useThemeStore } from '@/stores/themeStore';
 
 interface PieData {
   label: string;
@@ -15,7 +14,7 @@ interface PieChartProps {
   innerRadius?: number;
 }
 
-export function PieChart({ 
+function PieChartComponent({ 
   data, 
   width = 280, 
   height = 280,
@@ -23,8 +22,9 @@ export function PieChart({
 }: PieChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoveredSlice, setHoveredSlice] = useState<PieData | null>(null);
-  const { resolvedMode } = useThemeStore();
-  const isDark = resolvedMode === 'dark';
+  const isDark = typeof document !== 'undefined' 
+    ? document.documentElement.classList.contains('dark')
+    : true;
 
   useEffect(() => {
     if (!svgRef.current || data.length === 0) return;
@@ -142,3 +142,5 @@ export function PieChart({
     </div>
   );
 }
+
+export const PieChart = memo(PieChartComponent);

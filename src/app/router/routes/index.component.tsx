@@ -48,248 +48,15 @@ import {
 import toast from 'react-hot-toast';
 import { ThemeToggleSimple } from '@/components/ui/ThemeToggle';
 
-// Animated Background with Gradient Mesh - Theme Aware
-function GradientMeshBackground() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDark, setIsDark] = useState(true);
-
-  useEffect(() => {
-    const checkTheme = () => {
-      const dark = document.documentElement.classList.contains('dark') ||
-        (!document.documentElement.classList.contains('light') &&
-          window.matchMedia('(prefers-color-scheme: dark)').matches);
-      setIsDark(dark);
-    };
-    
-    checkTheme();
-    
-    const observer = new MutationObserver(checkTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animationId: number;
-    let time = 0;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-
-    const getThemeColors = () => {
-      return {
-        orb1: isDark 
-          ? ['rgba(59, 130, 246, 0.15)', 'rgba(6, 182, 212, 0.05)']
-          : ['rgba(37, 99, 235, 0.08)', 'rgba(8, 145, 178, 0.03)'],
-        orb2: isDark
-          ? ['rgba(139, 92, 246, 0.12)', 'rgba(236, 72, 153, 0.04)']
-          : ['rgba(124, 58, 237, 0.08)', 'rgba(219, 39, 119, 0.02)'],
-        orb3: isDark
-          ? ['rgba(16, 185, 129, 0.1)', 'rgba(20, 184, 166, 0.03)']
-          : ['rgba(5, 150, 105, 0.06)', 'rgba(13, 148, 136, 0.02)'],
-        noise: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.015)',
-      };
-    };
-
-    const drawGradientOrb = (
-      x: number,
-      y: number,
-      radius: number,
-      color1: string,
-      color2: string
-    ) => {
-      const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-      gradient.addColorStop(0, color1);
-      gradient.addColorStop(0.5, color2);
-      gradient.addColorStop(1, 'transparent');
-
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fill();
-    };
-
-    const animate = () => {
-      const colors = getThemeColors();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      time += 0.005;
-
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-
-      drawGradientOrb(
-        centerX + Math.sin(time) * 200,
-        centerY + Math.cos(time * 0.7) * 150,
-        400,
-        colors.orb1[0],
-        colors.orb1[1]
-      );
-
-      drawGradientOrb(
-        centerX + Math.cos(time * 0.8) * 250,
-        centerY + Math.sin(time * 1.2) * 180,
-        350,
-        colors.orb2[0],
-        colors.orb2[1]
-      );
-
-      drawGradientOrb(
-        centerX + Math.sin(time * 1.1 + Math.PI) * 180,
-        centerY + Math.cos(time * 0.9) * 200,
-        300,
-        colors.orb3[0],
-        colors.orb3[1]
-      );
-
-      ctx.fillStyle = colors.noise;
-      for (let i = 0; i < 100; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        ctx.fillRect(x, y, 1, 1);
-      }
-
-      animationId = requestAnimationFrame(animate);
-    };
-
-    resize();
-    animate();
-
-    window.addEventListener('resize', resize);
-    return () => {
-      cancelAnimationFrame(animationId);
-      window.removeEventListener('resize', resize);
-    };
-  }, [isDark]);
-
+// Static background - no animations to prevent memory issues
+function StaticBackground() {
   return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 0 }}
-    />
-  );
-}
-
-// Floating particles with connections - Theme Aware
-function FloatingParticles() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDark, setIsDark] = useState(true);
-
-  useEffect(() => {
-    const checkTheme = () => {
-      const dark = document.documentElement.classList.contains('dark') ||
-        (!document.documentElement.classList.contains('light') &&
-          window.matchMedia('(prefers-color-scheme: dark)').matches);
-      setIsDark(dark);
-    };
-    
-    checkTheme();
-    
-    const observer = new MutationObserver(checkTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animationId: number;
-    const particles: Array<{
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      size: number;
-      opacity: number;
-    }> = [];
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-
-    const getThemeColor = () => {
-      return isDark ? [148, 163, 184] : [100, 116, 139];
-    };
-
-    const createParticles = () => {
-      particles.length = 0;
-      const count = Math.min(50, Math.floor((canvas.width * canvas.height) / 25000));
-      for (let i = 0; i < count; i++) {
-        particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.3,
-          vy: (Math.random() - 0.5) * 0.3,
-          size: Math.random() * 2 + 0.5,
-          opacity: Math.random() * 0.5 + 0.1,
-        });
-      }
-    };
-
-    const animate = () => {
-      const [r, g, b] = getThemeColor();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      particles.forEach((p, i) => {
-        p.x += p.vx;
-        p.y += p.vy;
-
-        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
-        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity})`;
-        ctx.fill();
-
-        particles.slice(i + 1).forEach(p2 => {
-          const dx = p.x - p2.x;
-          const dy = p.y - p2.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 120) {
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.1 * (1 - dist / 120)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        });
-      });
-
-      animationId = requestAnimationFrame(animate);
-    };
-
-    resize();
-    createParticles();
-    animate();
-
-    window.addEventListener('resize', () => {
-      resize();
-      createParticles();
-    });
-    return () => cancelAnimationFrame(animationId);
-  }, [isDark]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 1 }}
+    <div 
+      className="fixed inset-0 pointer-events-none opacity-30"
+      style={{ 
+        zIndex: 0,
+        background: 'radial-gradient(ellipse at 30% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%)'
+      }}
     />
   );
 }
@@ -520,53 +287,73 @@ function HeroSection() {
   );
 }
 
-// Analysis Progress with modern design
+// Fun messages to keep users engaged
+const FUN_MESSAGES = [
+  "Scanning your codebase...",
+  "Hunting for performance bottlenecks...",
+  "Detecting energy-draining scripts...",
+  "Checking for security vulnerabilities...",
+  "Crunching bundle size numbers...",
+  "Targeting unused CSS selectors...",
+  "Preparing optimization rockets...",
+  "Calculating your performance score...",
+  "Sprinkling optimization magic...",
+  "Almost there, finalizing report...",
+];
+
+// Simplified Analysis Progress - prevents memory issues
 function AnalysisProgress({
   progress,
 }: {
   progress: { message: string; progress: number } | null;
 }) {
-  return (
-    <div className="flex flex-col items-center justify-center h-full relative px-4">
-      <div className="relative w-32 h-32 mb-8">
-        <div
-          className="absolute inset-0 border-4 border-blue-500/20 rounded-full"
-          style={{ animation: 'spin-slow 8s linear infinite' }}
-        />
-        <div
-          className="absolute inset-2 border-4 border-purple-500/20 rounded-full"
-          style={{ animation: 'spin-slow 6s linear infinite reverse' }}
-        />
-        <div
-          className="absolute inset-4 border-4 border-pink-500/20 rounded-full"
-          style={{ animation: 'spin-slow 4s linear infinite' }}
-        />
+  const progressValue = progress?.progress || 0;
 
+  // Get current message based on progress
+  const messageIndex = Math.min(
+    Math.floor((progressValue / 100) * FUN_MESSAGES.length),
+    FUN_MESSAGES.length - 1
+  );
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full relative px-4 py-16">
+      {/* Simple spinning loader */}
+      <div className="relative mb-8">
+        {/* Outer ring */}
+        <div className="w-24 h-24 rounded-full border-4 border-(--dev-border) border-t-(--dev-accent) animate-spin" />
+        
+        {/* Inner icon */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-16 h-16 rounded-full bg-linear-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
-            <Activity className="w-8 h-8 text-white animate-pulse" />
-          </div>
+          <Activity className="w-10 h-10 text-(--dev-accent)" />
         </div>
       </div>
 
+      {/* Title */}
       <h3 className="text-2xl font-bold text-(--dev-text) mb-2">
-        Analyzing Performance
+        Analyzing Your Code
       </h3>
+
+      {/* Rotating message */}
+      <div className="h-8 flex items-center justify-center mb-8">
+        <span className="text-(--dev-text-muted) animate-pulse">
+          {FUN_MESSAGES[messageIndex]}
+        </span>
+      </div>
 
       {progress && (
         <>
-          <p className="text-(--dev-text-muted) mb-6 text-center">{progress.message}</p>
-
-          <div className="w-full max-w-md h-2 bg-(--dev-border)/50 rounded-full overflow-hidden">
+          {/* Simple progress bar */}
+          <div className="w-full max-w-md h-2 bg-(--dev-border)/50 rounded-full overflow-hidden mb-4">
             <div
-              className="h-full bg-linear-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full transition-all duration-300"
-              style={{ width: `${progress.progress}%` }}
+              className="h-full bg-linear-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300"
+              style={{ width: `${progressValue}%` }}
             />
           </div>
 
-          <p className="text-2xl font-bold text-(--dev-text) mt-4">
-            {progress.progress}%
-          </p>
+          {/* Progress percentage */}
+          <span className="text-3xl font-bold text-(--dev-text)">
+            {progressValue}%
+          </span>
         </>
       )}
     </div>
@@ -650,7 +437,7 @@ export function IndexComponent() {
   const renderContent = () => {
     if (isAnalyzing) {
       return (
-        <div className="h-full flex items-center justify-center">
+        <div className="min-h-[calc(100vh-200px)] flex items-center justify-center bg-(--dev-bg)">
           <AnalysisProgress progress={progress} />
         </div>
       );
@@ -659,8 +446,7 @@ export function IndexComponent() {
     if (!currentReport) {
       return (
         <div className="relative min-h-[calc(100vh-200px)] flex flex-col items-center justify-center p-8 bg-(--dev-bg)">
-          <GradientMeshBackground />
-          <FloatingParticles />
+          <StaticBackground />
 
           <div className="relative z-10 w-full max-w-4xl">
             <HeroSection />
@@ -682,7 +468,7 @@ export function IndexComponent() {
     }
 
     return (
-      <div className="animate-in fade-in duration-500">
+      <div className="bg-(--dev-bg)">
         {(() => {
           switch (activeSection) {
             case 'overview':
@@ -835,40 +621,19 @@ export function IndexComponent() {
       )}
       <main
         ref={mainRef}
-        className="flex-1 overflow-y-auto focus:outline-none"
+        className="flex-1 overflow-y-auto focus:outline-none bg-(--dev-bg)"
         tabIndex={-1}
         aria-label="Report content"
       >
-        <div className={currentReport ? 'max-w-5xl mx-auto p-6' : ''}>
+        <div className={currentReport ? 'max-w-5xl mx-auto p-6 bg-(--dev-bg)' : ''}>
           {renderContent()}
         </div>
       </main>
 
       <style>{`
-        @keyframes float-gentle {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-10px) rotate(2deg); }
-        }
-        
-        @keyframes float-orbit {
-          0%, 100% { transform: translate(0, 0); }
-          25% { transform: translate(5px, -5px); }
-          50% { transform: translate(0, -10px); }
-          75% { transform: translate(-5px, -5px); }
-        }
-        
         @keyframes spin-slow {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
-        }
-        
-        .animate-in {
-          animation: fade-in 0.5s ease-out;
-        }
-        
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

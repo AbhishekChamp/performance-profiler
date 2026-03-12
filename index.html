@@ -6,18 +6,55 @@
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Frontend Performance Profiler - Analyze and optimize your web applications" />
-    <meta name="theme-color" content="#0d1117" />
+    <meta name="theme-color" content="#0d1117" id="theme-color-meta" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+      // Critical theme detection - runs before page renders to prevent flash
+      (function() {
+        try {
+          const saved = localStorage.getItem('ThemeStore');
+          let theme = 'dark';
+          
+          if (saved) {
+            const state = JSON.parse(saved);
+            theme = state.state?.resolvedMode || state.state?.mode || 'dark';
+          } else {
+            // Check system preference
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          
+          document.documentElement.classList.add(theme);
+          
+          // Update theme-color meta tag
+          const metaThemeColor = document.getElementById('theme-color-meta');
+          if (metaThemeColor) {
+            metaThemeColor.content = theme === 'dark' ? '#0d1117' : '#ffffff';
+          }
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
     <style>
-      /* Critical CSS - Dark Theme */
-      html, body {
-        background-color: #0d1117 !important;
-        color: #c9d1d9 !important;
+      /* Critical CSS - respects theme */
+      html {
         margin: 0;
         padding: 0;
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      }
+      html.dark, html.dark body {
+        background-color: #0d1117;
+        color: #c9d1d9;
+      }
+      html.light, html.light body {
+        background-color: #ffffff;
+        color: #24292f;
+      }
+      body {
+        margin: 0;
+        padding: 0;
         min-height: 100vh;
       }
       * {
@@ -32,10 +69,19 @@
         width: 40px;
         height: 40px;
         margin: -20px 0 0 -20px;
-        border: 3px solid #30363d;
-        border-top-color: #58a6ff;
+        border: 3px solid transparent;
+        border-top-color: currentColor;
         border-radius: 50%;
         animation: spin 1s linear infinite;
+        opacity: 0.5;
+      }
+      html.dark #root:empty::before {
+        border-color: #30363d;
+        border-top-color: #58a6ff;
+      }
+      html.light #root:empty::before {
+        border-color: #d0d7de;
+        border-top-color: #0969da;
       }
       @keyframes spin {
         to { transform: rotate(360deg); }

@@ -39,6 +39,12 @@ function applyTheme(mode: 'dark' | 'light') {
     root.classList.remove('dark');
   }
   
+  // Update theme-color meta tag for mobile browsers
+  const metaThemeColor = document.getElementById('theme-color-meta') as HTMLMetaElement | null;
+  if (metaThemeColor) {
+    metaThemeColor.content = mode === 'dark' ? '#0d1117' : '#ffffff';
+  }
+  
   // Remove transition class after animation completes
   setTimeout(() => {
     root.classList.remove('theme-transitioning');

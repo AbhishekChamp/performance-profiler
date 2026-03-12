@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, memo } from 'react';
 import * as d3 from 'd3';
 import type { BundleModule } from '@/types';
-import { useThemeStore } from '@/stores/themeStore';
 
 interface TreemapProps {
   modules: BundleModule[];
@@ -25,11 +24,14 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }
 
-export function Treemap({ modules, width = 600, height = 400 }: TreemapProps) {
+// Memoized Treemap to prevent unnecessary re-renders
+function TreemapComponent({ modules, width = 600, height = 400 }: TreemapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; content: BundleModule | null }>({ x: 0, y: 0, content: null });
-  const { resolvedMode } = useThemeStore();
-  const isDark = resolvedMode === 'dark';
+  // Get theme from document to avoid store subscription
+  const isDark = typeof document !== 'undefined' 
+    ? document.documentElement.classList.contains('dark')
+    : true;
 
   useEffect(() => {
     if (!svgRef.current || modules.length === 0) return;
@@ -43,8 +45,11 @@ export function Treemap({ modules, width = 600, height = 400 }: TreemapProps) {
     const textColor = isDark ? '#c9d1d9' : '#24292f';
     const textMutedColor = isDark ? '#8b949e' : '#57606a';
 
+    // Limit modules to prevent performance issues (show top 100 largest)
+    const sortedModules = [...modules].sort((a, b) => b.size - a.size).slice(0, 100);
+
     // Prepare data
-    const root = d3.hierarchy<TreemapDatum>({ children: modules })
+    const root = d3.hierarchy<TreemapDatum>({ children: sortedModules })
       .sum((d) => 'size' in d ? (d as unknown as BundleModule).size : 0)
       .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
 
@@ -142,3 +147,5 @@ export function Treemap({ modules, width = 600, height = 400 }: TreemapProps) {
     </div>
   );
 }
+
+export const Treemap = memo(TreemapComponent);
