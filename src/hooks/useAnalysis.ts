@@ -25,8 +25,8 @@ export function useAnalysis(): UseAnalysisReturn {
     options?: AnalysisOptions
   ) => {
     // Merge template options with provided options or store options
-    const templateOptions = templateStore.currentTemplate?.options || {};
-    const baseOptions = options || store.options;
+    const templateOptions = templateStore.currentTemplate.options;
+    const baseOptions = options ?? store.options;
     const analysisOptions = { ...baseOptions, ...templateOptions };
     
     setIsAnalyzing(true);
@@ -35,22 +35,32 @@ export function useAnalysis(): UseAnalysisReturn {
 
     try {
       // Validate files before sending
-      if (!files || files.length === 0) {
+      if (files.length === 0) {
         throw new Error('No files provided for analysis');
       }
 
       // Map files and validate content
-      const mappedFiles = files.map(f => ({
+      const mappedFiles: UploadedFile[] = files.map((f, index) => ({
+        id: `${f.name}-${index}`,
         name: f.name, 
         content: f.content || '', 
-        size: f.size 
+        size: f.size,
+        type: f.type || 'text/plain',
+        path: f.name
       }));
       
       const report = await runAnalysis(
         mappedFiles,
         analysisOptions,
-        (progress: AnalysisProgress) => {
-          store.setProgress(progress);
+        {
+          onProgress: (_stage, progress) => {
+            store.setProgress({
+              stage: _stage,
+              progress,
+              message: `Analyzing ${_stage}...`,
+              timestamp: Date.now()
+            } as AnalysisProgress);
+          }
         }
       );
 
@@ -82,7 +92,7 @@ export function useAnalysis(): UseAnalysisReturn {
     } finally {
       setIsAnalyzing(false);
     }
-  }, [store, templateStore.currentTemplate?.options, trendStore]);
+  }, [store, templateStore.currentTemplate.options, trendStore]);
 
   const cancel = useCallback(() => {
     store.setStatus('idle');

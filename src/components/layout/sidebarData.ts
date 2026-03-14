@@ -28,6 +28,8 @@ import {
   TrendingUp,
   Terminal,
   Code2,
+  Waves,
+  FileCheck,
 } from 'lucide-react';
 
 export const sections: { 
@@ -63,6 +65,8 @@ export const sections: {
   { id: 'trends', label: 'Trends', icon: TrendingUp, shortcut: '' },
   { id: 'cicd', label: 'CI/CD Config', icon: Terminal, shortcut: '' },
   { id: 'playground', label: 'Code Playground', icon: Code2, shortcut: '' },
+  { id: 'waterfall', label: 'Waterfall', icon: Waves, shortcut: '' },
+  { id: 'eslint', label: 'ESLint Config', icon: FileCheck, shortcut: '' },
 ];
 
 export const getSectionIndex = (sectionId: AnalysisSection): number => {

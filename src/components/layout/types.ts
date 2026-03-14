@@ -25,4 +25,6 @@ export type AnalysisSection =
   | 'compare'
   | 'trends'
   | 'cicd'
-  | 'playground';
+  | 'playground'
+  | 'waterfall'
+  | 'eslint';

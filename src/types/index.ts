@@ -526,6 +526,9 @@ export interface UploadedFile {
   path: string;
 }
 
+/** Alias for UploadedFile for backward compatibility */
+export type InputFile = UploadedFile;
+
 // Project Types
 export interface Project {
   id: string;

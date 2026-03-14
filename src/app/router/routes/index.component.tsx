@@ -32,6 +32,8 @@ import { TrendDashboard } from '@/components/trends/TrendDashboard';
 import { GraphSection } from '@/components/graph';
 import { CICDConfigGenerator } from '@/components/cicd';
 import { CodePlayground } from '@/components/playground';
+import { WaterfallSection } from '@/components/report/WaterfallSection';
+import { ESLintSection } from '@/components/report/ESLintSection';
 import { ProjectsList, CreateProjectDialog, ProjectDetail } from '@/components/projects';
 import { SectionErrorBoundary } from '@/components/ui/SectionErrorBoundary';
 import type { AnalysisSection } from '@/components/layout/types';
@@ -52,7 +54,7 @@ import toast from 'react-hot-toast';
 import { ThemeToggleSimple } from '@/components/ui/ThemeToggle';
 
 // Static background - no animations to prevent memory issues
-function StaticBackground() {
+function StaticBackground(): JSX.Element {
   return (
     <div 
       className="fixed inset-0 pointer-events-none opacity-30"
@@ -77,7 +79,7 @@ function FeatureCard({
   description: string;
   gradient: string;
   delay?: number;
-}) {
+}): JSX.Element {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -129,7 +131,7 @@ function FeatureCard({
 }
 
 // Animated Counter using requestAnimationFrame
-function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: string }) {
+function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: string }): JSX.Element {
   const [displayValue, setDisplayValue] = useState(0);
   const frameRef = useRef<number | undefined>(undefined);
 
@@ -138,7 +140,7 @@ function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: strin
     const startTime = performance.now();
     const startValue = 0;
 
-    const animate = (currentTime: number) => {
+    const animate = (currentTime: number): void => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
@@ -155,7 +157,7 @@ function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: strin
     frameRef.current = requestAnimationFrame(animate);
 
     return () => {
-      if (frameRef.current) {
+      if (frameRef.current != null) {
         cancelAnimationFrame(frameRef.current);
       }
     };
@@ -170,7 +172,7 @@ function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: strin
 }
 
 // Stats Bar
-function StatsBar() {
+function StatsBar(): JSX.Element {
   const stats = [
     { icon: Gauge, value: 16, suffix: '+', label: 'Analyzers' },
     { icon: Layers, value: 50, suffix: '+', label: 'Metrics' },
@@ -196,7 +198,7 @@ function StatsBar() {
 }
 
 // Modern Hero Section
-function HeroSection({ onNavigateToProjects }: { onNavigateToProjects: () => void }) {
+function HeroSection({ onNavigateToProjects }: { onNavigateToProjects: () => void }): JSX.Element {
   return (
     <div className="relative text-center mb-8 pt-16">
       <div className="absolute top-4 right-0 z-20">
@@ -321,8 +323,8 @@ function AnalysisProgress({
   progress,
 }: {
   progress: { message: string; progress: number } | null;
-}) {
-  const progressValue = progress?.progress || 0;
+}): JSX.Element {
+  const progressValue = progress?.progress ?? 0;
 
   // Get current message based on progress
   const messageIndex = Math.min(
@@ -375,7 +377,7 @@ function AnalysisProgress({
   );
 }
 
-function NoData({ section }: { section: string }) {
+function NoData({ section }: { section: string }): JSX.Element {
   return (
     <div className="flex flex-col items-center justify-center h-64 text-center">
       <div className="w-16 h-16 rounded-2xl bg-(--dev-surface) flex items-center justify-center mb-4">
@@ -395,7 +397,7 @@ type ViewState =
   | { type: 'project'; projectId: string }
   | { type: 'report'; projectId: string; reportId: string };
 
-export function IndexComponent() {
+export function IndexComponent(): JSX.Element {
   const [activeSection, setActiveSection] = useState<AnalysisSection>('overview');
   const [viewState, setViewState] = useState<ViewState>({ type: 'home' });
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -434,24 +436,24 @@ export function IndexComponent() {
   });
 
   useEffect(() => {
-    if (error) {
+    if (error != null && error !== '') {
       toast.error(error, { duration: 5000 });
     }
   }, [error]);
 
-  const handleCreateProject = (name: string, description?: string) => {
+  const handleCreateProject = (name: string, description?: string): void => {
     const id = createProject(name, description);
     setViewState({ type: 'project', projectId: id });
   };
 
-  const handleOpenProject = (projectId: string) => {
+  const handleOpenProject = (projectId: string): void => {
     loadProject(projectId);
     setViewState({ type: 'project', projectId });
   };
 
-  const handleViewReport = async (reportId: string, projectId?: string) => {
+  const handleViewReport = async (reportId: string, projectId?: string): Promise<void> => {
     // Load the project and find the report
-    const targetProjectId = projectId || (viewState.type === 'project' ? viewState.projectId : null);
+    const targetProjectId = projectId ?? (viewState.type === 'project' ? viewState.projectId : null);
     if (!targetProjectId) return;
     
     // Load project data
@@ -470,7 +472,7 @@ export function IndexComponent() {
     setViewState({ type: 'report', projectId: targetProjectId, reportId });
   };
 
-  const handleBackFromReport = () => {
+  const handleBackFromReport = (): void => {
     // Clear current report when going back
     useAnalysisStore.setState({ currentReport: null });
     if (viewState.type === 'report') {
@@ -478,11 +480,11 @@ export function IndexComponent() {
     }
   };
 
-  const handleBackToProjects = () => {
+  const handleBackToProjects = (): void => {
     setViewState({ type: 'projects' });
   };
 
-  const renderContent = () => {
+  const renderContent = (): JSX.Element | null => {
     // Analysis in progress
     if (isAnalyzing) {
       return (
@@ -533,7 +535,7 @@ export function IndexComponent() {
     }
 
     // Report view
-    if (viewState.type === 'report' && currentReport) {
+    if (viewState.type === 'report' && currentReport != null) {
       return (
         <div className="bg-(--dev-bg)">
           {/* Back button and report info */}
@@ -688,6 +690,10 @@ export function IndexComponent() {
                     <CodePlayground />
                   </SectionErrorBoundary>
                 );
+              case 'waterfall':
+                return <WaterfallSection />;
+              case 'eslint':
+                return <ESLintSection />;
               default:
                 return null;
             }
@@ -718,7 +724,7 @@ export function IndexComponent() {
         <Sidebar
           activeSection={activeSection}
           onSectionChange={setActiveSection}
-          hasReport={!!currentReport}
+          hasReport={currentReport != null}
         />
       )}
       <main

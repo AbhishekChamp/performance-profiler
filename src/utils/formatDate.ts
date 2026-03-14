@@ -55,7 +55,7 @@ export function formatDate(
   }
 }
 
-function formatRelativeTime(date: Date, locale: Locale): string {
+export function formatRelativeTime(date: Date, locale: Locale = 'en-US'): string {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 

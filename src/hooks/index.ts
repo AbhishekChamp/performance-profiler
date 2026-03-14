@@ -12,3 +12,5 @@ export {
   usePrefersReducedMotion 
 } from './useMediaQuery';
 export { useDebounce, useDebouncedCallback } from './useDebounce';
+export { useCelebration } from './useCelebration';
+export { useScrollReveal, useStaggeredReveal, useParallax } from './useScrollReveal';

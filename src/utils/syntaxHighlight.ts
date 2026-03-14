@@ -135,8 +135,16 @@ function highlightBash(code: string): string {
 
 /**
  * Main highlight function
+ * Alias: syntaxHighlight for backward compatibility
  */
 export function highlightCode(code: string, language: Language): string {
+  return syntaxHighlight(code, language);
+}
+
+/**
+ * Syntax highlighting function (alias for highlightCode)
+ */
+export function syntaxHighlight(code: string, language: Language): string {
   switch (language) {
     case 'yaml':
       return highlightYAML(code);

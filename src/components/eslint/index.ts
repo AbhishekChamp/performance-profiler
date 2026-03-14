@@ -1,0 +1,1 @@
+export { ESLintConfigGenerator } from './ESLintConfigGenerator';
