@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Package, Code2, Zap, Accessibility } from 'lucide-react';
+import { Accessibility, Code2, Package, TrendingUp, Zap } from 'lucide-react';
 import type { PlaygroundAnalysis } from '@/types/playground';
 
 interface ScoreComparisonProps {
@@ -21,7 +21,7 @@ function MetricCard({
   unit?: string;
   icon: React.ElementType;
   reverse?: boolean;
-}) {
+}): React.ReactNode {
   const improvement = reverse 
     ? before - after 
     : after - before;
@@ -56,7 +56,7 @@ function MetricCard({
   );
 }
 
-function ScoreRing({ score, size = 60 }: { score: number; size?: number }) {
+function ScoreRing({ score, size = 60 }: { score: number; size?: number }): React.ReactNode {
   const circumference = 2 * Math.PI * ((size - 8) / 2);
   const strokeDashoffset = circumference - (score / 100) * circumference;
   
@@ -98,7 +98,7 @@ function ScoreRing({ score, size = 60 }: { score: number; size?: number }) {
   );
 }
 
-export function ScoreComparison({ analysis }: ScoreComparisonProps) {
+export function ScoreComparison({ analysis }: ScoreComparisonProps): React.ReactNode {
   const [showDetails, setShowDetails] = useState(false);
   
   const hasImprovement = analysis.score.improvement > 0;

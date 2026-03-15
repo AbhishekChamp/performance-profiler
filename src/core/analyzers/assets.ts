@@ -1,4 +1,4 @@
-import type { AssetAnalysis, Asset, AssetBreakdown } from '@/types';
+import type { Asset, AssetAnalysis, AssetBreakdown } from '@/types';
 
 const TYPE_MAP: Record<string, string> = {
   '.js': 'javascript',
@@ -74,16 +74,14 @@ export function analyzeAssets(
   // Group by type
   const byType: Record<string, Asset[]> = {};
   for (const asset of assets) {
-    if (!byType[asset.type]) {
-      byType[asset.type] = [];
-    }
+    byType[asset.type] ??= [];
     byType[asset.type].push(asset);
   }
 
   // Sort each type by size
-  for (const type of Object.keys(byType)) {
-    byType[type].sort((a, b) => b.size - a.size);
-  }
+  Object.values(byType).forEach(typeAssets => {
+    typeAssets.sort((a, b) => b.size - a.size);
+  });
 
   return {
     breakdown,

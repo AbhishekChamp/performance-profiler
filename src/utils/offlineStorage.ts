@@ -1,4 +1,4 @@
-import { get, set, del, keys } from 'idb-keyval';
+import { del, get, keys, set } from 'idb-keyval';
 import type { AnalysisReport } from '@/types';
 
 // Storage keys
@@ -33,7 +33,7 @@ interface PendingAnalysis {
  */
 export async function getStoredReportMetadata(): Promise<ReportMetadata[]> {
   const metadata = await get<ReportMetadata[]>(STORAGE_KEYS.REPORT_METADATA);
-  return metadata || [];
+  return metadata ?? [];
 }
 
 /**
@@ -41,7 +41,7 @@ export async function getStoredReportMetadata(): Promise<ReportMetadata[]> {
  */
 export async function getStoredReport(id: string): Promise<AnalysisReport | null> {
   const report = await get<AnalysisReport>(`${STORAGE_KEYS.REPORTS}:${id}`);
-  return report || null;
+  return report ?? null;
 }
 
 /**
@@ -172,7 +172,7 @@ export async function getStorageStats(): Promise<{
     totalReports: metadata.length,
     pinnedReports: metadata.filter(m => m.isPinned).length,
     totalSize,
-    lastSync: await get<number>(STORAGE_KEYS.LAST_SYNC) || null,
+    lastSync: await get<number>(STORAGE_KEYS.LAST_SYNC) ?? null,
     isFull: metadata.length >= MAX_REPORTS && metadata.every(m => m.isPinned),
   };
 }
@@ -184,7 +184,7 @@ export async function queuePendingAnalysis(
   files: { name: string; content: string; size: number }[],
   options: Record<string, boolean>
 ): Promise<string> {
-  const pending = await get<PendingAnalysis[]>(STORAGE_KEYS.PENDING_ANALYSES) || [];
+  const pending = await get<PendingAnalysis[]>(STORAGE_KEYS.PENDING_ANALYSES) ?? [];
   
   const analysis: PendingAnalysis = {
     id: `pending-${Date.now()}`,
@@ -203,14 +203,14 @@ export async function queuePendingAnalysis(
  * Get all pending analyses
  */
 export async function getPendingAnalyses(): Promise<PendingAnalysis[]> {
-  return await get<PendingAnalysis[]>(STORAGE_KEYS.PENDING_ANALYSES) || [];
+  return await get<PendingAnalysis[]>(STORAGE_KEYS.PENDING_ANALYSES) ?? [];
 }
 
 /**
  * Remove a pending analysis from the queue
  */
 export async function removePendingAnalysis(id: string): Promise<void> {
-  const pending = await get<PendingAnalysis[]>(STORAGE_KEYS.PENDING_ANALYSES) || [];
+  const pending = await get<PendingAnalysis[]>(STORAGE_KEYS.PENDING_ANALYSES) ?? [];
   const updated = pending.filter(p => p.id !== id);
   await set(STORAGE_KEYS.PENDING_ANALYSES, updated);
 }
@@ -270,8 +270,8 @@ export async function getStorageQuota(): Promise<{
     try {
       const estimate = await navigator.storage.estimate();
       return {
-        usage: estimate.usage || 0,
-        quota: estimate.quota || 0,
+        usage: estimate.usage ?? 0,
+        quota: estimate.quota ?? 0,
       };
     } catch (error) {
       console.error('[Storage] Error getting quota:', error);

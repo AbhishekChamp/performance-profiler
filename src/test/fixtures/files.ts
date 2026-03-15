@@ -1,4 +1,4 @@
-import type { AnalyzedFile, AnalysisReport } from '@/types';
+import type { AnalysisReport, AnalyzedFile } from '@/types';
 
 export const mockHtmlFile: AnalyzedFile = {
   name: 'index.html',

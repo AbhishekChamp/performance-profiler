@@ -1,5 +1,5 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useCallback, useEffect, useRef } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { Button } from './Button';
 
@@ -27,7 +27,7 @@ export function Modal({
   closeOnOverlayClick = true,
   closeOnEscape = true,
   footer,
-}: ModalProps) {
+}: ModalProps): React.JSX.Element | null {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<Element | null>(null);
 
@@ -64,12 +64,12 @@ export function Modal({
       if (event.shiftKey) {
         if (document.activeElement === firstElement) {
           event.preventDefault();
-          lastElement?.focus();
+          lastElement.focus();
         }
       } else {
         if (document.activeElement === lastElement) {
           event.preventDefault();
-          firstElement?.focus();
+          firstElement.focus();
         }
       }
     },
@@ -137,20 +137,20 @@ export function Modal({
               transition={{ duration: 0.2 }}
               role="dialog"
               aria-modal="true"
-              aria-labelledby={title ? 'modal-title' : undefined}
-              aria-describedby={description ? 'modal-description' : undefined}
+              aria-labelledby={title != null ? 'modal-title' : undefined}
+              aria-describedby={description != null ? 'modal-description' : undefined}
               className={`w-full ${sizeClasses[size]} bg-dev-surface border border-dev-border rounded-xl shadow-2xl pointer-events-auto`}
             >
               {/* Header */}
-              {(title || showCloseButton) && (
+              {(title != null || showCloseButton) && (
                 <div className="flex items-center justify-between px-6 py-4 border-b border-dev-border">
                   <div>
-                    {title && (
+                    {title != null && (
                       <h2 id="modal-title" className="text-lg font-semibold text-dev-text">
                         {title}
                       </h2>
                     )}
-                    {description && (
+                    {description != null && (
                       <p id="modal-description" className="text-sm text-dev-text-muted mt-1">
                         {description}
                       </p>
@@ -173,7 +173,7 @@ export function Modal({
               <div className="px-6 py-4">{children}</div>
 
               {/* Footer */}
-              {footer && (
+              {footer != null && (
                 <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-dev-border bg-dev-bg/50 rounded-b-xl">
                   {footer}
                 </div>

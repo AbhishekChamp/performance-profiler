@@ -1,6 +1,6 @@
-import { useBudgetStore, checkBudget } from '@/stores/budgetStore';
+import { checkBudget, useBudgetStore } from '@/stores/budgetStore';
 import type { AnalysisReport } from '@/types';
-import { DollarSign, Download, Upload, AlertTriangle, CheckCircle, RotateCcw } from 'lucide-react';
+import { AlertTriangle, CheckCircle, DollarSign, Download, RotateCcw, Upload } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 
 interface BudgetSettingsProps {
@@ -12,13 +12,13 @@ function formatBytes(bytes: number): string {
   const k = 1024;
   const sizes = ['B', 'KB', 'MB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i] ?? 'B'}`;
 }
 
-export function BudgetSettings({ report }: BudgetSettingsProps) {
+export function BudgetSettings({ report }: BudgetSettingsProps): React.ReactNode {
   const { budget, setBudget, resetBudget, exportBudget, importBudget } = useBudgetStore();
 
-  const handleExport = useCallback(() => {
+  const handleExport = useCallback((): void => {
     const json = exportBudget();
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -29,12 +29,12 @@ export function BudgetSettings({ report }: BudgetSettingsProps) {
     URL.revokeObjectURL(url);
   }, [exportBudget]);
 
-  const handleImport = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImport = useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (file !== undefined) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        if (event.target?.result) {
+        if (event.target?.result !== undefined && event.target.result !== '') {
           importBudget(event.target.result as string);
         }
       };
@@ -43,7 +43,7 @@ export function BudgetSettings({ report }: BudgetSettingsProps) {
   }, [importBudget]);
 
   const budgetStatuses = useMemo(() => {
-    if (!report) return [];
+    if (report === undefined) return [];
     const result = checkBudget(budget, {
       bundleSize: report.bundle?.totalSize,
       imageSize: report.images?.totalSize,

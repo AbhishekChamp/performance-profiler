@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { formatDate, formatRelativeTime, formatDuration } from '../formatDate';
+import { describe, expect, it } from 'vitest';
+import { formatDate, formatDuration, formatRelativeTime } from '../formatDate';
 
 describe('formatDate', () => {
   it('should format date to readable string', () => {

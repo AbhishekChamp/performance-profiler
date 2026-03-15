@@ -52,7 +52,7 @@ function isVendorModule(name: string): boolean {
 function getModuleName(path: string): string {
   // Extract package name from path
   const match = path.match(/node_modules\/(@[^/]+\/[^/]+|[^/]+)/);
-  return match ? match[1] : path.split('/').pop() || path;
+  return match ? match[1] : path.split('/').pop() ?? path;
 }
 
 export function analyzeBundle(
@@ -120,7 +120,7 @@ export function analyzeBundle(
 
   // Calculate totals
   const totalSize = modules.reduce((sum, m) => sum + m.size, 0);
-  const gzippedSize = modules.reduce((sum, m) => sum + (m.gzippedSize || 0), 0);
+  const gzippedSize = modules.reduce((sum, m) => sum + (m.gzippedSize ?? 0), 0);
   
   // Calculate vendor size
   const vendorModules = modules.filter(m => m.type === 'vendor');
@@ -143,9 +143,12 @@ export function analyzeBundle(
       librarySizes.set(baseName, 0);
     }
     
-    const version = dependencies[baseName] || 'unknown';
-    libraryVersions.get(baseName)!.add(version);
-    librarySizes.set(baseName, librarySizes.get(baseName)! + module.size);
+    // Extract version from module name (e.g., "lodash@4.17.0" -> "4.17.0")
+    // or fall back to package.json dependencies
+    const versionMatch = module.name.match(/@([\d.]+)$/);
+    const version = versionMatch ? versionMatch[1] : (dependencies[baseName] ?? 'unknown');
+    libraryVersions.get(baseName)?.add(version);
+    librarySizes.set(baseName, (librarySizes.get(baseName) ?? 0) + module.size);
   }
 
   const duplicateLibraries: DuplicateLibrary[] = [];
@@ -155,7 +158,7 @@ export function analyzeBundle(
         name,
         versions: [...versions],
         instances: versions.size,
-        totalSize: librarySizes.get(name) || 0,
+        totalSize: librarySizes.get(name) ?? 0,
       });
     }
   }

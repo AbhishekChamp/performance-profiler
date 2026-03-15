@@ -26,7 +26,7 @@ export function Gauge({
   showValue = true,
   label,
   animate = true,
-}: GaugeProps): JSX.Element {
+}: GaugeProps): React.ReactNode {
   const [animatedValue, setAnimatedValue] = useState(() => {
     const prefersReducedMotion = typeof window !== 'undefined' 
       ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 

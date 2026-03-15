@@ -54,7 +54,7 @@ interface HARExportProps {
   fileName?: string;
 }
 
-export function HARExport({ data, fileName = 'waterfall' }: HARExportProps): JSX.Element {
+export function HARExport({ data, fileName = 'waterfall' }: HARExportProps): React.ReactNode {
   const generateHAR = (): HARFile => {
     const now = new Date().toISOString();
     

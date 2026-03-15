@@ -31,7 +31,7 @@ export function ScoreRing({
   label,
   animate = true,
   glowOnHighScore = true,
-}: ScoreRingProps): JSX.Element {
+}: ScoreRingProps): React.ReactNode {
   const [animatedScore, setAnimatedScore] = useState(() => {
     const prefersReducedMotion = typeof window !== 'undefined' 
       ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
@@ -171,7 +171,7 @@ export function MiniScoreRing({
   score,
   size = 24,
   strokeWidth = 3,
-}: MiniScoreRingProps): JSX.Element {
+}: MiniScoreRingProps): React.ReactNode {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const color = getScoreColor(score);

@@ -1,4 +1,4 @@
-import type { PlaygroundLanguage, OptimizationPreset, CodeTransformation } from '@/types/playground';
+import type { CodeTransformation, OptimizationPreset, PlaygroundLanguage } from '@/types/playground';
 
 // Optimization presets
 export const OPTIMIZATION_PRESETS: OptimizationPreset[] = [
@@ -8,8 +8,8 @@ export const OPTIMIZATION_PRESETS: OptimizationPreset[] = [
     description: 'Add loading="lazy" to all images without it',
     icon: 'image',
     appliesTo: ['html'],
-    transform: (code: string) => {
-      return code.replace(/<img(?![^>]*loading=)[^>]*>/g, (match) => {
+    transform: (code: string): string => {
+      return code.replace(/<img(?![^>]*loading=)[^>]*>/g, (match): string => {
         if (match.endsWith('/>')) {
           return match.replace('/>', ' loading="lazy" />');
         }
@@ -23,8 +23,8 @@ export const OPTIMIZATION_PRESETS: OptimizationPreset[] = [
     description: 'Add alt attributes to images missing them',
     icon: 'accessibility',
     appliesTo: ['html'],
-    transform: (code: string) => {
-      return code.replace(/<img(?![^>]*alt=)[^>]*>/g, (match) => {
+    transform: (code: string): string => {
+      return code.replace(/<img(?![^>]*alt=)[^>]*>/g, (match): string => {
         if (match.endsWith('/>')) {
           return match.replace('/>', ' alt="Image description" />');
         }
@@ -38,7 +38,7 @@ export const OPTIMIZATION_PRESETS: OptimizationPreset[] = [
     description: 'Remove all console.log statements',
     icon: 'terminal',
     appliesTo: ['javascript', 'typescript', 'tsx'],
-    transform: (code: string) => {
+    transform: (code: string): string => {
       return code
         .replace(/console\.(log|warn|error|info|debug)\([^)]*\);?\s*\n?/g, '')
         .replace(/\n\s*\n/g, '\n'); // Remove empty lines
@@ -50,14 +50,14 @@ export const OPTIMIZATION_PRESETS: OptimizationPreset[] = [
     description: 'Convert full lodash import to specific modules',
     icon: 'package',
     appliesTo: ['javascript', 'typescript', 'tsx'],
-    transform: (code: string) => {
+    transform: (code: string): string => {
       // Replace full lodash import with specific imports
       if (code.includes("import _ from 'lodash'") || code.includes('import _ from "lodash"')) {
         // Extract used lodash methods (simplified)
         const usedMethods = ['merge', 'clone', 'isEqual']; // Default for demo
-        const imports = usedMethods.map(m => `import ${m} from 'lodash/${m}';`).join('\n');
+        const imports = usedMethods.map((m): string => `import ${m} from 'lodash/${m}';`).join('\n');
         return code
-          .replace(/import _ from ['"]lodash['"];?\n?/g, imports + '\n')
+          .replace(/import _ from ['"]lodash['"];?\n?/g, `${imports  }\n`)
           .replace(/_\.(merge|clone|isEqual)/g, '$1');
       }
       return code;
@@ -69,10 +69,10 @@ export const OPTIMIZATION_PRESETS: OptimizationPreset[] = [
     description: 'Add font-display: swap to @font-face rules',
     icon: 'type',
     appliesTo: ['css', 'scss'],
-    transform: (code: string) => {
+    transform: (code: string): string => {
       return code.replace(
         /@font-face\s*{([^}]*)}/g,
-        (match, content) => {
+        (match: string, content: string): string => {
           if (!content.includes('font-display')) {
             return match.replace('}', '  font-display: swap;\n}');
           }
@@ -87,7 +87,7 @@ export const OPTIMIZATION_PRESETS: OptimizationPreset[] = [
     description: 'Remove comments and whitespace from CSS',
     icon: 'zap',
     appliesTo: ['css', 'scss'],
-    transform: (code: string) => {
+    transform: (code: string): string => {
       return code
         .replace(/\/\*[\s\S]*?\*\//g, '') // Remove comments
         .replace(/\n\s*\n/g, '\n') // Remove empty lines
@@ -101,7 +101,7 @@ export const OPTIMIZATION_PRESETS: OptimizationPreset[] = [
     description: 'Add async attribute to non-critical scripts',
     icon: 'code',
     appliesTo: ['html'],
-    transform: (code: string) => {
+    transform: (code: string): string => {
       return code.replace(
         /<script(?![^>]*\b(async|defer|type="module"))([^>]*)>/g,
         '<script async$2>'
@@ -114,7 +114,7 @@ export const OPTIMIZATION_PRESETS: OptimizationPreset[] = [
     description: 'Convert var to const/let',
     icon: 'refresh-cw',
     appliesTo: ['javascript', 'typescript', 'tsx'],
-    transform: (code: string) => {
+    transform: (code: string): string => {
       return code
         .replace(/\bvar\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=/g, 'const $1 =')
         .replace(/function\s*\(([a-zA-Z_$][a-zA-Z0-9_$\s,]*)\)\s*{/g, '($1) => {');
@@ -124,7 +124,7 @@ export const OPTIMIZATION_PRESETS: OptimizationPreset[] = [
 
 // Get applicable presets for a language
 export function getApplicablePresets(language: PlaygroundLanguage): OptimizationPreset[] {
-  return OPTIMIZATION_PRESETS.filter(preset => 
+  return OPTIMIZATION_PRESETS.filter((preset): boolean => 
     preset.appliesTo.includes(language)
   );
 }
@@ -132,7 +132,7 @@ export function getApplicablePresets(language: PlaygroundLanguage): Optimization
 // Apply a preset transformation
 export function applyPreset(code: string, presetId: string, language: PlaygroundLanguage): string {
   const preset = OPTIMIZATION_PRESETS.find(p => p.id === presetId);
-  if (!preset || !preset.appliesTo.includes(language)) {
+  if (preset?.appliesTo.includes(language) !== true) {
     return code;
   }
   return preset.transform(code);
@@ -140,7 +140,7 @@ export function applyPreset(code: string, presetId: string, language: Playground
 
 // Apply multiple presets
 export function applyPresets(code: string, presetIds: string[], language: PlaygroundLanguage): string {
-  return presetIds.reduce((result, presetId) => {
+  return presetIds.reduce((result, presetId): string => {
     return applyPreset(result, presetId, language);
   }, code);
 }
@@ -198,8 +198,10 @@ export function createPatch(filename: string, original: string, modified: string
     const oldLine = originalLines[i];
     const newLine = modifiedLines[i];
     
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (oldLine === undefined) {
       patch += `+${newLine}\n`;
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     } else if (newLine === undefined) {
       patch += `-${oldLine}\n`;
     } else if (oldLine !== newLine) {
@@ -220,8 +222,8 @@ export function generateCommitMessage(appliedPresets: string[]): string {
   }
   
   if (appliedPresets.length === 1) {
-    const preset = OPTIMIZATION_PRESETS.find(p => p.id === appliedPresets[0]);
-    return `perf: ${preset?.name.toLowerCase() || 'optimize code'}`;
+    const preset = OPTIMIZATION_PRESETS.find((p): boolean => p.id === appliedPresets[0]);
+    return `perf: ${preset?.name.toLowerCase() ?? 'optimize code'}`;
   }
   
   return `perf: apply ${appliedPresets.length} optimizations`;

@@ -1,5 +1,5 @@
 import type { MemoryAnalysis } from '@/types';
-import { Brain, AlertTriangle, AlertCircle, CheckCircle, Zap } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Brain, CheckCircle, Zap } from 'lucide-react';
 
 interface MemorySectionProps {
   memory: MemoryAnalysis;
@@ -13,7 +13,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }
 
-function getSeverityIcon(severity: string) {
+function getSeverityIcon(severity: string): React.ReactNode {
   switch (severity) {
     case 'high':
       return <AlertTriangle className="w-4 h-4 text-red-400" />;
@@ -37,7 +37,7 @@ function getTypeLabel(type: string): string {
   return labels[type] || type;
 }
 
-export function MemorySection({ memory }: MemorySectionProps) {
+export function MemorySection({ memory }: MemorySectionProps): React.ReactNode {
   const { estimatedHeapSize, leakRisks, highRiskCount, mediumRiskCount, recommendations } = memory;
 
   return (

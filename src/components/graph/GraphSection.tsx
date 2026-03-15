@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ReactFlowProvider } from '@xyflow/react';
-import { Layers, AlertTriangle, Package, GitCommit, Maximize2, Minimize2 } from 'lucide-react';
+import { AlertTriangle, GitCommit, Layers, Maximize2, Minimize2, Package } from 'lucide-react';
 import { DependencyGraph } from './DependencyGraph';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { buildDependencyGraph, calculateGraphStats } from '@/core/graph';
 import { Button } from '@/components/ui/Button';
 import { SectionErrorBoundary } from '@/components/ui/SectionErrorBoundary';
 
-export function GraphSection() {
+export function GraphSection(): React.ReactNode {
   const { currentReport } = useAnalysisStore();
   const [isFullscreen, setIsFullscreen] = useState(false);
   

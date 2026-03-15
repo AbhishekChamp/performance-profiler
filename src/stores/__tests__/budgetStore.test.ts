@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { useBudgetStore, checkBudget } from '../budgetStore';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { checkBudget, useBudgetStore } from '../budgetStore';
 
 describe('BudgetStore', () => {
   beforeEach(() => {

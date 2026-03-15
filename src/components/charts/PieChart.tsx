@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, memo } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
 interface PieData {
@@ -19,7 +19,7 @@ function PieChartComponent({
   width = 280, 
   height = 280,
   innerRadius = 0.6 
-}: PieChartProps) {
+}: PieChartProps): React.JSX.Element {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoveredSlice, setHoveredSlice] = useState<PieData | null>(null);
   const isDark = typeof document !== 'undefined' 

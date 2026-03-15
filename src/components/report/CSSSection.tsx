@@ -1,14 +1,14 @@
 import { BarChart } from '../charts/BarChart';
 import type { CSSAnalysis } from '@/types';
-import { Palette, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Palette } from 'lucide-react';
 
 interface CSSSectionProps {
   css: CSSAnalysis;
 }
 
-export function CSSSection({ css }: CSSSectionProps) {
+export function CSSSection({ css }: CSSSectionProps): React.ReactNode {
   const fileData = css.largeFiles.map(f => ({
-    label: f.path.split('/').pop() || f.path,
+    label: f.path.split('/').pop() ?? f.path,
     value: f.size,
     color: f.size > 200 * 1024 ? '#f85149' : f.size > 100 * 1024 ? '#d29922' : '#58a6ff',
   }));
@@ -71,7 +71,7 @@ export function CSSSection({ css }: CSSSectionProps) {
                 }`} />
                 <div>
                   <p className="text-sm text-dev-text">{warning.message}</p>
-                  {warning.selector && (
+                  {warning.selector != null && warning.selector !== '' && (
                     <code className="text-xs text-dev-text-muted mt-1 block">{warning.selector}</code>
                   )}
                 </div>

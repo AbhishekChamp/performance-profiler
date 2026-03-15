@@ -1,4 +1,4 @@
-import type { TypeScriptAnalysis, TypeScriptIssue, TSConfigCheck } from '@/types';
+import type { TSConfigCheck, TypeScriptAnalysis, TypeScriptIssue } from '@/types';
 
 export function analyzeTypeScript(
   files: { name: string; content: string }[],
@@ -105,14 +105,14 @@ export function analyzeTypeScript(
   // Analyze tsconfig.json
   let strictMode = false;
 
-  if (tsConfigContent) {
+  if (tsConfigContent !== undefined && tsConfigContent !== '') {
     try {
-      const tsConfig = JSON.parse(tsConfigContent);
-      const compilerOptions = tsConfig.compilerOptions || {};
+      const tsConfig = JSON.parse(tsConfigContent) as { compilerOptions?: Record<string, unknown> };
+      const compilerOptions = tsConfig.compilerOptions ?? {};
 
       // Check strict mode and related options
       const strictChecks = [
-        { option: 'strict', value: compilerOptions.strict },
+        { option: 'strict', value: compilerOptions.strict as boolean | undefined },
         { option: 'noImplicitAny', value: compilerOptions.noImplicitAny },
         { option: 'strictNullChecks', value: compilerOptions.strictNullChecks },
         { option: 'noImplicitReturns', value: compilerOptions.noImplicitReturns },
@@ -129,20 +129,20 @@ export function analyzeTypeScript(
           option: check.option,
           enabled: check.value === true,
           recommended: true,
-          severity: check.option === 'strict' && !check.value ? 'error' :
-                    check.option === 'noImplicitAny' && !check.value ? 'warning' : 'info',
+          severity: check.option === 'strict' && check.value !== true ? 'error' :
+                    check.option === 'noImplicitAny' && check.value !== true ? 'warning' : 'info',
         });
       }
 
-      if (!strictMode) {
+      if (strictMode !== true) {
         recommendations.push('Enable "strict": true in tsconfig.json for better type safety');
       }
 
-      if (!compilerOptions.noImplicitAny) {
+      if (compilerOptions.noImplicitAny !== true) {
         recommendations.push('Enable "noImplicitAny" to catch implicit any types');
       }
 
-      if (!compilerOptions.strictNullChecks) {
+      if (compilerOptions.strictNullChecks !== true) {
         recommendations.push('Enable "strictNullChecks" for null/undefined safety');
       }
     } catch {
@@ -167,15 +167,13 @@ export function analyzeTypeScript(
 
   // Detect unused types (simple heuristic - types defined but not used in same file)
   for (const file of tsFiles) {
-    const typeDefinitions = file.content.match(/type\s+(\w+)\s*=/g) || [];
-    // Track interface definitions for future use
-    void file.content.match(/interface\s+(\w+)\s*\{/g);
+    const typeDefinitions = file.content.match(/type\s+(\w+)\s*=/g) ?? [];
 
     for (const typeDef of typeDefinitions) {
       const typeName = typeDef.match(/type\s+(\w+)/)?.[1];
-      if (typeName) {
+      if (typeName !== undefined && typeName !== '') {
         const usageRegex = new RegExp(`\\b${typeName}\\b`, 'g');
-        const usages = (file.content.match(usageRegex) || []).length;
+        const usages = (file.content.match(usageRegex) ?? []).length;
         if (usages <= 1) { // Only the definition
           issues.push({
             type: 'unused-type',

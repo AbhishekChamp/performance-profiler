@@ -37,12 +37,12 @@ export function analyzeMemory(jsFiles: { name: string; content: string }[]): Mem
         const basePattern = line.match(/(\w+)\.addEventListener/)?.[1];
         let hasRemoval = false;
         
-        if (basePattern) {
+        if (basePattern != null) {
           const removalPattern = new RegExp(`${basePattern}\\.removeEventListener`);
           hasRemoval = removalPattern.test(file.content);
         }
         
-        if (!hasRemoval && eventType && !['DOMContentLoaded', 'load'].includes(eventType)) {
+        if (!hasRemoval && eventType != null && !['DOMContentLoaded', 'load'].includes(eventType)) {
           leakRisks.push({
             type: 'event-listener',
             file: file.name,
@@ -74,7 +74,7 @@ export function analyzeMemory(jsFiles: { name: string; content: string }[]): Mem
       const globalPattern = /^(window|global|globalThis)\.[a-zA-Z_$][a-zA-Z0-9_$]*\s*=/;
       if (globalPattern.test(line.trim())) {
         const varName = line.match(/^(?:window|global|globalThis)\.([a-zA-Z_$][a-zA-Z0-9_$]*)/)?.[1];
-        if (varName && !['location', 'document', 'console'].includes(varName)) {
+        if (varName != null && !['location', 'document', 'console'].includes(varName)) {
           leakRisks.push({
             type: 'global-variable',
             file: file.name,

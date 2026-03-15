@@ -1,5 +1,5 @@
-import { Upload, X, File, FileCode, FileType, FolderUp, FileJson, Trash2, Sparkles, ArrowRight, CheckCircle2 } from 'lucide-react';
-import { useCallback, useState, useRef, useEffect } from 'react';
+import { ArrowRight, CheckCircle2, File, FileCode, FileJson, FileType, FolderUp, Sparkles, Trash2, Upload, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTemplateStore } from '@/stores/templateStore';
 import { TemplateSelectorCompact } from '@/components/templates';
 import type { UploadedFile } from '@/types';
@@ -20,10 +20,10 @@ function formatBytes(bytes: number): string {
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i] ?? 'B'}`;
 }
 
-function getFileIcon(filename: string) {
+function getFileIcon(filename: string): React.ReactNode {
   if (filename.endsWith('.html')) return <FileType className="w-5 h-5 text-orange-400" />;
   if (filename.endsWith('.json')) return <FileJson className="w-5 h-5 text-yellow-400" />;
   if (filename.endsWith('.js') || filename.endsWith('.jsx')) {
@@ -46,7 +46,7 @@ export function FileUpload({
   onClearFiles,
   onSetDragging,
   onAnalyze,
-}: FileUploadProps) {
+}: FileUploadProps): React.ReactNode {
   const [isFolderMode, setIsFolderMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -68,7 +68,7 @@ export function FileUpload({
   }, [files, autoDetectEnabled, detectTemplate]);
 
   const handleDragOver = useCallback(
-    (e: React.DragEvent) => {
+    (e: React.DragEvent): void => {
       e.preventDefault();
       onSetDragging(true);
     },
@@ -76,7 +76,7 @@ export function FileUpload({
   );
 
   const handleDragLeave = useCallback(
-    (e: React.DragEvent) => {
+    (e: React.DragEvent): void => {
       e.preventDefault();
       onSetDragging(false);
     },
@@ -84,7 +84,7 @@ export function FileUpload({
   );
 
   const handleDrop = useCallback(
-    (e: React.DragEvent) => {
+    (e: React.DragEvent): void => {
       e.preventDefault();
       onSetDragging(false);
       onAddFiles(e.dataTransfer.files);
@@ -93,7 +93,7 @@ export function FileUpload({
   );
 
   const handleFileInput = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
       onAddFiles(e.target.files);
       e.target.value = '';
     },
@@ -101,14 +101,14 @@ export function FileUpload({
   );
 
   const handleFolderInput = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement>): void => {
       onAddFiles(e.target.files);
       e.target.value = '';
     },
     [onAddFiles]
   );
 
-  const totalSize = files?.reduce((sum, f) => sum + f.size, 0) || 0;
+  const totalSize = files.length > 0 ? files.reduce((sum, f) => sum + f.size, 0) : 0;
 
   return (
     <div className="w-full">
@@ -252,20 +252,20 @@ export function FileUpload({
       </div>
 
       {/* Template Selection & Auto-detection */}
-      {files?.length > 0 && (
+      {files.length > 0 && (
         <div className="mt-6">
           <div className="bg-(--dev-surface)/40 backdrop-blur-sm border border-(--dev-border)/50 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-4 h-4 text-(--dev-accent)" />
               <span className="text-sm font-medium text-(--dev-text)">Analysis Template</span>
-              {lastDetectedTemplate && lastDetectedTemplate.confidence > 0.3 && (
+              {lastDetectedTemplate !== null && lastDetectedTemplate.confidence > 0.3 && (
                 <span className="text-xs px-2 py-0.5 bg-(--dev-accent)/10 text-(--dev-accent) rounded-full">
                   Auto-detected ({Math.round(lastDetectedTemplate.confidence * 100)}%)
                 </span>
               )}
             </div>
             <TemplateSelectorCompact />
-            {lastDetectedTemplate && lastDetectedTemplate.reasons.length > 0 && (
+            {lastDetectedTemplate !== null && lastDetectedTemplate.reasons.length > 0 && (
               <div className="mt-2 text-xs text-(--dev-text-subtle)">
                 <span className="font-medium">Detected:</span>{' '}
                 {lastDetectedTemplate.reasons.slice(0, 2).join(', ')}
@@ -276,7 +276,7 @@ export function FileUpload({
       )}
 
       {/* File List */}
-      {files?.length > 0 && (
+      {files.length > 0 && (
         <div className="mt-6">
           <div className="bg-(--dev-surface)/40 backdrop-blur-sm rounded-2xl border border-(--dev-border)/50 overflow-hidden">
             {/* Header */}
@@ -287,7 +287,7 @@ export function FileUpload({
                 </div>
                 <div>
                   <h4 className="text-sm font-semibold text-(--dev-text)">
-                    {files?.length || 0} file{(files?.length || 0) !== 1 ? 's' : ''}
+                    {files.length} file{files.length !== 1 ? 's' : ''}
                   </h4>
                   <p className="text-xs text-(--dev-text-muted)">{formatBytes(totalSize)} total</p>
                 </div>
@@ -303,7 +303,7 @@ export function FileUpload({
 
             {/* File Items */}
             <div className="max-h-64 overflow-y-auto">
-              {files?.map((file, index) => (
+              {files.map((file, index) => (
                 <div
                   key={file.id}
                   className="group px-6 py-3 flex items-center gap-4 border-b border-(--dev-border)/20 last:border-0 hover:bg-(--dev-surface-hover)/50 transition-all duration-200"

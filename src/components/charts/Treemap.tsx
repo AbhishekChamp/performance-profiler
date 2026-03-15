@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, memo } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import type { BundleModule } from '@/types';
 
@@ -25,7 +25,7 @@ function formatBytes(bytes: number): string {
 }
 
 // Memoized Treemap to prevent unnecessary re-renders
-function TreemapComponent({ modules, width = 600, height = 400 }: TreemapProps) {
+function TreemapComponent({ modules, width = 600, height = 400 }: TreemapProps): React.ReactNode {
   const svgRef = useRef<SVGSVGElement>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; content: BundleModule | null }>({ x: 0, y: 0, content: null });
   // Get theme from document to avoid store subscription
@@ -74,7 +74,11 @@ function TreemapComponent({ modules, width = 600, height = 400 }: TreemapProps) 
       .attr('height', (d) => d.y1 - d.y0)
       .attr('fill', (d) => {
         const baseColor = d.data.type === 'vendor' ? vendorColor : entryColor;
-        return d3.color(baseColor)!.copy({ opacity: 0.7 }).toString();
+        const colored = d3.color(baseColor);
+        if (colored !== null) {
+          return colored.copy({ opacity: 0.7 }).toString();
+        }
+        return baseColor;
       })
       .attr('stroke', (d) => {
         const baseColor = d.data.type === 'vendor' ? vendorColor : entryColor;
@@ -136,7 +140,7 @@ function TreemapComponent({ modules, width = 600, height = 400 }: TreemapProps) 
         >
           <p className="text-sm font-medium text-dev-text">{tooltip.content.name}</p>
           <p className="text-xs text-dev-text-muted">{formatBytes(tooltip.content.size)}</p>
-          {tooltip.content.gzippedSize && (
+          {tooltip.content.gzippedSize !== undefined && tooltip.content.gzippedSize > 0 && (
             <p className="text-xs text-dev-text-subtle">
               Gzipped: {formatBytes(tooltip.content.gzippedSize)}
             </p>

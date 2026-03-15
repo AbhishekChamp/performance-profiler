@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
-import type { TrendSeries, RegressionPoint } from '@/types';
+import type { RegressionPoint, TrendSeries } from '@/types';
 import { useThemeStore } from '@/stores/themeStore';
 
 interface TrendLineChartProps {
@@ -19,7 +19,7 @@ export function TrendLineChart({
   height = 400,
   showLegend = true,
   enableZoom = true,
-}: TrendLineChartProps) {
+}: TrendLineChartProps): React.JSX.Element {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; data: { series: string; value: number; date: Date } } | null>(null);
   const { resolvedMode } = useThemeStore();
@@ -230,7 +230,7 @@ export function TrendLineChart({
           const newXScale = event.transform.rescaleX(xScale);
           
           // Update axes
-          g.select<SVGGElement>('.x-axis')?.call(d3.axisBottom(newXScale));
+          g.select<SVGGElement>('.x-axis').call(d3.axisBottom(newXScale));
           
           // Update lines
           g.selectAll('path.line')

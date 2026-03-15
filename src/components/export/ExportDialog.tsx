@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { AnalysisReport } from '@/types';
-import { exportReport, formatMetricsForSharing, copyToClipboard } from '@/utils/export';
-import { FileDown, FileText, FileCode, FileJson, Share2, Check, X } from 'lucide-react';
+import { copyToClipboard, exportReport, formatMetricsForSharing } from '@/utils/export';
+import { Check, FileCode, FileDown, FileJson, FileText, Share2, X } from 'lucide-react';
 
 interface ExportDialogProps {
   report: AnalysisReport;
@@ -9,16 +9,16 @@ interface ExportDialogProps {
   onClose: () => void;
 }
 
-export function ExportDialog({ report, isOpen, onClose }: ExportDialogProps) {
+export function ExportDialog({ report, isOpen, onClose }: ExportDialogProps): React.ReactNode {
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleExport = (format: 'json' | 'pdf' | 'html' | 'markdown') => {
+  const handleExport = (format: 'json' | 'pdf' | 'html' | 'markdown'): void => {
     exportReport(report, format);
   };
 
-  const handleShare = async () => {
+  const handleShare = async (): Promise<void> => {
     const text = formatMetricsForSharing(report);
     await copyToClipboard(text);
     setCopied(true);

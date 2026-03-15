@@ -38,7 +38,7 @@ export function AccessibleChart({
   columns,
   summary,
   showDataTable = false,
-}: AccessibleChartProps): JSX.Element {
+}: AccessibleChartProps): React.JSX.Element {
   const chartId = useId();
   const tableId = `${chartId}-table`;
   
@@ -129,8 +129,8 @@ export function ChartNavigation({
   onPrevious,
   onNext,
   onSelect,
-}: ChartNavigationProps): JSX.Element {
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+}: ChartNavigationProps): React.ReactNode {
+  const handleKeyDown = (e: React.KeyboardEvent): void => {
     switch (e.key) {
       case 'ArrowLeft':
         e.preventDefault();
@@ -200,7 +200,7 @@ export function ScreenReaderSummary({
   valueKey,
   labelKey,
   type = 'distribution',
-}: ScreenReaderSummaryProps): JSX.Element {
+}: ScreenReaderSummaryProps): React.ReactNode {
   if (data.length === 0) {
     return <span className="sr-only">No data available</span>;
   }

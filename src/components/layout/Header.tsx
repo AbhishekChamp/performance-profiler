@@ -10,10 +10,10 @@ interface HeaderProps {
   onClear?: () => void;
 }
 
-export function Header({ onExport, onClear }: HeaderProps) {
+export function Header({ onExport, onClear }: HeaderProps): React.ReactNode {
   const { currentReport } = useAnalysisStore();
 
-  const handleNavigateHome = () => {
+  const handleNavigateHome = (): void => {
     window.location.href = '/';
   };
 

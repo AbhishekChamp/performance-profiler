@@ -1,9 +1,9 @@
-import { Wifi, WifiOff, RefreshCw, Database } from 'lucide-react';
+import { Database, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { usePWAStore } from '@/stores/pwaStore';
 import { useEffect, useState } from 'react';
-import { getStorageStats, formatStorageSize } from '@/utils/offlineStorage';
+import { formatStorageSize, getStorageStats } from '@/utils/offlineStorage';
 
-export function OfflineIndicator() {
+export function OfflineIndicator(): React.JSX.Element | null {
   const { isOnline, wasOffline } = usePWAStore();
   const [storageStats, setStorageStats] = useState<{
     totalReports: number;
@@ -14,7 +14,7 @@ export function OfflineIndicator() {
 
   // Load storage stats
   useEffect(() => {
-    const loadStats = async () => {
+    const loadStats = async (): Promise<void> => {
       const stats = await getStorageStats();
       setStorageStats(stats);
     };
@@ -27,8 +27,8 @@ export function OfflineIndicator() {
   }, []);
 
   // Format last sync time
-  const getLastSyncText = () => {
-    if (!storageStats?.lastSync) return 'Never synced';
+  const getLastSyncText = (): string => {
+    if (storageStats?.lastSync == null) return 'Never synced';
     
     // eslint-disable-next-line react-hooks/purity
     const diff = Date.now() - storageStats.lastSync;
@@ -43,7 +43,7 @@ export function OfflineIndicator() {
   };
 
   // Don't show anything if online and no stored data
-  if (isOnline && !wasOffline && !storageStats?.totalReports) {
+  if (isOnline && !wasOffline && (storageStats?.totalReports ?? 0) === 0) {
     return null;
   }
 

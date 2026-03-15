@@ -1,5 +1,5 @@
 import { Parser } from 'htmlparser2';
-import type { DOMAnalysis, DOMNode, ImageInfo, DOMWarning } from '@/types';
+import type { DOMAnalysis, DOMNode, DOMWarning, ImageInfo } from '@/types';
 
 interface ParseContext {
   currentDepth: number;

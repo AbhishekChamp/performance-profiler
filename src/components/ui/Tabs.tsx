@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, createContext, useContext } from 'react';
+import { createContext, useCallback, useContext, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 
 interface TabsContextType {
@@ -15,7 +15,7 @@ interface TabsProps {
   onChange?: (tabId: string) => void;
 }
 
-export function Tabs({ defaultTab, children, className = '', onChange }: TabsProps) {
+export function Tabs({ defaultTab, children, className = '', onChange }: TabsProps): React.JSX.Element {
   const [activeTab, setActiveTab] = useState(defaultTab);
 
   const handleSetActiveTab = useCallback((id: string) => {
@@ -31,9 +31,9 @@ export function Tabs({ defaultTab, children, className = '', onChange }: TabsPro
 }
 
 // Hook to use tabs context
-function useTabs() {
+function useTabs(): TabsContextType {
   const context = useContext(TabsContext);
-  if (!context) {
+  if (context == null) {
     throw new Error('Tabs components must be used within a Tabs provider');
   }
   return context;
@@ -44,7 +44,7 @@ interface TabListProps {
   className?: string;
 }
 
-export function TabList({ children, className = '' }: TabListProps) {
+export function TabList({ children, className = '' }: TabListProps): React.JSX.Element {
   const listRef = useRef<HTMLDivElement>(null);
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
@@ -99,7 +99,7 @@ interface TabProps {
   className?: string;
 }
 
-export function Tab({ id, children, disabled = false, className = '' }: TabProps) {
+export function Tab({ id, children, disabled = false, className = '' }: TabProps): React.JSX.Element {
   const { activeTab, setActiveTab } = useTabs();
   const isActive = activeTab === id;
 
@@ -140,7 +140,7 @@ interface TabPanelProps {
   className?: string;
 }
 
-export function TabPanel({ id, children, className = '' }: TabPanelProps) {
+export function TabPanel({ id, children, className = '' }: TabPanelProps): React.JSX.Element | null {
   const { activeTab } = useTabs();
   const isActive = activeTab === id;
 

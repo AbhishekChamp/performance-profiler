@@ -1,10 +1,10 @@
 import type { 
-  CIPlatform, 
-  PerformanceBudget, 
+  BudgetCheckScript, 
   BudgetConfig, 
+  CIPlatform, 
   GeneratedConfig,
-  PlatformInfo,
-  BudgetCheckScript 
+  PerformanceBudget,
+  PlatformInfo 
 } from '@/types/cicd';
 
 export const PLATFORMS: PlatformInfo[] = [
@@ -585,9 +585,9 @@ function generateVercelConfig(budget: BudgetConfig): GeneratedConfig {
       }
     },
     performance: {
-      bundleSize: budget.budgets.bundleSize ? budget.budgets.bundleSize * 1024 : 256000,
-      jsSize: budget.budgets.jsSize ? budget.budgets.jsSize * 1024 : 153600,
-      cssSize: budget.budgets.cssSize ? budget.budgets.cssSize * 1024 : 51200
+      bundleSize: budget.budgets.bundleSize !== undefined ? budget.budgets.bundleSize * 1024 : 256000,
+      jsSize: budget.budgets.jsSize !== undefined ? budget.budgets.jsSize * 1024 : 153600,
+      cssSize: budget.budgets.cssSize !== undefined ? budget.budgets.cssSize * 1024 : 51200
     },
     github: {
       enabled: true,
@@ -629,17 +629,17 @@ function generateNetlifyConfig(budget: BudgetConfig): GeneratedConfig {
   
   [plugins.inputs]
     # Bundle size budgets (in KB)
-    bundleSize = ${budget.budgets.bundleSize || 500}
-    jsSize = ${budget.budgets.jsSize || 300}
-    cssSize = ${budget.budgets.cssSize || 100}
-    imageSize = ${budget.budgets.imageSize || 200}
-    fontSize = ${budget.budgets.fontSize || 100}
+    bundleSize = ${budget.budgets.bundleSize ?? 500}
+    jsSize = ${budget.budgets.jsSize ?? 300}
+    cssSize = ${budget.budgets.cssSize ?? 100}
+    imageSize = ${budget.budgets.imageSize ?? 200}
+    fontSize = ${budget.budgets.fontSize ?? 100}
     
     # Lighthouse score thresholds
-    lighthousePerformance = ${budget.budgets.lighthousePerformance || 90}
-    lighthouseAccessibility = ${budget.budgets.lighthouseAccessibility || 90}
-    lighthouseBestPractices = ${budget.budgets.lighthouseBestPractices || 90}
-    lighthouseSEO = ${budget.budgets.lighthouseSEO || 90}
+    lighthousePerformance = ${budget.budgets.lighthousePerformance ?? 90}
+    lighthouseAccessibility = ${budget.budgets.lighthouseAccessibility ?? 90}
+    lighthouseBestPractices = ${budget.budgets.lighthouseBestPractices ?? 90}
+    lighthouseSEO = ${budget.budgets.lighthouseSEO ?? 90}
 
 # Security headers
 [[headers]]
@@ -817,7 +817,7 @@ async function runBudgetChecks() {
   
   log('\\n' + (allPassed ? '✓ All performance budgets passed!' : '✗ Some performance budgets failed!'), allPassed ? 'green' : 'red');
   
-  if (${budget.failOnViolation ? 'true' : 'false'} && !allPassed) {
+  if (${budget.failOnViolation === true ? 'true' : 'false'} && !allPassed) {
     process.exit(1);
   }
 }
@@ -867,7 +867,7 @@ export function generateConfig(
  * Get platform by ID
  */
 export function getPlatform(id: CIPlatform): PlatformInfo | undefined {
-  return PLATFORMS.find(p => p.id === id);
+  return PLATFORMS.find((p): boolean => p.id === id);
 }
 
 /**

@@ -7,7 +7,6 @@ export type AnalysisSection =
   | 'fonts'
   | 'assets'
   | 'javascript'
-  | 'react'
   | 'webvitals'
   | 'network'
   | 'accessibility'

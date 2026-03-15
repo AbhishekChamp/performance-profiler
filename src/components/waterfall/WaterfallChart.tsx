@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { motion } from 'framer-motion';
 import type { WaterfallData, WaterfallResource } from '@/core/waterfall/timingCalculator';
 import { calculatePotentialSavings } from '@/core/waterfall/timingCalculator';
-import { ZoomIn, ZoomOut, Filter, Download } from 'lucide-react';
+import { Download, Filter, ZoomIn, ZoomOut } from 'lucide-react';
 
 interface WaterfallChartProps {
   data: WaterfallData;
@@ -20,7 +20,7 @@ const TYPE_COLORS: Record<WaterfallResource['type'], string> = {
   other: '#8b949e',
 };
 
-export function WaterfallChart({ data, height = 500 }: WaterfallChartProps): JSX.Element {
+export function WaterfallChart({ data, height = 500 }: WaterfallChartProps): React.ReactNode {
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedResource, setSelectedResource] = useState<WaterfallResource | null>(null);
   const [filter, setFilter] = useState<WaterfallResource['type'] | 'all'>('all');
@@ -40,7 +40,7 @@ export function WaterfallChart({ data, height = 500 }: WaterfallChartProps): JSX
     svg.selectAll('*').remove();
 
     const margin = { top: 40, right: 20, bottom: 60, left: 200 };
-    const width = (svgRef.current.clientWidth ?? 800) - margin.left - margin.right;
+    const width = svgRef.current.clientWidth - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
 
     const g = svg
@@ -147,7 +147,7 @@ export function WaterfallChart({ data, height = 500 }: WaterfallChartProps): JSX
       .style('font-size', '11px')
       .text((d) => {
         const name = d.url.split('/').pop() ?? d.url;
-        return name.length > 30 ? name.substring(0, 27) + '...' : name;
+        return name.length > 30 ? `${name.substring(0, 27)  }...` : name;
       });
 
     // Duration labels on bars
@@ -290,7 +290,7 @@ interface ResourceDetailsModalProps {
   onClose: () => void;
 }
 
-function ResourceDetailsModal({ resource, onClose }: ResourceDetailsModalProps): JSX.Element {
+function ResourceDetailsModal({ resource, onClose }: ResourceDetailsModalProps): React.ReactNode {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <motion.div

@@ -1,4 +1,4 @@
-import type { WebVitalsAnalysis, WebVitalMetric, DOMAnalysis, BundleAnalysis, AssetAnalysis } from '@/types';
+import type { AssetAnalysis, BundleAnalysis, DOMAnalysis, ImageInfo, WebVitalMetric, WebVitalsAnalysis } from '@/types';
 
 // Web Vitals thresholds based on Google's Core Web Vitals
 const LCP_THRESHOLDS = { good: 2500, poor: 4000 }; // ms
@@ -15,21 +15,21 @@ function getScore<T extends number>(value: T, thresholds: { good: T; poor: T }):
 }
 
 function calculateLCPEstimate(
-  dom?: DOMAnalysis,
+  dom?: Pick<DOMAnalysis, 'largeImages' | 'imagesWithoutLazy' | 'totalNodes'>,
   assets?: AssetAnalysis
 ): WebVitalMetric {
   const factors: string[] = [];
   let estimatedLCP = 1500; // Base estimate
 
   // Factor 1: Large images are likely LCP candidates
-  if (dom?.largeImages.length) {
+  if (dom !== undefined && dom.largeImages.length > 0) {
     const largestImage = dom.largeImages[0];
     estimatedLCP += Math.min(2000, largestImage.size / 1000);
     factors.push(`Large image detected (${Math.round(largestImage.size / 1024)} KB)`);
   }
 
   // Factor 2: Images without lazy loading in viewport
-  if (dom?.imagesWithoutLazy) {
+  if (dom !== undefined && dom.imagesWithoutLazy > 0) {
     estimatedLCP += dom.imagesWithoutLazy * 50;
     factors.push(`${dom.imagesWithoutLazy} images without lazy loading`);
   }
@@ -127,7 +127,7 @@ function calculateFIDEstimate(
   };
 }
 
-function calculateCLSEstimate(dom?: DOMAnalysis): WebVitalMetric {
+function calculateCLSEstimate(dom?: Pick<DOMAnalysis, 'imagesWithoutDimensions' | 'largeImages' | 'maxDepth'>): WebVitalMetric {
   const factors: string[] = [];
   let estimatedCLS = 0;
 
@@ -144,7 +144,7 @@ function calculateCLSEstimate(dom?: DOMAnalysis): WebVitalMetric {
 
   // Factor 1: Images without dimensions
   if (dom.imagesWithoutDimensions > 0) {
-    estimatedCLS += dom.imagesWithoutDimensions * 0.05;
+    estimatedCLS += dom.imagesWithoutDimensions * 0.15;
     factors.push(`${dom.imagesWithoutDimensions} images without explicit dimensions`);
   }
 
@@ -265,6 +265,72 @@ function calculateINPEstimate(
   };
 }
 
+interface ExtractedDOMAnalysis {
+  totalNodes: number;
+  maxDepth: number;
+  imagesWithoutLazy: number;
+  imagesWithoutDimensions: number;
+  largeImages: ImageInfo[];
+}
+
+function extractDOMFromHTML(files: { name: string; content: string }[]): ExtractedDOMAnalysis | undefined {
+  const htmlFiles = files.filter(f => /\.html$/.test(f.name));
+  if (htmlFiles.length === 0) return undefined;
+
+  let imagesWithoutDimensions = 0;
+  let imagesWithoutLazy = 0;
+  let totalNodes = 0;
+  let maxDepth = 0;
+
+  for (const file of htmlFiles) {
+    const content = file.content;
+
+    // Count images without dimensions
+    const imgRegex = /<img[^>]*>/gi;
+    let match;
+    while ((match = imgRegex.exec(content)) !== null) {
+      const imgTag = match[0];
+      const hasWidth = /\swidth\s*=\s*["']?\d+/.test(imgTag);
+      const hasHeight = /\sheight\s*=\s*["']?\d+/.test(imgTag);
+      if (!hasWidth || !hasHeight) {
+        imagesWithoutDimensions++;
+      }
+      const hasLazy = /\sloading\s*=\s*["']?lazy/.test(imgTag);
+      if (!hasLazy) {
+        imagesWithoutLazy++;
+      }
+    }
+
+    // Count total nodes (approximate)
+    const tagMatches = content.match(/<[a-z][^>]*>/gi);
+    if (tagMatches) {
+      totalNodes += tagMatches.length;
+    }
+
+    // Estimate max depth by finding deepest nesting
+    let depth = 0;
+    let maxLocalDepth = 0;
+    const tokens = content.match(/<[a-z][^>]*>|<\/[a-z][^>]*>/gi) ?? [];
+    for (const token of tokens) {
+      if (token.startsWith('</')) {
+        depth = Math.max(0, depth - 1);
+      } else if (!token.endsWith('/>')) {
+        depth++;
+        maxLocalDepth = Math.max(maxLocalDepth, depth);
+      }
+    }
+    maxDepth = Math.max(maxDepth, maxLocalDepth);
+  }
+
+  return {
+    imagesWithoutDimensions,
+    imagesWithoutLazy,
+    totalNodes,
+    maxDepth,
+    largeImages: [],
+  };
+}
+
 export function analyzeWebVitals(
   files: { name: string; size: number; content: string }[],
   dom?: DOMAnalysis,
@@ -273,12 +339,14 @@ export function analyzeWebVitals(
   hasCSS: boolean = false,
   hasJS: boolean = false
 ): WebVitalsAnalysis {
+  // Extract DOM info from HTML files if no dom analysis provided
+  const extractedDOM = dom ?? extractDOMFromHTML(files);
   const jsFiles = files.filter(f => /\.(js|jsx|ts|tsx|mjs)$/.test(f.name));
 
   const metrics: WebVitalMetric[] = [
-    calculateLCPEstimate(dom, assets),
+    calculateLCPEstimate(extractedDOM, assets),
     calculateFIDEstimate(bundle, jsFiles),
-    calculateCLSEstimate(dom),
+    calculateCLSEstimate(extractedDOM),
     calculateFCPEstimate(hasCSS, hasJS, bundle),
     calculateTTFBEstimate(files),
     calculateINPEstimate(bundle, jsFiles),

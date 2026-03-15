@@ -4,9 +4,9 @@
  * Generates custom ESLint configurations based on detected code quality issues.
  */
 
-import { issueToRuleMapping, getRulesForIssues, calculateEstimatedImpact, type ESLintRule } from './ruleMapping';
-import { presets, combinePresets, type PresetType } from './presets';
-import type { TypeScriptAnalysis, JSFileAnalysis, JSWarning, ReactAnalysis } from '@/types';
+import { type ESLintRule, calculateEstimatedImpact, getRulesForIssues, issueToRuleMapping } from './ruleMapping';
+import { type PresetType, combinePresets, presets } from './presets';
+import type { JSFileAnalysis, JSWarning, TypeScriptAnalysis } from '@/types';
 
 export type ConfigFormat = 'json' | 'js' | 'flat';
 
@@ -51,7 +51,7 @@ export interface ConfigGenerationOptions {
 export function generateESLintConfig(
   typescriptAnalysis?: TypeScriptAnalysis,
   javascriptAnalysis?: JSFileAnalysis[],
-  reactAnalysis?: ReactAnalysis,
+  _reactAnalysis?: unknown,
   options: ConfigGenerationOptions = {}
 ): GeneratedConfig {
   const {
@@ -68,31 +68,22 @@ export function generateESLintConfig(
     if (typescriptAnalysis.anyCount > 0) {
       detectedIssues.push({ type: 'any-usage', count: typescriptAnalysis.anyCount });
     }
-    if (!typescriptAnalysis.strictMode) {
+    if (typescriptAnalysis.strictMode === false) {
       detectedIssues.push({ type: 'implicit-any', count: 1 });
     }
   }
 
-  if (javascriptAnalysis) {
+  if (javascriptAnalysis !== undefined) {
     javascriptAnalysis.forEach((file: JSFileAnalysis) => {
-      const complexFunctions = file.warnings.filter((w: JSWarning) => w.type === 'high-complexity').length;
+      const complexFunctions = file.warnings.filter((w: JSWarning): boolean => w.type === 'high-complexity').length;
       if (complexFunctions > 0) {
         detectedIssues.push({ type: 'complex-function', count: complexFunctions });
       }
-      const largeFunctions = file.warnings.filter((w: JSWarning) => w.type === 'large-function').length;
+      const largeFunctions = file.warnings.filter((w: JSWarning): boolean => w.type === 'large-function').length;
       if (largeFunctions > 0) {
         detectedIssues.push({ type: 'large-function', count: largeFunctions });
       }
     });
-  }
-
-  if (reactAnalysis) {
-    if (reactAnalysis.componentsWithInlineFunctions > 0) {
-      detectedIssues.push({
-        type: 'react-inline-function',
-        count: reactAnalysis.componentsWithInlineFunctions,
-      });
-    }
   }
 
   // Combine presets
@@ -115,7 +106,7 @@ export function generateESLintConfig(
   // Add rules based on detected issues
   const relevantRules = getRulesForIssues(detectedIssues.map((i) => i.type));
   
-  relevantRules.forEach((rule) => {
+  relevantRules.forEach((rule): void => {
     config.rules ??= {};
     
     // Adjust rule severity based on strictness
@@ -153,7 +144,7 @@ export function generateESLintConfig(
   const content = formatConfig(config, format);
 
   // Get unique plugins
-  const plugins = [...new Set([...(config.plugins ?? []), ...relevantRules.map((r) => r.plugin).filter((p): p is string => Boolean(p))])];
+  const plugins = [...new Set([...(config.plugins ?? []), ...relevantRules.map((r): string | undefined => r.plugin).filter((p): p is string => Boolean(p))])];
 
   return {
     config,
@@ -202,9 +193,9 @@ function formatAsJS(config: ESLintConfig): string {
   if (config.settings) {
     lines.push(`  settings: ${JSON.stringify(config.settings, null, 2).replace(/\n/g, '\n  ')},`);
   }
-  if (config.rules) {
+  if (config.rules !== undefined) {
     lines.push(`  rules: {`);
-    Object.entries(config.rules).forEach(([key, value]) => {
+    Object.entries(config.rules).forEach(([key, value]): void => {
       lines.push(`    '${key}': ${JSON.stringify(value)},`);
     });
     lines.push(`  },`);
@@ -223,7 +214,7 @@ function formatAsFlat(config: ESLintConfig): string {
     "import tseslint from 'typescript-eslint';",
   ];
 
-  if (config.plugins?.includes('react')) {
+  if ((config.plugins?.includes('react')) ?? false) {
     lines.push("import react from 'eslint-plugin-react';");
     lines.push("import reactHooks from 'eslint-plugin-react-hooks';");
   }
@@ -233,7 +224,7 @@ function formatAsFlat(config: ESLintConfig): string {
   lines.push("  js.configs.recommended,");
   lines.push("  ...tseslint.configs.recommended,");
 
-  if (config.plugins?.includes('react')) {
+  if ((config.plugins?.includes('react')) ?? false) {
     lines.push("  react.configs.flat.recommended,");
     lines.push("  reactHooks.configs['recommended-latest'],");
   }
@@ -241,9 +232,9 @@ function formatAsFlat(config: ESLintConfig): string {
   lines.push('  {');
   lines.push("    files: ['**/*.{ts,tsx}'],");
   
-  if (config.rules && Object.keys(config.rules).length > 0) {
+  if (config.rules !== undefined && Object.keys(config.rules).length > 0) {
     lines.push('    rules: {');
-    Object.entries(config.rules).forEach(([key, value]) => {
+    Object.entries(config.rules).forEach(([key, value]): void => {
       lines.push(`      '${key}': ${JSON.stringify(value)},`);
     });
     lines.push('    },');
@@ -261,7 +252,7 @@ function formatAsFlat(config: ESLintConfig): string {
 export function generateInstallCommands(plugins: string[]): string {
   const npmPackages: string[] = ['eslint'];
 
-  plugins.forEach((plugin) => {
+  plugins.forEach((plugin): void => {
     switch (plugin) {
       case '@typescript-eslint':
         npmPackages.push('@typescript-eslint/eslint-plugin', '@typescript-eslint/parser');
@@ -295,12 +286,13 @@ export function generateInstallCommands(plugins: string[]): string {
 export function validateConfig(config: ESLintConfig): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!config.extends && !config.rules) {
+  if ((config.extends === undefined || config.extends.length === 0) && 
+      (config.rules === undefined || Object.keys(config.rules).length === 0)) {
     errors.push('Config must have either extends or rules');
   }
 
-  if (config.rules) {
-    Object.entries(config.rules).forEach(([rule, value]) => {
+  if (config.rules !== undefined) {
+    Object.entries(config.rules).forEach(([rule, value]): void => {
       const validSeverities = ['off', 'warn', 'error', 0, 1, 2];
       const severity = Array.isArray(value) ? value[0] : value;
       

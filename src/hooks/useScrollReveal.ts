@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface ScrollRevealOptions {
   threshold?: number;
@@ -10,7 +10,7 @@ interface ScrollRevealOptions {
  * Hook for triggering animations when elements enter viewport
  */
 interface ScrollRevealReturn<T extends HTMLElement> {
-  ref: React.RefObject<T>;
+  ref: React.RefObject<T | null>;
   isVisible: boolean;
 }
 
@@ -19,19 +19,23 @@ export function useScrollReveal<T extends HTMLElement>(
 ): ScrollRevealReturn<T> {
   const { threshold = 0.1, rootMargin = '0px', triggerOnce = true } = options;
   const ref = useRef<T>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  // Initialize visibility based on reduced motion preference (for SSR compatibility)
+  const [isVisible, setIsVisible] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  });
   const [hasTriggered, setHasTriggered] = useState(false);
 
   useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-
     // Check for reduced motion preference
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) {
-      requestAnimationFrame(() => setIsVisible(true));
+      setIsVisible(true);
       return;
     }
+
+    const element = ref.current;
+    if (!element) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -62,26 +66,29 @@ export function useScrollReveal<T extends HTMLElement>(
  * Hook for staggered animations on multiple elements
  */
 interface StaggeredRevealReturn {
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   visibleItems: boolean[];
 }
 
 export function useStaggeredReveal(itemCount: number, baseDelay: number = 100): StaggeredRevealReturn {
-  const [visibleItems, setVisibleItems] = useState<boolean[]>(
-    new Array(itemCount).fill(false)
-  );
+  // Initialize visibility based on reduced motion preference (for SSR compatibility)
+  const [visibleItems, setVisibleItems] = useState<boolean[]>(() => {
+    if (typeof window === 'undefined') return new Array(itemCount).fill(false);
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    return new Array(itemCount).fill(prefersReducedMotion);
+  });
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
     // Check for reduced motion preference
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) {
       setVisibleItems(new Array(itemCount).fill(true));
       return;
     }
+
+    const container = containerRef.current;
+    if (!container) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -116,7 +123,7 @@ export function useStaggeredReveal(itemCount: number, baseDelay: number = 100): 
  * Hook for parallax scrolling effect
  */
 interface ParallaxReturn {
-  ref: React.RefObject<HTMLDivElement>;
+  ref: React.RefObject<HTMLDivElement | null>;
   offset: number;
 }
 

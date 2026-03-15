@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { 
-  AlertTriangle, 
   AlertCircle, 
-  Info, 
+  AlertTriangle, 
+  Check, 
   ChevronDown, 
  
   ExternalLink,
+  Info,
   Wand2,
-  Check,
 } from 'lucide-react';
 import type { PlaygroundFile, PlaygroundIssue } from '@/types/playground';
 import { Button } from '@/components/ui/Button';
@@ -36,7 +36,7 @@ function IssueItem({
 }: { 
   issue: PlaygroundIssue; 
   onApplyFix: (id: string) => void;
-}) {
+}): React.ReactNode {
   const [isExpanded, setIsExpanded] = useState(false);
   const Icon = SEVERITY_ICONS[issue.severity];
   const colorClass = SEVERITY_COLORS[issue.severity];
@@ -73,12 +73,12 @@ function IssueItem({
             className="border-t border-current border-opacity-20"
           >
             <div className="p-3 space-y-3">
-              {issue.explanation && (
+              {issue.explanation !== undefined && issue.explanation !== '' && (
                 <p className="text-sm opacity-90">{issue.explanation}</p>
               )}
               
               <div className="flex items-center gap-2">
-                {issue.fixable && (
+                {issue.fixable === true && (
                   <Button
                     variant="secondary"
                     size="sm"
@@ -89,7 +89,7 @@ function IssueItem({
                   </Button>
                 )}
                 
-                {issue.mdnUrl && (
+                {issue.mdnUrl !== undefined && issue.mdnUrl !== '' && (
                   <a
                     href={issue.mdnUrl}
                     target="_blank"
@@ -109,7 +109,7 @@ function IssueItem({
   );
 }
 
-export function IssueList({ file, onApplyFix }: IssueListProps) {
+export function IssueList({ file, onApplyFix }: IssueListProps): React.ReactNode {
   const [filter, setFilter] = useState<'all' | 'error' | 'warning' | 'info'>('all');
 
   

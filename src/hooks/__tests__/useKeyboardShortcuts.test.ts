@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useKeyboardShortcuts } from '../useKeyboardShortcuts';
 
@@ -9,6 +9,9 @@ describe('useKeyboardShortcuts', () => {
     onGoToSection: vi.fn(),
     onCycleTheme: vi.fn(),
     onExport: vi.fn(),
+    onNavigateDown: vi.fn(),
+    onNavigateUp: vi.fn(),
+    onShowHelp: vi.fn(),
   };
 
   beforeEach(() => {
@@ -21,11 +24,12 @@ describe('useKeyboardShortcuts', () => {
       enabled: true,
     }));
 
-    // Simulate keydown
-    const event = new KeyboardEvent('keydown', { key: 'j' });
-    document.dispatchEvent(event);
+    // Simulate keydown on window (where the hook listens)
+    const event = new KeyboardEvent('keydown', { key: 'j', bubbles: true });
+    window.dispatchEvent(event);
 
-    expect(mockHandlers.onNextSection).toHaveBeenCalled();
+    // 'j' key maps to 'navigateDown' action
+    expect(mockHandlers.onNavigateDown).toHaveBeenCalled();
   });
 
   it('should not trigger when disabled', () => {
@@ -34,10 +38,10 @@ describe('useKeyboardShortcuts', () => {
       enabled: false,
     }));
 
-    const event = new KeyboardEvent('keydown', { key: 'j' });
-    document.dispatchEvent(event);
+    const event = new KeyboardEvent('keydown', { key: 'j', bubbles: true });
+    window.dispatchEvent(event);
 
-    expect(mockHandlers.onNextSection).not.toHaveBeenCalled();
+    expect(mockHandlers.onNavigateDown).not.toHaveBeenCalled();
   });
 
   it('should handle numeric keys for section navigation', () => {
@@ -46,8 +50,8 @@ describe('useKeyboardShortcuts', () => {
       enabled: true,
     }));
 
-    const event = new KeyboardEvent('keydown', { key: '5' });
-    document.dispatchEvent(event);
+    const event = new KeyboardEvent('keydown', { key: '5', bubbles: true });
+    window.dispatchEvent(event);
 
     expect(mockHandlers.onGoToSection).toHaveBeenCalledWith(4);
   });
@@ -60,10 +64,10 @@ describe('useKeyboardShortcuts', () => {
 
     unmount();
 
-    const event = new KeyboardEvent('keydown', { key: 'j' });
-    document.dispatchEvent(event);
+    const event = new KeyboardEvent('keydown', { key: 'j', bubbles: true });
+    window.dispatchEvent(event);
 
-    expect(mockHandlers.onNextSection).not.toHaveBeenCalled();
+    expect(mockHandlers.onNavigateDown).not.toHaveBeenCalled();
   });
 
   it('should handle question mark for help', () => {
@@ -75,8 +79,9 @@ describe('useKeyboardShortcuts', () => {
       enabled: true,
     }));
 
-    const event = new KeyboardEvent('keydown', { key: '?' });
-    document.dispatchEvent(event);
+    // The '?' shortcut requires shift: true in the implementation
+    const event = new KeyboardEvent('keydown', { key: '?', shiftKey: true, bubbles: true });
+    window.dispatchEvent(event);
 
     expect(onShowHelp).toHaveBeenCalled();
   });

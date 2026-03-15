@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import type React from 'react';
+import { useCallback, useState } from 'react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 export interface ConfirmOptions {
@@ -9,7 +10,12 @@ export interface ConfirmOptions {
   type?: 'danger' | 'warning' | 'info';
 }
 
-export function useConfirm() {
+interface UseConfirmReturn {
+  confirm: (options: ConfirmOptions) => Promise<boolean>;
+  dialog: React.ReactNode;
+}
+
+export function useConfirm(): UseConfirmReturn {
   const [isOpen, setIsOpen] = useState(false);
   const [options, setOptions] = useState<ConfirmOptions>({
     title: '',

@@ -1,4 +1,4 @@
-import type { GraphNode, GraphEdge, GraphLayout } from '@/types/graph';
+import type { GraphEdge, GraphLayout, GraphNode } from '@/types/graph';
 
 export type LayoutAlgorithm = 'force' | 'hierarchical' | 'circular' | 'grid';
 
@@ -41,7 +41,7 @@ function forceDirectedLayout(
   // Initialize positions randomly
   const positions: Map<string, { x: number; y: number; vx: number; vy: number }> = new Map();
   
-  nodes.forEach((node) => {
+  nodes.forEach((node): void => {
     positions.set(node.id, {
       x: Math.random() * width * 0.8 + width * 0.1,
       y: Math.random() * height * 0.8 + height * 0.1,
@@ -65,8 +65,9 @@ function forceDirectedLayout(
     // Repulsion between all nodes
     for (let a = 0; a < nodes.length; a++) {
       for (let b = a + 1; b < nodes.length; b++) {
-        const posA = positions.get(nodes[a].id)!;
-        const posB = positions.get(nodes[b].id)!;
+        const posA = positions.get(nodes[a].id);
+        const posB = positions.get(nodes[b].id);
+        if (posA === undefined || posB === undefined) continue;
         
         const dx = posA.x - posB.x;
         const dy = posA.y - posB.y;
@@ -86,11 +87,11 @@ function forceDirectedLayout(
     }
     
     // Attraction along edges
-    edges.forEach(edge => {
+    edges.forEach((edge): void => {
       const posA = positions.get(edge.source);
       const posB = positions.get(edge.target);
       
-      if (!posA || !posB) return;
+      if (posA === undefined || posB === undefined) return;
       
       const dx = posB.x - posA.x;
       const dy = posB.y - posA.y;
@@ -107,13 +108,13 @@ function forceDirectedLayout(
     });
     
     // Center gravity
-    positions.forEach(pos => {
+    positions.forEach((pos): void => {
       pos.vx += (centerX - pos.x) * centerForce;
       pos.vy += (centerY - pos.y) * centerForce;
     });
     
     // Update positions with damping
-    positions.forEach(pos => {
+    positions.forEach((pos): void => {
       pos.vx *= damping;
       pos.vy *= damping;
       pos.x += pos.vx;
@@ -125,9 +126,9 @@ function forceDirectedLayout(
     });
   }
   
-  return nodes.map(node => {
-    const pos = positions.get(node.id)!;
-    return { x: pos.x, y: pos.y };
+  return nodes.map((node): GraphLayout => {
+    const pos = positions.get(node.id);
+    return { x: pos?.x ?? 0, y: pos?.y ?? 0 };
   });
 }
 
@@ -145,11 +146,11 @@ function hierarchicalLayout(
   const levelGroups = new Map<number, GraphNode[]>();
   let maxLevel = 0;
   
-  nodes.forEach(node => {
+  nodes.forEach((node): void => {
     const level = node.level;
     maxLevel = Math.max(maxLevel, level);
     
-    const group = levelGroups.get(level) || [];
+    const group = levelGroups.get(level) ?? [];
     group.push(node);
     levelGroups.set(level, group);
   });
@@ -158,19 +159,19 @@ function hierarchicalLayout(
   const positions = new Map<string, GraphLayout>();
   const levelHeight = height / (maxLevel + 2);
   
-  levelGroups.forEach((levelNodes, level) => {
+  levelGroups.forEach((levelNodes, level): void => {
     const y = (level + 1) * levelHeight;
     const nodeWidth = width / (levelNodes.length + 1);
     
-    levelNodes.forEach((node, index) => {
+    levelNodes.forEach((node, index): void => {
       positions.set(node.id, {
         x: (index + 1) * nodeWidth,
-        y: y,
+        y,
       });
     });
   });
   
-  return nodes.map(node => positions.get(node.id) || { x: width / 2, y: height / 2 });
+  return nodes.map((node): GraphLayout => positions.get(node.id) ?? { x: width / 2, y: height / 2 });
 }
 
 /**
@@ -188,7 +189,7 @@ function circularLayout(
   const maxRadius = Math.min(width, height) * 0.4;
   
   // Sort nodes by type and level
-  const sortedNodes = [...nodes].sort((a, b) => {
+  const sortedNodes = [...nodes].sort((a, b): number => {
     if (a.type === 'entry') return -1;
     if (b.type === 'entry') return 1;
     return a.level - b.level;
@@ -196,7 +197,7 @@ function circularLayout(
   
   const positions = new Map<string, GraphLayout>();
   
-  sortedNodes.forEach((node, index) => {
+  sortedNodes.forEach((node, index): void => {
     if (node.type === 'entry') {
       // Entry points in center
       positions.set(node.id, {
@@ -205,8 +206,9 @@ function circularLayout(
       });
     } else {
       // Others in concentric circles based on level
-      const level = node.level || 1;
-      const radius = (level / (Math.max(...nodes.map(n => n.level)) || 1)) * maxRadius;
+      const level = node.level > 0 ? node.level : 1;
+      const maxNodeLevel = Math.max(...nodes.map((n): number => n.level));
+      const radius = (level / (maxNodeLevel > 0 ? maxNodeLevel : 1)) * maxRadius;
       const angle = (index / nodes.length) * 2 * Math.PI;
       
       positions.set(node.id, {
@@ -216,7 +218,7 @@ function circularLayout(
     }
   });
   
-  return nodes.map(node => positions.get(node.id) || { x: centerX, y: centerY });
+  return nodes.map((node): GraphLayout => positions.get(node.id) ?? { x: centerX, y: centerY });
 }
 
 /**
@@ -233,7 +235,7 @@ function gridLayout(
   const cellWidth = width / cols;
   const cellHeight = height / Math.ceil(nodes.length / cols);
   
-  return nodes.map((node, index) => ({
+  return nodes.map((node, index): GraphLayout => ({
     x: (index % cols) * cellWidth + cellWidth / 2,
     y: Math.floor(index / cols) * cellHeight + cellHeight / 2,
   }));
@@ -300,7 +302,7 @@ export function getModuleColor(type: string): string {
     dynamic: '#d29922',  // Yellow
   };
   
-  return colors[type] || '#8b949e';
+  return colors[type] ?? '#8b949e';
 }
 
 /**
@@ -318,8 +320,8 @@ export function calculateBoundingBox(layouts: GraphLayout[]): {
     return { minX: 0, maxX: 0, minY: 0, maxY: 0, width: 0, height: 0 };
   }
   
-  const xs = layouts.map(l => l.x);
-  const ys = layouts.map(l => l.y);
+  const xs = layouts.map((l): number => l.x);
+  const ys = layouts.map((l): number => l.y);
   
   const minX = Math.min(...xs);
   const maxX = Math.max(...xs);
@@ -361,7 +363,7 @@ export function fitToViewport(
   const offsetX = (viewportWidth - bbox.width * scale) / 2 - bbox.minX * scale;
   const offsetY = (viewportHeight - bbox.height * scale) / 2 - bbox.minY * scale;
   
-  return layouts.map(l => ({
+  return layouts.map((l): GraphLayout => ({
     x: l.x * scale + offsetX,
     y: l.y * scale + offsetY,
   }));

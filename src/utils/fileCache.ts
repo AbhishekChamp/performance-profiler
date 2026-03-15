@@ -7,7 +7,7 @@
  * @module fileCache
  */
 
-import { get, set, del, clear } from 'idb-keyval';
+import { clear, del, get, set } from 'idb-keyval';
 
 /**
  * Cache entry for a file analysis

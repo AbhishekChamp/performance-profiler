@@ -7,7 +7,7 @@ interface SectionErrorBoundaryProps {
   sectionName: string;
 }
 
-export function SectionErrorBoundary({ children, sectionName }: SectionErrorBoundaryProps) {
+export function SectionErrorBoundary({ children, sectionName }: SectionErrorBoundaryProps): React.ReactNode {
   return (
     <ErrorBoundary 
       componentName={sectionName}

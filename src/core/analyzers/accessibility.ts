@@ -1,4 +1,4 @@
-import type { AccessibilityAnalysis, A11yViolation } from '@/types';
+import type { A11yViolation, AccessibilityAnalysis } from '@/types';
 
 export function analyzeAccessibility(htmlContent: string): AccessibilityAnalysis {
   const violations: A11yViolation[] = [];
@@ -74,7 +74,7 @@ export function analyzeAccessibility(htmlContent: string): AccessibilityAnalysis
       const srcMatch = match[0].match(/src=["']([^"']+)["']/i);
       violations.push({
         rule: 'image-alt',
-        element: `<img src="${srcMatch?.[1] || '...'}">`,
+        element: `<img src="${srcMatch?.[1] ?? '...'}">`,
         severity: 'critical',
         message: 'Image is missing alt text',
         wcagLevel: 'A',
@@ -92,7 +92,7 @@ export function analyzeAccessibility(htmlContent: string): AccessibilityAnalysis
 
   // 5. Check heading hierarchy
   const h1Regex = /<h1[^>]*>/gi;
-  const h1Count = (htmlContent.match(h1Regex) || []).length;
+  const h1Count = (htmlContent.match(h1Regex) ?? []).length;
 
   if (h1Count === 0) {
     violations.push({
@@ -153,9 +153,9 @@ export function analyzeAccessibility(htmlContent: string): AccessibilityAnalysis
     const input = match[0];
     // Skip submit, button, hidden, image inputs
     const typeMatch = input.match(/type=["']([^"']+)["']/i);
-    const type = typeMatch?.[1].toLowerCase();
+    const type = typeMatch?.[1].toLowerCase() ?? '';
 
-    if (type === 'submit' || type === 'button' || type === 'hidden' || type === 'image') {
+    if (type !== '' && (type === 'submit' || type === 'button' || type === 'hidden' || type === 'image')) {
       continue;
     }
 
@@ -198,11 +198,11 @@ export function analyzeAccessibility(htmlContent: string): AccessibilityAnalysis
     const hasAriaLabel = /aria-label=["'][^"']+["']/i.test(link);
     const hasImgWithAlt = /<img[^>]*alt=["'][^"]+["'][^>]*>/i.test(link);
 
-    if (!textContent && !hasAriaLabel && !hasImgWithAlt) {
+    if (textContent === '' && !hasAriaLabel && !hasImgWithAlt) {
       const hrefMatch = link.match(/href=["']([^"']+)["']/i);
       violations.push({
         rule: 'link-name',
-        element: `<a href="${hrefMatch?.[1] || '#'}">`,
+        element: `<a href="${hrefMatch?.[1] ?? '#'}">`,
         severity: 'serious',
         message: 'Link does not have discernible text',
         wcagLevel: 'A',

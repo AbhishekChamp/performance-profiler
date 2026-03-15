@@ -110,17 +110,9 @@ export async function migrateToCurrentVersion<T>(
     return data as T;
   }
   
-  // eslint-disable-next-line no-console
-  console.log(
-    `[Migration] Migrating ${key} from v${storedVersion} to v${CURRENT_SCHEMA_VERSION}`
-  );
-  
   const result = await runMigrations(data, storedVersion, CURRENT_SCHEMA_VERSION);
   
   if (result.migrated) {
-    // eslint-disable-next-line no-console
-    console.log(`[Migration] Applied migrations:`, result.path);
-    
     // Save migrated data
     await set(key, result.data);
   }

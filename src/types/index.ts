@@ -429,7 +429,6 @@ export interface AnalysisReport {
   css?: CSSAnalysis;
   assets?: AssetAnalysis;
   javascript?: JSFileAnalysis[];
-  react?: ReactAnalysis;
   webVitals?: WebVitalsAnalysis;
   network?: NetworkAnalysis;
   images?: ImageAnalysis;
@@ -483,7 +482,6 @@ export interface AnalysisOptions {
   includeCSS: boolean;
   includeAssets: boolean;
   includeJS: boolean;
-  includeReact: boolean;
   includeWebVitals: boolean;
   includeNetwork: boolean;
   includeImages: boolean;

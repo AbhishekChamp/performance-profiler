@@ -1,11 +1,11 @@
 import type { 
   AnalysisReport, 
+  ProjectTrend, 
+  RegressionPoint, 
   TrendDataPoint, 
-  TrendSeries, 
-  TrendSummary, 
-  RegressionPoint,
-  ProjectTrend,
-  TrendFilters 
+  TrendFilters,
+  TrendSeries,
+  TrendSummary 
 } from '@/types';
 
 /**
@@ -31,7 +31,7 @@ export function reportToTrendData(report: AnalysisReport): TrendDataPoint {
     bundleSize: report.bundle?.totalSize,
     domNodes: report.dom?.totalNodes,
     cssSize: report.css?.totalRules,
-    jsSize: report.javascript?.reduce((sum, f) => sum + f.size, 0),
+    jsSize: report.javascript?.reduce((sum, f): number => sum + f.size, 0),
     imageSize: report.images?.totalSize,
   };
 }
@@ -42,12 +42,14 @@ export function reportToTrendData(report: AnalysisReport): TrendDataPoint {
 export function groupReportsByProject(reports: AnalysisReport[]): Map<string, AnalysisReport[]> {
   const groups = new Map<string, AnalysisReport[]>();
   
-  reports.forEach(report => {
-    const projectName = report.files[0]?.name || 'Unknown Project';
-    if (!groups.has(projectName)) {
-      groups.set(projectName, []);
+  reports.forEach((report): void => {
+    const projectName = report.files[0]?.name ?? 'Unknown Project';
+    const existing = groups.get(projectName);
+    if (existing === undefined) {
+      groups.set(projectName, [report]);
+    } else {
+      existing.push(report);
     }
-    groups.get(projectName)!.push(report);
   });
   
   return groups;
@@ -63,8 +65,8 @@ export function createTrendSeries(
   color: string
 ): TrendSeries | null {
   const seriesData = data
-    .filter(point => point[metric] !== undefined && point[metric] !== null)
-    .map(point => ({
+    .filter((point): boolean => point[metric] !== undefined)
+    .map((point) => ({
       x: point.timestamp,
       y: point[metric] as number,
     }));
@@ -97,19 +99,13 @@ export function calculateTrendSummary(data: TrendDataPoint[]): TrendSummary {
     };
   }
   
-  const sorted = [...data].sort((a, b) => a.timestamp - b.timestamp);
-  const scores = sorted.map(d => d.overallScore);
+  const sorted = [...data].sort((a, b): number => a.timestamp - b.timestamp);
+  const scores = sorted.map((d): number => d.overallScore);
   
   // Calculate average
-  const averageScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const averageScore = scores.reduce((a, b): number => a + b, 0) / scores.length;
   
-  // Find best and worst
-  const bestScore = Math.max(...scores);
-  const worstScore = Math.min(...scores);
-  const bestPoint = sorted.find(d => d.overallScore === bestScore)!;
-  const worstPoint = sorted.find(d => d.overallScore === worstScore)!;
-  
-  // Calculate trend direction
+  // Calculate trend direction first (needed for early return)
   const firstHalf = scores.slice(0, Math.floor(scores.length / 2));
   const secondHalf = scores.slice(Math.floor(scores.length / 2));
   const firstAvg = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
@@ -129,6 +125,25 @@ export function calculateTrendSummary(data: TrendDataPoint[]): TrendSummary {
   
   // Detect regressions
   const regressions = detectRegressions(sorted);
+  
+  // Find best and worst
+  const bestScore = Math.max(...scores);
+  const worstScore = Math.min(...scores);
+  const bestPoint = sorted.find((d): boolean => d.overallScore === bestScore);
+  const worstPoint = sorted.find((d): boolean => d.overallScore === worstScore);
+  if (bestPoint === undefined || worstPoint === undefined) {
+    return {
+      startDate: sorted[0].timestamp,
+      endDate: sorted[sorted.length - 1].timestamp,
+      totalReports: data.length,
+      averageScore: Math.round(averageScore),
+      trendDirection,
+      improvementRate: Math.round(improvementRate * 10) / 10,
+      bestScore: { value: bestScore, timestamp: sorted[0].timestamp },
+      worstScore: { value: worstScore, timestamp: sorted[0].timestamp },
+      regressions,
+    };
+  }
   
   return {
     startDate: sorted[0].timestamp,
@@ -169,7 +184,7 @@ export function detectRegressions(data: TrendDataPoint[]): RegressionPoint[] {
     }
     
     // Check bundle size regression
-    if (previous.bundleSize && current.bundleSize) {
+    if (previous.bundleSize !== undefined && current.bundleSize !== undefined) {
       const sizeIncrease = current.bundleSize - previous.bundleSize;
       const percentageIncrease = (sizeIncrease / previous.bundleSize) * 100;
       
@@ -233,33 +248,36 @@ export function filterTrendData(
         cutoff = now - 90 * 24 * 60 * 60 * 1000;
         break;
       case 'custom':
-        if (filters.startDate) {
-          filtered = filtered.filter(d => d.timestamp >= filters.startDate!);
+        if (filters.startDate !== undefined) {
+          const startDate = filters.startDate;
+          filtered = filtered.filter((d): boolean => d.timestamp >= startDate);
         }
-        if (filters.endDate) {
-          filtered = filtered.filter(d => d.timestamp <= filters.endDate!);
+        if (filters.endDate !== undefined) {
+          const endDate = filters.endDate;
+          filtered = filtered.filter((d): boolean => d.timestamp <= endDate);
         }
         break;
     }
     
     if (filters.dateRange !== 'custom') {
-      filtered = filtered.filter(d => d.timestamp >= cutoff);
+      filtered = filtered.filter((d): boolean => d.timestamp >= cutoff);
     }
   }
   
   // Filter by project name
-  if (filters.projectName) {
-    filtered = filtered.filter(d => 
-      d.projectName.toLowerCase().includes(filters.projectName!.toLowerCase())
+  if (filters.projectName !== undefined && filters.projectName.length > 0) {
+    const projectName = filters.projectName;
+    filtered = filtered.filter((d): boolean => 
+      d.projectName.toLowerCase().includes(projectName.toLowerCase())
     );
   }
   
   // Filter by branch
-  if (filters.branch) {
-    filtered = filtered.filter(d => d.branch === filters.branch);
+  if (filters.branch !== undefined && filters.branch.length > 0) {
+    filtered = filtered.filter((d): boolean => d.branch === filters.branch);
   }
   
-  return filtered.sort((a, b) => a.timestamp - b.timestamp);
+  return filtered.sort((a, b): number => a.timestamp - b.timestamp);
 }
 
 /**
@@ -285,7 +303,7 @@ export function exportTrendDataAsCSV(data: TrendDataPoint[]): string {
     'DOM Nodes',
   ].join(',');
   
-  const rows = data.map(point => [
+  const rows = data.map((point): string => [
     new Date(point.timestamp).toISOString(),
     `"${point.projectName}"`,
     point.overallScore,
@@ -300,7 +318,7 @@ export function exportTrendDataAsCSV(data: TrendDataPoint[]): string {
     point.securityScore ?? '',
     point.totalIssues,
     point.criticalIssues,
-    point.bundleSize ? Math.round(point.bundleSize / 1024) : '',
+    point.bundleSize !== undefined ? Math.round(point.bundleSize / 1024) : '',
     point.domNodes ?? '',
   ].join(','));
   

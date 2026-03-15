@@ -1,4 +1,4 @@
-import type { CSSAnalysis, CSSRule, CSSFile, CSSWarning } from '@/types';
+import type { CSSAnalysis, CSSFile, CSSRule, CSSWarning } from '@/types';
 
 function parseCSSContent(content: string): { rules: CSSRule[]; importantCount: number } {
   const rules: CSSRule[] = [];
@@ -53,7 +53,7 @@ function detectUnusedSelectors(cssRules: CSSRule[], htmlContent: string): CSSRul
     // Check for class
     if (cleanSelector.includes('.')) {
       const className = cleanSelector.match(/\.([\w-]+)/)?.[1];
-      if (className && htmlContent.includes(className)) {
+      if (className !== undefined && className !== '' && htmlContent.includes(className)) {
         return { ...rule, used: true };
       }
     }
@@ -61,7 +61,7 @@ function detectUnusedSelectors(cssRules: CSSRule[], htmlContent: string): CSSRul
     // Check for id
     if (cleanSelector.includes('#')) {
       const id = cleanSelector.match(/#([\w-]+)/)?.[1];
-      if (id && htmlContent.includes(`id="${id}"`)) {
+      if (id !== undefined && id !== '' && htmlContent.includes(`id="${id}"`)) {
         return { ...rule, used: true };
       }
     }
@@ -82,7 +82,7 @@ export function analyzeCSS(
   cssFiles: { name: string; content: string; size: number }[],
   htmlContent?: string
 ): CSSAnalysis | undefined {
-  if (cssFiles.length === 0) return undefined;
+  if (cssFiles.length === 0 && htmlContent == null) return undefined;
 
   const allRules: CSSRule[] = [];
   const fileAnalyses: CSSFile[] = [];
@@ -103,14 +103,14 @@ export function analyzeCSS(
   }
 
   // Detect inline styles from HTML
-  if (htmlContent) {
+  if (htmlContent !== undefined && htmlContent !== '') {
     const inlineStyleRegex = /style="[^"]*"/g;
     const matches = htmlContent.match(inlineStyleRegex);
-    inlineStyleCount = matches ? matches.length : 0;
+    inlineStyleCount = matches !== null ? matches.length : 0;
   }
 
   // Mark used/unused selectors
-  const processedRules = htmlContent 
+  const processedRules = (htmlContent !== undefined && htmlContent !== '')
     ? detectUnusedSelectors(allRules, htmlContent)
     : allRules;
 

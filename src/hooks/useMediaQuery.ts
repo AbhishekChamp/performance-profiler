@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);
@@ -12,29 +12,19 @@ export function useMediaQuery(query: string): boolean {
     const media = window.matchMedia(query);
     
     // Set initial value
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMatches(media.matches);
 
     // Create event listener
-    const listener = (event: MediaQueryListEvent) => {
+    const listener = (event: MediaQueryListEvent): void => {
       setMatches(event.matches);
     };
 
-    // Add listener (with fallback for older browsers)
-    if (media.addEventListener) {
-      media.addEventListener('change', listener);
-    } else {
-      // For older browsers
-      media.addListener(listener);
-    }
+    // Add listener
+    media.addEventListener('change', listener);
 
     // Cleanup
     return () => {
-      if (media.removeEventListener) {
-        media.removeEventListener('change', listener);
-      } else {
-        media.removeListener(listener);
-      }
+      media.removeEventListener('change', listener);
     };
   }, [query]);
 

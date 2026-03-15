@@ -238,7 +238,8 @@ export function runA11yTests(element: HTMLElement): A11yTestResult {
   // Check buttons for accessible names
   const buttons = element.querySelectorAll('button:not([aria-label]):not([aria-labelledby])');
   buttons.forEach(btn => {
-    if (btn.textContent?.trim() === '' && btn.getAttribute('aria-label') == null) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- textContent may be null for some element types
+    if ((btn.textContent?.trim() ?? '') === '' && btn.getAttribute('aria-label') == null) {
       violations.push({
         rule: 'button-name',
         element: 'button',
@@ -251,7 +252,8 @@ export function runA11yTests(element: HTMLElement): A11yTestResult {
   // Check links for discernible text
   const links = element.querySelectorAll('a:not([aria-label]):not([aria-labelledby])');
   links.forEach(link => {
-    if (link.textContent?.trim() === '' && link.querySelector('img[alt]') == null) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- textContent may be null for some element types
+    if ((link.textContent?.trim() ?? '') === '' && link.querySelector('img[alt]') == null) {
       violations.push({
         rule: 'link-name',
         element: 'a',

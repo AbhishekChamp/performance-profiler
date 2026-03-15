@@ -1,5 +1,5 @@
-import { AlertTriangle, Shield, ArrowRight } from 'lucide-react';
-import type { RenderRisk, Optimization } from '@/types';
+import { AlertTriangle, ArrowRight, Shield } from 'lucide-react';
+import type { Optimization, RenderRisk } from '@/types';
 
 interface RisksSectionProps {
   risk: RenderRisk;
@@ -34,7 +34,7 @@ function getEffortColor(effort: Optimization['effort']): string {
   }
 }
 
-export function RisksSection({ risk, optimizations }: RisksSectionProps) {
+export function RisksSection({ risk, optimizations }: RisksSectionProps): React.ReactNode {
   const riskColor = getRiskColor(risk.level);
 
   return (
@@ -129,7 +129,7 @@ export function RisksSection({ risk, optimizations }: RisksSectionProps) {
                     <p className={`text-xs ${getEffortColor(opt.effort)}`}>
                       Effort: {opt.effort}
                     </p>
-                    {opt.code && (
+                    {opt.code != null && (
                       <pre className="mt-3 p-3 bg-dev-bg rounded text-xs text-dev-text-muted overflow-x-auto">
                         <code>{opt.code}</code>
                       </pre>

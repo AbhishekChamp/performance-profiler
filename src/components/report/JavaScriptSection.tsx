@@ -1,6 +1,6 @@
 import { BarChart } from '../charts/BarChart';
 import type { JSFileAnalysis } from '@/types';
-import { Braces, AlertTriangle, FunctionSquare } from 'lucide-react';
+import { AlertTriangle, Braces, FunctionSquare } from 'lucide-react';
 
 interface JavaScriptSectionProps {
   js: JSFileAnalysis[];
@@ -12,7 +12,7 @@ function formatComplexity(complexity: number): { text: string; color: string } {
   return { text: 'High', color: '#f85149' };
 }
 
-export function JavaScriptSection({ js }: JavaScriptSectionProps) {
+export function JavaScriptSection({ js }: JavaScriptSectionProps): React.ReactNode {
   const allFunctions = js.flatMap(f => 
     f.functions.map(fn => ({ ...fn, file: f.path }))
   );
@@ -84,7 +84,7 @@ export function JavaScriptSection({ js }: JavaScriptSectionProps) {
                 }`} />
                 <div>
                   <p className="text-sm text-dev-text">{warning.message}</p>
-                  {warning.function && warning.line && (
+                  {warning.function != null && warning.line != null && (
                     <p className="text-xs text-dev-text-muted mt-1">
                       {warning.function} at line {warning.line}
                     </p>

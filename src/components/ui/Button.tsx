@@ -1,4 +1,4 @@
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { type ButtonHTMLAttributes, type ReactNode, forwardRef } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
@@ -24,7 +24,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ...props
     },
     ref
-  ) => {
+  ): React.JSX.Element => {
     const baseClasses =
       'inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dev-bg disabled:opacity-50 disabled:cursor-not-allowed';
 
@@ -45,16 +45,16 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       lg: 'px-6 py-3 text-base',
     };
 
-    const widthClass = fullWidth ? 'w-full' : '';
+    const widthClass = fullWidth === true ? 'w-full' : '';
 
     return (
       <button
         ref={ref}
         className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${widthClass} ${className}`}
-        disabled={disabled || isLoading}
+        disabled={(disabled === true) || (isLoading === true)}
         {...props}
       >
-        {isLoading && (
+        {(isLoading === true) && (
           <svg
             className="animate-spin h-4 w-4"
             xmlns="http://www.w3.org/2000/svg"
@@ -76,9 +76,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             />
           </svg>
         )}
-        {!isLoading && leftIcon}
+        {(isLoading !== true) && leftIcon}
         {children}
-        {!isLoading && rightIcon}
+        {(isLoading !== true) && rightIcon}
       </button>
     );
   }

@@ -1,5 +1,5 @@
 import type { ThirdPartyAnalysis } from '@/types';
-import { ExternalLink, Shield, AlertTriangle, TrendingUp, Clock, Database } from 'lucide-react';
+import { AlertTriangle, Clock, Database, ExternalLink, Shield, TrendingUp } from 'lucide-react';
 
 interface ThirdPartySectionProps {
   thirdParty: ThirdPartyAnalysis;
@@ -30,7 +30,7 @@ function getCategoryColor(category: string): string {
   }
 }
 
-export function ThirdPartySection({ thirdParty }: ThirdPartySectionProps) {
+export function ThirdPartySection({ thirdParty }: ThirdPartySectionProps): React.ReactNode {
   const { scripts, totalSize, totalLoadTime, highPrivacyRisk, renderBlocking, recommendations } = thirdParty;
 
   return (

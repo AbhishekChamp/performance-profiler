@@ -1,7 +1,7 @@
 import { PieChart } from '../charts/PieChart';
 import { BarChart } from '../charts/BarChart';
-import type { AssetAnalysis, Asset } from '@/types';
-import { Images, File, FileCode, Type, Folder } from 'lucide-react';
+import type { Asset, AssetAnalysis } from '@/types';
+import { File, FileCode, Folder, Images, Type } from 'lucide-react';
 
 interface AssetsSectionProps {
   assets: AssetAnalysis;
@@ -31,7 +31,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }
 
-export function AssetsSection({ assets }: AssetsSectionProps) {
+export function AssetsSection({ assets }: AssetsSectionProps): React.ReactElement {
   const pieData = [
     { label: 'JavaScript', value: assets.breakdown.javascript, color: TYPE_COLORS.javascript },
     { label: 'CSS', value: assets.breakdown.css, color: TYPE_COLORS.css },
@@ -41,7 +41,7 @@ export function AssetsSection({ assets }: AssetsSectionProps) {
   ].filter(d => d.value > 0);
 
   const largestAssetsData = assets.largestAssets.slice(0, 10).map(a => ({
-    label: a.path.split('/').pop() || a.path,
+    label: a.path.split('/').pop() ?? a.path,
     value: a.size,
     color: TYPE_COLORS[a.type] || TYPE_COLORS.other,
   }));
@@ -59,9 +59,8 @@ export function AssetsSection({ assets }: AssetsSectionProps) {
         {Object.entries(assets.breakdown)
           .filter(([key]) => key !== 'total')
           .map(([type, size]) => {
-            const Icon = TYPE_ICONS[type] || File;
+            const Icon = TYPE_ICONS[type] ?? File;
             const percentage = assets.percentages[type as keyof typeof assets.percentages];
-            
             return (
               <div key={type} className="metric-card">
                 <div className="flex items-center gap-2 mb-2">
@@ -104,8 +103,8 @@ export function AssetsSection({ assets }: AssetsSectionProps) {
                 <div className="px-4 py-3 border-b border-dev-border flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {(() => {
-                      const Icon = TYPE_ICONS[type] || File;
-                      return <Icon className="w-4 h-4" style={{ color: TYPE_COLORS[type] }} />;
+                      const Icon = TYPE_ICONS[type] ?? File;
+                      return <Icon className="w-4 h-4" style={{ color: TYPE_COLORS[type] ?? TYPE_COLORS.other }} />;
                     })()}
                     <h3 className="text-sm font-semibold text-dev-text capitalize">{type}</h3>
                   </div>

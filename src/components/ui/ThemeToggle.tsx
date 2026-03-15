@@ -1,4 +1,4 @@
-import { Sun, Moon, Monitor, Check } from 'lucide-react';
+import { Check, Monitor, Moon, Sun } from 'lucide-react';
 import { useThemeStore } from '@/stores/themeStore';
 import toast from 'react-hot-toast';
 import { useCallback, useEffect, useState } from 'react';
@@ -22,7 +22,7 @@ const themeOptions: ThemeOption[] = [
   { mode: 'system', label: 'System', icon: Monitor, description: 'Follow system preference' },
 ];
 
-export function ThemeToggle({ size = 'md', showLabel = false, className = '' }: ThemeToggleProps) {
+export function ThemeToggle({ size = 'md', showLabel = false, className = '' }: ThemeToggleProps): React.JSX.Element {
   const { mode, resolvedMode, setMode } = useThemeStore();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -45,7 +45,7 @@ export function ThemeToggle({ size = 'md', showLabel = false, className = '' }: 
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent): void => {
       const target = event.target as HTMLElement;
       if (!target.closest('.theme-toggle-dropdown')) {
         setIsOpen(false);
@@ -58,7 +58,7 @@ export function ThemeToggle({ size = 'md', showLabel = false, className = '' }: 
     }
   }, [isOpen]);
 
-  const currentOption = themeOptions.find(opt => opt.mode === mode) || themeOptions[1];
+  const currentOption = themeOptions.find(opt => opt.mode === mode) ?? themeOptions[1];
   const CurrentIcon = currentOption.icon;
 
   const iconSizes = { sm: 14, md: 18, lg: 22 };
@@ -175,7 +175,7 @@ export function ThemeToggle({ size = 'md', showLabel = false, className = '' }: 
  * Simple toggle for compact spaces (cycles through modes)
  * Use this in headers or constrained spaces
  */
-export function ThemeToggleSimple({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg'; className?: string }) {
+export function ThemeToggleSimple({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg'; className?: string }): React.JSX.Element {
   const { resolvedMode, toggleMode } = useThemeStore();
   const isDark = resolvedMode === 'dark';
 
@@ -209,7 +209,7 @@ export function ThemeToggleSimple({ size = 'md', className = '' }: { size?: 'sm'
  * Segmented control variant for settings panels
  * Shows all three options side by side
  */
-export function ThemeToggleSegmented({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg'; className?: string }) {
+export function ThemeToggleSegmented({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg'; className?: string }): React.JSX.Element {
   const { mode, resolvedMode, setMode } = useThemeStore();
 
   const iconSizes = { sm: 14, md: 16, lg: 18 };

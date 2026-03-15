@@ -61,7 +61,7 @@ export const useTemplateStore = create<TemplateState>()(
 
         // Set template by ID
         setTemplateById: (id) => {
-          const template = getTemplateById(id) || 
+          const template = getTemplateById(id) ?? 
             get().customTemplates.find(t => t.id === id);
           
           if (template) {
@@ -109,7 +109,7 @@ export const useTemplateStore = create<TemplateState>()(
         // Export template as JSON
         exportTemplate: (id) => {
           const template =
-            getTemplateById(id) ||
+            getTemplateById(id) ??
             get().customTemplates.find((t) => t.id === id);
 
           if (!template) return '';
@@ -129,7 +129,12 @@ export const useTemplateStore = create<TemplateState>()(
             const data = JSON.parse(json);
 
             // Validate required fields
-            if (!data.id || !data.name || !data.options) {
+            if (
+              typeof data.id !== 'string' ||
+              typeof data.name !== 'string' ||
+              data.options === undefined ||
+              data.options === null
+            ) {
               throw new Error('Invalid template format');
             }
 
@@ -321,8 +326,13 @@ export const useTemplateStore = create<TemplateState>()(
 );
 
 // Selectors
-export const selectCurrentTemplate = (state: TemplateState) => state.currentTemplate;
-export const selectCustomTemplates = (state: TemplateState) => state.customTemplates;
-export const selectAllTemplates = (state: TemplateState) => state.getAllTemplates();
-export const selectAutoDetectEnabled = (state: TemplateState) => state.autoDetectEnabled;
-export const selectLastDetectedTemplate = (state: TemplateState) => state.lastDetectedTemplate;
+export const selectCurrentTemplate = (state: TemplateState): ReportTemplate =>
+  state.currentTemplate;
+export const selectCustomTemplates = (state: TemplateState): ReportTemplate[] =>
+  state.customTemplates;
+export const selectAllTemplates = (state: TemplateState): ReportTemplate[] =>
+  state.getAllTemplates();
+export const selectAutoDetectEnabled = (state: TemplateState): boolean =>
+  state.autoDetectEnabled;
+export const selectLastDetectedTemplate = (state: TemplateState): TemplateDetectionResult | null =>
+  state.lastDetectedTemplate;

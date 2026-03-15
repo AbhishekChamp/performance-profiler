@@ -23,7 +23,7 @@ function getSystemTheme(): 'dark' | 'light' {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-function applyTheme(mode: 'dark' | 'light') {
+function applyTheme(mode: 'dark' | 'light'): void {
   if (typeof document === 'undefined') return;
   
   const root = document.documentElement;
@@ -135,16 +135,16 @@ export const useThemeStore = create<ThemeState>()(
 
 // Initialize theme on load (for SSR compatibility)
 if (typeof document !== 'undefined') {
-  const initTheme = async () => {
+  const initTheme = async (): Promise<void> => {
     try {
       // Check if theme was already set by inline script (avoids race condition)
       const root = document.documentElement;
       const hasThemeClass = root.classList.contains('dark') || root.classList.contains('light');
       
       const saved = await get('ThemeStore');
-      if (saved) {
+      if (saved !== undefined && saved !== null) {
         const state = JSON.parse(saved);
-        const savedMode = state.state?.mode || 'dark';
+        const savedMode = state.state?.mode ?? 'dark';
         
         // Only apply if inline script hasn't set it yet, or if they differ
         if (!hasThemeClass || (savedMode !== 'dark' && savedMode !== 'light')) {
@@ -181,6 +181,8 @@ if (typeof document !== 'undefined') {
 }
 
 // Selectors
-export const selectThemeMode = (state: ThemeState) => state.mode;
-export const selectResolvedTheme = (state: ThemeState) => state.resolvedMode;
-export const selectIsTransitioning = (state: ThemeState) => state.isTransitioning;
+export const selectThemeMode = (state: ThemeState): ThemeMode => state.mode;
+export const selectResolvedTheme = (state: ThemeState): 'dark' | 'light' =>
+  state.resolvedMode;
+export const selectIsTransitioning = (state: ThemeState): boolean =>
+  state.isTransitioning;

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Download, X, Smartphone, Laptop } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Download, Laptop, Smartphone, X } from 'lucide-react';
 import { usePWAStore } from '@/stores/pwaStore';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 
-export function InstallPrompt() {
+export function InstallPrompt(): React.JSX.Element | null {
   const { canInstall, isInstalled, installApp } = usePWAStore();
   const [isDismissed, setIsDismissed] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
@@ -12,7 +12,7 @@ export function InstallPrompt() {
   // Check if user previously dismissed the prompt
   useEffect(() => {
     const dismissed = localStorage.getItem('pwa-install-dismissed');
-    if (dismissed) {
+    if (dismissed != null) {
       const dismissedTime = parseInt(dismissed, 10);
       // Show again after 7 days
       if (Date.now() - dismissedTime < 7 * 24 * 60 * 60 * 1000) {
@@ -21,12 +21,12 @@ export function InstallPrompt() {
     }
   }, []);
 
-  const handleDismiss = () => {
+  const handleDismiss = (): void => {
     setIsDismissed(true);
     localStorage.setItem('pwa-install-dismissed', Date.now().toString());
   };
 
-  const handleInstall = async () => {
+  const handleInstall = async (): Promise<void> => {
     setIsInstalling(true);
     
     try {
@@ -150,11 +150,11 @@ export function InstallPrompt() {
 }
 
 // Button variant for settings/header
-export function InstallButton() {
+export function InstallButton(): React.JSX.Element | null {
   const { canInstall, isInstalled, installApp } = usePWAStore();
   const [isInstalling, setIsInstalling] = useState(false);
 
-  const handleInstall = async () => {
+  const handleInstall = async (): Promise<void> => {
     setIsInstalling(true);
     await installApp();
     setIsInstalling(false);

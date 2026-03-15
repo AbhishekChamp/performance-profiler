@@ -8,10 +8,12 @@
  */
 
 import type { 
-  UploadedFile, 
   AnalysisOptions, 
-  AnalysisReport,
-  AnalyzedFile
+  AnalysisReport, 
+  AnalyzedFile,
+  Optimization,
+  ReportSummary,
+  UploadedFile
 } from '@/types';
 import type { AnalysisStage } from '@/workers/types';
 
@@ -19,7 +21,7 @@ import { analyzeBundle } from '@/core/analyzers/bundle';
 import { analyzeDOM } from '@/core/analyzers/dom';
 import { analyzeCSS } from '@/core/analyzers/css';
 import { analyzeJavaScript } from '@/core/analyzers/javascript';
-import { analyzeReact } from '@/core/analyzers/react';
+
 import { analyzeWebVitals } from '@/core/analyzers/webVitals';
 import type { WebVitalsAnalysis } from '@/types';
 import { analyzeNetwork } from '@/core/analyzers/network';
@@ -174,16 +176,6 @@ export async function runAnalysisPipeline(
     )), pipelineConfig),
   ]);
   
-  // React analysis (depends on JS analysis)
-  reportProgress('react', 0);
-  const reactAnalysis = analyzeReact(jsAnalysis) ?? {
-    componentCount: 0,
-    largeComponents: [],
-    componentsWithInlineFunctions: 0,
-    avgPropsPerComponent: 0,
-    score: 100,
-  };
-  reportProgress('react', 100);
   
   reportProgress('scoring', 0);
   
@@ -199,15 +191,25 @@ export async function runAnalysisPipeline(
   
   reportProgress('scoring', 100);
   
-  // Issues are collected within each analyzer
+  // Collect issues from all analyzers and build summary
+  const summary = buildReportSummary(
+    bundleAnalysis,
+    domAnalysis,
+    cssAnalysis,
+    jsAnalysis,
+    accessibilityAnalysis,
+    seoAnalysis,
+    securityAnalysis,
+    tsAnalysis
+  );
   
   const report = {
     id: generateReportId(),
     timestamp: Date.now(),
     files: files.map(f => {
       const fileType: AnalyzedFile['type'] = f.name.endsWith('.html') ? 'html' :
-        f.name.endsWith('.js') || f.name.endsWith('.ts') || f.name.endsWith('.jsx') || f.name.endsWith('.tsx') ? 'javascript' :
-        f.name.endsWith('.css') || f.name.endsWith('.scss') ? 'css' :
+        (f.name.endsWith('.js') || f.name.endsWith('.ts') || f.name.endsWith('.jsx') || f.name.endsWith('.tsx')) ? 'javascript' :
+        (f.name.endsWith('.css') || f.name.endsWith('.scss')) ? 'css' :
         f.name.endsWith('.json') ? 'json' : 'other';
       return {
         name: f.name,
@@ -221,7 +223,6 @@ export async function runAnalysisPipeline(
     css: cssAnalysis,
     assets: assetsAnalysis,
     javascript: jsAnalysis,
-    react: reactAnalysis,
     webVitals: webVitalsAnalysisResult,
     network: networkAnalysis,
     images: imagesAnalysis,
@@ -231,6 +232,18 @@ export async function runAnalysisPipeline(
     typescript: tsAnalysis,
     security: securityAnalysis,
     score,
+    summary,
+    renderRisk: {
+      level: 'low',
+      score: 0,
+      reasons: [],
+      recommendations: [],
+    },
+    timeline: {
+      events: [],
+      totalTime: 0,
+      criticalPath: [],
+    },
   } as AnalysisReport;
   
   reportProgress('complete', 100);
@@ -317,10 +330,122 @@ function countAssetsByType(files: UploadedFile[]): Record<string, number> {
 // Issue collection is handled within individual analyzers
 
 /**
+ * Build report summary from all analyzer results
+ */
+function buildReportSummary(
+  bundle?: unknown,
+  dom?: unknown,
+  css?: unknown,
+  js?: unknown,
+  accessibility?: { violations?: { severity: string }[] },
+  seo?: { issues?: string[] },
+  security?: { vulnerabilities?: { severity: string }[] },
+  typescript?: { issues?: unknown[] }
+): ReportSummary {
+  let totalIssues = 0;
+  let criticalIssues = 0;
+  let warnings = 0;
+  const optimizations: Optimization[] = [];
+  
+  // Count DOM issues
+  if (dom !== undefined && dom !== null && typeof dom === 'object' && 'warnings' in dom) {
+    const domWarnings = (dom as { warnings?: { severity: string }[] }).warnings;
+    if (Array.isArray(domWarnings)) {
+      totalIssues += domWarnings.length;
+      criticalIssues += domWarnings.filter((w): boolean => w.severity === 'error').length;
+      warnings += domWarnings.filter((w): boolean => w.severity === 'warning').length;
+    }
+  }
+  
+  // Count CSS issues
+  if (css !== undefined && css !== null && typeof css === 'object' && 'warnings' in css) {
+    const cssWarnings = (css as { warnings?: { severity: string }[] }).warnings;
+    if (Array.isArray(cssWarnings)) {
+      totalIssues += cssWarnings.length;
+      criticalIssues += cssWarnings.filter((w): boolean => w.severity === 'error').length;
+      warnings += cssWarnings.filter((w): boolean => w.severity === 'warning').length;
+    }
+  }
+  
+  // Count JS issues
+  if (js !== undefined && js !== null && Array.isArray(js)) {
+    for (const file of js) {
+      if (file !== undefined && file !== null && typeof file === 'object' && 'warnings' in file) {
+        const jsWarnings = (file as { warnings?: { severity: string }[] }).warnings;
+        if (Array.isArray(jsWarnings)) {
+          totalIssues += jsWarnings.length;
+          criticalIssues += jsWarnings.filter((w): boolean => w.severity === 'error').length;
+          warnings += jsWarnings.filter((w): boolean => w.severity === 'warning').length;
+        }
+      }
+    }
+  }
+  
+  
+  // Count accessibility violations
+  if (accessibility?.violations !== undefined) {
+    totalIssues += accessibility.violations.length;
+    criticalIssues += accessibility.violations.filter((v): boolean => 
+      v.severity === 'critical' || v.severity === 'serious'
+    ).length;
+  }
+  
+  // Count SEO issues
+  if (seo?.issues !== undefined) {
+    totalIssues += seo.issues.length;
+    warnings += seo.issues.length;
+  }
+  
+  // Count security vulnerabilities
+  if (security?.vulnerabilities !== undefined) {
+    totalIssues += security.vulnerabilities.length;
+    criticalIssues += security.vulnerabilities.filter((v): boolean => 
+      v.severity === 'critical' || v.severity === 'high'
+    ).length;
+  }
+  
+  // Count TypeScript issues
+  if (typescript?.issues !== undefined) {
+    totalIssues += typescript.issues.length;
+    warnings += typescript.issues.length;
+  }
+  
+  // Generate optimizations based on findings
+  if (bundle !== undefined && bundle !== null && typeof bundle === 'object') {
+    const b = bundle as { duplicateLibraries?: unknown[]; vendorPercentage?: number };
+    if (b.duplicateLibraries !== undefined && b.duplicateLibraries.length > 0) {
+      optimizations.push({
+        category: 'bundle',
+        title: 'Remove Duplicate Libraries',
+        description: `Found ${b.duplicateLibraries.length} duplicate libraries that can be deduplicated.`,
+        impact: 'high',
+        effort: 'medium',
+      });
+    }
+    if (b.vendorPercentage !== undefined && b.vendorPercentage > 50) {
+      optimizations.push({
+        category: 'bundle',
+        title: 'Reduce Vendor Bundle Size',
+        description: `Vendor code is ${b.vendorPercentage.toFixed(0)}% of bundle. Consider code splitting.`,
+        impact: 'high',
+        effort: 'high',
+      });
+    }
+  }
+  
+  return {
+    totalIssues,
+    criticalIssues,
+    warnings,
+    optimizations: optimizations.slice(0, 10), // Limit to top 10
+  };
+}
+
+/**
  * Generate unique report ID
  */
 function generateReportId(): string {
-  return `report-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `report-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
 // Export types and utilities

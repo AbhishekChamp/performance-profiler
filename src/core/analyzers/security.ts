@@ -120,7 +120,7 @@ export function analyzeSecurity(
   }
 
   // Analyze HTML for inline scripts and missing SRI
-  if (htmlContent) {
+  if (htmlContent != null && htmlContent !== '') {
     // Check for inline scripts (CSP concern)
     const inlineScriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
     let match: RegExpExecArray | null;
@@ -129,7 +129,7 @@ export function analyzeSecurity(
       const scriptContent = match[1].trim();
       const hasSrc = /<script[^>]*src=/i.test(match[0]);
 
-      if (scriptContent && !hasSrc) {
+      if (scriptContent !== '' && !hasSrc) {
         vulnerabilities.push({
           type: 'inline-script',
           file: 'index.html',

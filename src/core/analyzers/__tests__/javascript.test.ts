@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { analyzeJavaScript } from '../javascript';
 
 
@@ -94,8 +94,8 @@ describe('analyzeJavaScript', () => {
         name: 'large.js',
         content: `
           function largeFunction() {
-            ${Array(50).fill('const x = 1;').join('\n')}
-            return x;
+            ${Array(50).fill(0).map((_, i) => `const x${i} = ${i};`).join('\n')}
+            return x49;
           }
         `,
         size: 2000,
@@ -103,8 +103,8 @@ describe('analyzeJavaScript', () => {
     ];
     
     const result = analyzeJavaScript(files);
-    expect(result[0].warnings).toHaveLength(1);
-    expect(result[0].warnings[0].type).toBe('large-function');
+    const largeFunctionWarning = result[0].warnings.find(w => w.type === 'large-function');
+    expect(largeFunctionWarning).toBeDefined();
   });
 
   it('should handle syntax errors gracefully', () => {

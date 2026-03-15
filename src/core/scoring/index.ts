@@ -1,15 +1,15 @@
 import type {
+  AccessibilityAnalysis,
+  AssetAnalysis,
+  BundleAnalysis,
+  CSSAnalysis,
+  DOMAnalysis,
+  JSFileAnalysis,
   PerformanceScore,
   RenderRisk,
-  BundleAnalysis,
-  DOMAnalysis,
-  CSSAnalysis,
-  AssetAnalysis,
-  JSFileAnalysis,
-  WebVitalsAnalysis,
-  AccessibilityAnalysis,
   SEOAnalysis,
   SecurityAnalysis,
+  WebVitalsAnalysis,
 } from '@/types';
 
 interface ScoringWeights {
@@ -289,6 +289,34 @@ export function calculatePerformanceScore(
   const seoScore = calculateSEOScore(seo);
   const securityScore = calculateSecurityScore(security);
 
+  // Check if any analysis is provided
+  const hasAnyAnalysis = 
+    bundle !== undefined ||
+    dom !== undefined ||
+    css !== undefined ||
+    assets !== undefined ||
+    js !== undefined ||
+    webVitals !== undefined ||
+    accessibility !== undefined ||
+    seo !== undefined ||
+    security !== undefined;
+
+  // If no analysis is provided at all, return default score of 50
+  if (!hasAnyAnalysis) {
+    return {
+      overall: 50,
+      bundle: 50,
+      dom: 50,
+      css: 50,
+      assets: 50,
+      javascript: 50,
+      webVitals: 50,
+      accessibility: 50,
+      seo: 50,
+      security: 50,
+    };
+  }
+
   // Calculate weighted overall score
   let overall = Math.round(
     bundleScore * finalWeights.bundle +
@@ -416,10 +444,10 @@ export function calculateRenderRisk(
   }
 
   // Score-based risk
-  if (score.overall < 40) {
-    riskScore += 20;
+  if (score.overall <= 40) {
+    riskScore += 50;
   } else if (score.overall < 60) {
-    riskScore += 10;
+    riskScore += 25;
   }
 
   // Additional risks from new scores (use void to acknowledge we're checking the score exists)

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import { set, get as idbGet } from 'idb-keyval';
-import type { Project, ProjectSummary, UploadedFile, AnalysisReport } from '@/types';
+import { get as idbGet, set } from 'idb-keyval';
+import type { AnalysisReport, Project, ProjectSummary, UploadedFile } from '@/types';
 import { logError } from '@/utils/errorHandler';
 
 interface ProjectState {
@@ -41,8 +41,8 @@ const PROJECT_DATA_KEY = 'ProjectData';
 // Helper to get project data from IndexedDB
 async function getProjectData(projectId: string): Promise<Project | null> {
   try {
-    const allData = await idbGet<Record<string, Project>>(PROJECT_DATA_KEY) || {};
-    return allData[projectId] || null;
+    const allData = await idbGet<Record<string, Project>>(PROJECT_DATA_KEY) ?? {};
+    return allData[projectId] ?? null;
   } catch (error) {
     logError(error instanceof Error ? error : new Error('Failed to get project data'), {
       component: 'ProjectStore',
@@ -55,7 +55,7 @@ async function getProjectData(projectId: string): Promise<Project | null> {
 // Helper to save project data to IndexedDB
 async function saveProjectData(project: Project): Promise<void> {
   try {
-    const allData = await idbGet<Record<string, Project>>(PROJECT_DATA_KEY) || {};
+    const allData = await idbGet<Record<string, Project>>(PROJECT_DATA_KEY) ?? {};
     allData[project.id] = project;
     await set(PROJECT_DATA_KEY, allData);
   } catch (error) {
@@ -69,9 +69,10 @@ async function saveProjectData(project: Project): Promise<void> {
 // Helper to delete project data from IndexedDB
 async function deleteProjectData(projectId: string): Promise<void> {
   try {
-    const allData = await idbGet<Record<string, Project>>(PROJECT_DATA_KEY) || {};
-    delete allData[projectId];
-    await set(PROJECT_DATA_KEY, allData);
+    const allData = await idbGet<Record<string, Project>>(PROJECT_DATA_KEY) ?? {};
+    const { [projectId]: _removed, ...rest } = allData;
+    void _removed; // Mark as intentionally unused
+    await set(PROJECT_DATA_KEY, rest);
   } catch (error) {
     logError(error instanceof Error ? error : new Error('Failed to delete project data'), {
       component: 'ProjectStore',
@@ -171,7 +172,7 @@ export const useProjectStore = create<ProjectState>()(
           let project = get().currentProject;
           
           // If not currently loaded, load it
-          if (!project || project.id !== projectId) {
+          if (project?.id !== projectId) {
             project = await getProjectData(projectId);
           }
           
@@ -206,7 +207,7 @@ export const useProjectStore = create<ProjectState>()(
           const now = Date.now();
           let project = get().currentProject;
           
-          if (!project || project.id !== projectId) {
+          if (project?.id !== projectId) {
             project = await getProjectData(projectId);
           }
           
@@ -236,7 +237,7 @@ export const useProjectStore = create<ProjectState>()(
           const now = Date.now();
           let project = get().currentProject;
           
-          if (!project || project.id !== projectId) {
+          if (project?.id !== projectId) {
             project = await getProjectData(projectId);
           }
           
@@ -270,7 +271,7 @@ export const useProjectStore = create<ProjectState>()(
           }));
         },
 
-        getProjectSummaries: () => {
+        getProjectSummaries: (): ProjectSummary[] => {
           return get().projects.sort((a, b) => b.updatedAt - a.updatedAt);
         },
       }),
@@ -285,5 +286,5 @@ export const useProjectStore = create<ProjectState>()(
 );
 
 // Selectors
-export const selectProjects = (state: ProjectState) => state.projects;
-export const selectCurrentProject = (state: ProjectState) => state.currentProject;
+export const selectProjects = (state: ProjectState): ProjectSummary[] => state.projects;
+export const selectCurrentProject = (state: ProjectState): Project | null => state.currentProject;

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { getBezierPath, type EdgeProps } from '@xyflow/react';
+import { type EdgeProps, getBezierPath } from '@xyflow/react';
 
 interface CircularEdgeData extends Record<string, unknown> {
   type: 'static' | 'dynamic' | 'circular';
@@ -11,7 +11,7 @@ interface ExtendedEdgeProps extends EdgeProps {
   data?: CircularEdgeData;
 }
 
-function CircularEdgeComponent(props: ExtendedEdgeProps) {
+function CircularEdgeComponent(props: ExtendedEdgeProps): React.ReactNode {
   const { 
     id, 
     sourceX, 
@@ -27,7 +27,7 @@ function CircularEdgeComponent(props: ExtendedEdgeProps) {
   
   const edgeData = data;
   const isCircular = edgeData?.type === 'circular';
-  const count = edgeData?.count || 1;
+  const count = edgeData?.count ?? 1;
   
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
@@ -64,7 +64,7 @@ function CircularEdgeComponent(props: ExtendedEdgeProps) {
         strokeDasharray={strokeDasharray}
         style={{
           ...(style as React.CSSProperties),
-          filter: selected ? 'drop-shadow(0 0 4px rgba(88, 166, 255, 0.5))' : undefined,
+          filter: selected === true ? 'drop-shadow(0 0 4px rgba(88, 166, 255, 0.5))' : undefined,
         }}
         className="transition-all duration-200"
       />

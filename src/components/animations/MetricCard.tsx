@@ -38,7 +38,7 @@ export function MetricCard({
   trend,
   color = 'blue',
   isLoading,
-}: MetricCardProps): JSX.Element {
+}: MetricCardProps): React.ReactNode {
   const [isHovered, setIsHovered] = useState(false);
   const hasAnimated = useRef(false);
 

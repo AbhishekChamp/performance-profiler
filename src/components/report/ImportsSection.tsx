@@ -1,5 +1,5 @@
 import type { ImportAnalysis } from '@/types';
-import { Package, AlertTriangle, TreePine, CheckCircle, Zap } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Package, TreePine, Zap } from 'lucide-react';
 
 interface ImportsSectionProps {
   imports: ImportAnalysis;
@@ -13,7 +13,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }
 
-export function ImportsSection({ imports }: ImportsSectionProps) {
+export function ImportsSection({ imports }: ImportsSectionProps): React.ReactNode {
   const {
     imports: importList,
     totalImportSize,

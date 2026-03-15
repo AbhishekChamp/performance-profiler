@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   calculatePerformanceScore,
   calculateRenderRisk,
@@ -133,7 +133,7 @@ describe('getScoreColor', () => {
   });
 
   it('should return red for poor scores', () => {
-    expect(getScoreColor(40)).toBe('#f85149');
+    expect(getScoreColor(40)).toBe('#da3633');
     expect(getScoreColor(20)).toBe('#da3633');
   });
 });

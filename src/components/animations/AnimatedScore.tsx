@@ -22,7 +22,7 @@ export function AnimatedScore({
   showDecimal = false,
   prefix = '',
   suffix = '',
-}: AnimatedScoreProps): JSX.Element {
+}: AnimatedScoreProps): React.ReactNode {
   const hasAnimated = useRef(false);
 
   // Lazy state initialization to check motion preference once
@@ -99,7 +99,7 @@ export function AnimatedCounter({
   duration = 1,
   format = 'number',
   className = '',
-}: AnimatedCounterProps): JSX.Element {
+}: AnimatedCounterProps): React.ReactNode {
   const [displayValue, setDisplayValue] = useState(() => {
     const prefersReducedMotion = typeof window !== 'undefined' 
       ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
@@ -177,7 +177,7 @@ interface ScoreChangeIndicatorProps {
 /**
  * Shows score change with animation (up/down arrow)
  */
-export function ScoreChangeIndicator({ change, className = '' }: ScoreChangeIndicatorProps): JSX.Element {
+export function ScoreChangeIndicator({ change, className = '' }: ScoreChangeIndicatorProps): React.ReactNode {
   const isPositive = change > 0;
   const isNeutral = change === 0;
 

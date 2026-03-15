@@ -1,4 +1,3 @@
-import type { JSX } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 
@@ -9,7 +8,7 @@ interface RippleButtonProps {
   disabled?: boolean;
 }
 
-export function RippleButton({ children, onClick, className = '', disabled }: RippleButtonProps): JSX.Element {
+export function RippleButton({ children, onClick, className = '', disabled }: RippleButtonProps): React.ReactNode {
   const [ripples, setRipples] = useState<Array<{ x: number; y: number; id: number }>>([]);
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>): void => {
@@ -67,7 +66,7 @@ interface AnimatedToggleProps {
   label?: string;
 }
 
-export function AnimatedToggle({ checked, onChange, label }: AnimatedToggleProps): JSX.Element {
+export function AnimatedToggle({ checked, onChange, label }: AnimatedToggleProps): React.ReactNode {
   return (
     <label className="flex items-center gap-3 cursor-pointer">
       <motion.div
@@ -97,7 +96,7 @@ interface AnimatedCheckboxProps {
   label?: string;
 }
 
-export function AnimatedCheckbox({ checked, onChange, label }: AnimatedCheckboxProps): JSX.Element {
+export function AnimatedCheckbox({ checked, onChange, label }: AnimatedCheckboxProps): React.ReactNode {
   return (
     <label className="flex items-center gap-3 cursor-pointer group">
       <motion.div
@@ -145,7 +144,7 @@ interface ToastAnimationProps {
   onClose: () => void;
 }
 
-export function ToastAnimation({ children, isVisible }: ToastAnimationProps): JSX.Element {
+export function ToastAnimation({ children, isVisible }: ToastAnimationProps): React.ReactNode {
   return (
     <AnimatePresence>
       {isVisible && (
@@ -169,7 +168,7 @@ interface ModalAnimationProps {
   onClose: () => void;
 }
 
-export function ModalAnimation({ children, isOpen, onClose }: ModalAnimationProps): JSX.Element {
+export function ModalAnimation({ children, isOpen, onClose }: ModalAnimationProps): React.ReactNode {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -203,7 +202,7 @@ interface SkeletonProps {
   shimmer?: boolean;
 }
 
-export function Skeleton({ className = '', shimmer = true }: SkeletonProps): JSX.Element {
+export function Skeleton({ className = '', shimmer = true }: SkeletonProps): React.ReactNode {
   return (
     <div className={`relative overflow-hidden bg-dev-surface rounded ${className}`}>
       {shimmer && (
@@ -222,7 +221,7 @@ interface LoadingSpinnerProps {
   color?: string;
 }
 
-export function LoadingSpinner({ size = 'md', color = 'var(--dev-accent)' }: LoadingSpinnerProps): JSX.Element {
+export function LoadingSpinner({ size = 'md', color = 'var(--dev-accent)' }: LoadingSpinnerProps): React.ReactNode {
   const sizes = { sm: 16, md: 24, lg: 32 };
   
   return (

@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { AnalysisSection } from './types';
 import { sections } from './sidebarData';
 
@@ -8,7 +8,7 @@ interface SidebarProps {
   hasReport: boolean;
 }
 
-export function Sidebar({ activeSection, onSectionChange, hasReport }: SidebarProps) {
+export function Sidebar({ activeSection, onSectionChange, hasReport }: SidebarProps): React.ReactNode {
   const navRef = useRef<HTMLElement>(null);
   const activeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -17,7 +17,7 @@ export function Sidebar({ activeSection, onSectionChange, hasReport }: SidebarPr
     activeButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [activeSection]);
 
-  const handleKeyDown = (event: React.KeyboardEvent, sectionId: AnalysisSection, index: number) => {
+  const handleKeyDown = (event: React.KeyboardEvent, sectionId: AnalysisSection, index: number): void => {
     switch (event.key) {
       case 'Enter':
       case ' ': {
@@ -29,27 +29,27 @@ export function Sidebar({ activeSection, onSectionChange, hasReport }: SidebarPr
       }
       case 'ArrowDown': {
         event.preventDefault();
-        const nextButton = navRef.current?.querySelectorAll('button')[index + 1] as HTMLButtonElement;
-        nextButton?.focus();
+        const nextButton = navRef.current?.querySelectorAll('button')[index + 1] as HTMLButtonElement | undefined;
+        if (nextButton !== undefined) nextButton.focus();
         break;
       }
       case 'ArrowUp': {
         event.preventDefault();
-        const prevButton = navRef.current?.querySelectorAll('button')[index - 1] as HTMLButtonElement;
-        prevButton?.focus();
+        const prevButton = navRef.current?.querySelectorAll('button')[index - 1] as HTMLButtonElement | undefined;
+        if (prevButton !== undefined) prevButton.focus();
         break;
       }
       case 'Home': {
         event.preventDefault();
-        const firstButton = navRef.current?.querySelector('button') as HTMLButtonElement;
-        firstButton?.focus();
+        const firstButton = navRef.current?.querySelector('button') as HTMLButtonElement | undefined;
+        if (firstButton !== undefined) firstButton.focus();
         break;
       }
       case 'End': {
         event.preventDefault();
         const buttons = navRef.current?.querySelectorAll('button');
-        const lastButton = buttons?.[buttons.length - 1] as HTMLButtonElement;
-        lastButton?.focus();
+        const lastButton = buttons?.[buttons.length - 1] as HTMLButtonElement | undefined;
+        if (lastButton !== undefined) lastButton.focus();
         break;
       }
     }

@@ -1,15 +1,15 @@
 import { useComparisonStore } from '@/stores/comparisonStore';
-import { GitCompare, ArrowRight, TrendingUp, TrendingDown, ArrowLeftRight, RotateCcw } from 'lucide-react';
+import { ArrowLeftRight, ArrowRight, GitCompare, RotateCcw, TrendingDown, TrendingUp } from 'lucide-react';
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
   const sizes = ['B', 'KB', 'MB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i] ?? 'B'}`;
 }
 
-export function ReportComparison() {
+export function ReportComparison(): React.ReactNode {
   const { comparison, baseline, current, clearComparison, swapReports } = useComparisonStore();
 
   if (!comparison) {
@@ -57,19 +57,19 @@ export function ReportComparison() {
         <div className="dev-panel p-4">
           <div className="text-xs text-dev-text-muted mb-1">Baseline</div>
           <div className="text-sm font-medium text-dev-text truncate">
-            Report from {new Date(baseline?.timestamp || 0).toLocaleDateString()}
+            Report from {baseline?.timestamp !== undefined ? new Date(baseline.timestamp).toLocaleDateString() : 'Unknown'}
           </div>
           <div className="text-xs text-dev-text-subtle mt-1">
-            Score: {baseline?.score.overall}
+            Score: {baseline?.score.overall ?? '-'}
           </div>
         </div>
         <div className="dev-panel p-4">
           <div className="text-xs text-dev-text-muted mb-1">Current</div>
           <div className="text-sm font-medium text-dev-text truncate">
-            Report from {new Date(current?.timestamp || 0).toLocaleDateString()}
+            Report from {current?.timestamp !== undefined ? new Date(current.timestamp).toLocaleDateString() : 'Unknown'}
           </div>
           <div className="text-xs text-dev-text-subtle mt-1">
-            Score: {current?.score.overall}
+            Score: {current?.score.overall ?? '-'}
           </div>
         </div>
       </div>
@@ -120,7 +120,6 @@ export function ReportComparison() {
           {Object.entries(changes)
             .filter(([key]) => key !== 'overall')
             .map(([key, diff]) => {
-              if (!diff) return null;
               const isPositive = key === 'overall' ? diff.delta > 0 : diff.delta < 0;
               return (
                 <div key={key} className="px-4 py-3 flex items-center justify-between">

@@ -30,19 +30,19 @@ function highlightYAML(code: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     // Comments
-    .replace(/(#.*$)/gm, '<span style="' + TOKEN_TYPES.comment + '">$1</span>')
+    .replace(/(#.*$)/gm, `<span style="${  TOKEN_TYPES.comment  }">$1</span>`)
     // Keys (before colon)
     .replace(/^(\s*)([a-zA-Z_-][a-zA-Z0-9_-]*)(:)/gm, 
-      '$1<span style="' + TOKEN_TYPES.property + '">$2</span><span style="' + TOKEN_TYPES.punctuation + '">$3</span>')
+      `$1<span style="${  TOKEN_TYPES.property  }">$2</span><span style="${  TOKEN_TYPES.punctuation  }">$3</span>`)
     // Strings
-    .replace(/(".*?"|'.*?')/g, '<span style="' + TOKEN_TYPES.string + '">$1</span>')
+    .replace(/(".*?"|'.*?')/g, `<span style="${  TOKEN_TYPES.string  }">$1</span>`)
     // Numbers
-    .replace(/\b(\d+\.?\d*)\b/g, '<span style="' + TOKEN_TYPES.number + '">$1</span>')
+    .replace(/\b(\d+\.?\d*)\b/g, `<span style="${  TOKEN_TYPES.number  }">$1</span>`)
     // Booleans
-    .replace(/\b(true|false|yes|no)\b/g, '<span style="' + TOKEN_TYPES.keyword + '">$1</span>')
+    .replace(/\b(true|false|yes|no)\b/g, `<span style="${  TOKEN_TYPES.keyword  }">$1</span>`)
     // Environment variables
     .replace(/(\$\{\{[^}]+\}\}|\$\w+|\$\{[^}]+\})/g, 
-      '<span style="' + TOKEN_TYPES.function + '">$1</span>')
+      `<span style="${  TOKEN_TYPES.function  }">$1</span>`)
 }
 
 /**
@@ -54,15 +54,15 @@ function highlightJSON(code: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     // Keys
-    .replace(/(".*?")(\s*:)/g, '<span style="' + TOKEN_TYPES.property + '">$1</span><span style="' + TOKEN_TYPES.punctuation + '">$2</span>')
+    .replace(/(".*?")(\s*:)/g, `<span style="${  TOKEN_TYPES.property  }">$1</span><span style="${  TOKEN_TYPES.punctuation  }">$2</span>`)
     // Strings
-    .replace(/: (".*?")/g, ': <span style="' + TOKEN_TYPES.string + '">$1</span>')
+    .replace(/: (".*?")/g, `: <span style="${  TOKEN_TYPES.string  }">$1</span>`)
     // Numbers
-    .replace(/: (\d+\.?\d*)/g, ': <span style="' + TOKEN_TYPES.number + '">$1</span>')
+    .replace(/: (\d+\.?\d*)/g, `: <span style="${  TOKEN_TYPES.number  }">$1</span>`)
     // Booleans and null
-    .replace(/: (true|false|null)/g, ': <span style="' + TOKEN_TYPES.keyword + '">$1</span>')
+    .replace(/: (true|false|null)/g, `: <span style="${  TOKEN_TYPES.keyword  }">$1</span>`)
     // Brackets and braces
-    .replace(/([{}[\],])/g, '<span style="' + TOKEN_TYPES.punctuation + '">$1</span>');
+    .replace(/([{}[\],])/g, `<span style="${  TOKEN_TYPES.punctuation  }">$1</span>`);
 }
 
 /**
@@ -80,23 +80,23 @@ function highlightJavaScript(code: string): string {
   
   // Comments
   result = result.replace(/(\/\/.*$|\/\*[\s\S]*?\*\/)/gm, 
-    '<span style="' + TOKEN_TYPES.comment + '">$1</span>');
+    `<span style="${  TOKEN_TYPES.comment  }">$1</span>`);
   
   // Keywords
-  const keywordRegex = new RegExp('\\b(' + keywords.join('|') + ')\\b', 'g');
-  result = result.replace(keywordRegex, '<span style="' + TOKEN_TYPES.keyword + '">$1</span>');
+  const keywordRegex = new RegExp(`\\b(${  keywords.join('|')  })\\b`, 'g');
+  result = result.replace(keywordRegex, `<span style="${  TOKEN_TYPES.keyword  }">$1</span>`);
   
   // Strings
-  result = result.replace(/(".*?"|'.*?'|`[\s\S]*?`)/g, '<span style="' + TOKEN_TYPES.string + '">$1</span>');
+  result = result.replace(/(".*?"|'.*?'|`[\s\S]*?`)/g, `<span style="${  TOKEN_TYPES.string  }">$1</span>`);
   
   // Numbers
-  result = result.replace(/\b(\d+\.?\d*)\b/g, '<span style="' + TOKEN_TYPES.number + '">$1</span>');
+  result = result.replace(/\b(\d+\.?\d*)\b/g, `<span style="${  TOKEN_TYPES.number  }">$1</span>`);
   
   // Functions
-  result = result.replace(/(\w+)(\s*\()/g, '<span style="' + TOKEN_TYPES.function + '">$1</span>$2');
+  result = result.replace(/(\w+)(\s*\()/g, `<span style="${  TOKEN_TYPES.function  }">$1</span>$2`);
   
   // Template literals (interpolated expressions)
-  result = result.replace(/(\$\{[^}]+\})/g, '<span style="' + TOKEN_TYPES.function + '">$1</span>');
+  result = result.replace(/(\$\{[^}]+\})/g, `<span style="${  TOKEN_TYPES.function  }">$1</span>`);
   
   return result;
 }
@@ -114,21 +114,21 @@ function highlightBash(code: string): string {
     .replace(/>/g, '&gt;');
   
   // Comments
-  result = result.replace(/(#.*$)/gm, '<span style="' + TOKEN_TYPES.comment + '">$1</span>');
+  result = result.replace(/(#.*$)/gm, `<span style="${  TOKEN_TYPES.comment  }">$1</span>`);
   
   // Keywords
-  const keywordRegex = new RegExp('\\b(' + keywords.join('|') + ')\\b', 'g');
-  result = result.replace(keywordRegex, '<span style="' + TOKEN_TYPES.keyword + '">$1</span>');
+  const keywordRegex = new RegExp(`\\b(${  keywords.join('|')  })\\b`, 'g');
+  result = result.replace(keywordRegex, `<span style="${  TOKEN_TYPES.keyword  }">$1</span>`);
   
   // Strings
-  result = result.replace(/(".*?"|'.*?')/g, '<span style="' + TOKEN_TYPES.string + '">$1</span>');
+  result = result.replace(/(".*?"|'.*?')/g, `<span style="${  TOKEN_TYPES.string  }">$1</span>`);
   
   // Variables
-  result = result.replace(/(\$\w+|\$\{[^}]+\})/g, '<span style="' + TOKEN_TYPES.function + '">$1</span>');
+  result = result.replace(/(\$\w+|\$\{[^}]+\})/g, `<span style="${  TOKEN_TYPES.function  }">$1</span>`);
   
   // Commands (first word on line or after pipe)
-  result = result.replace(/^(\s*)([a-zA-Z_-]+)/gm, '$1<span style="' + TOKEN_TYPES.function + '">$2</span>');
-  result = result.replace(/(\|)(\s*)([a-zA-Z_-]+)/g, '$1$2<span style="' + TOKEN_TYPES.function + '">$3</span>');
+  result = result.replace(/^(\s*)([a-zA-Z_-]+)/gm, `$1<span style="${  TOKEN_TYPES.function  }">$2</span>`);
+  result = result.replace(/(\|)(\s*)([a-zA-Z_-]+)/g, `$1$2<span style="${  TOKEN_TYPES.function  }">$3</span>`);
   
   return result;
 }

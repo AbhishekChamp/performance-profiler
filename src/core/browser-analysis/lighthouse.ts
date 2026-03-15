@@ -6,7 +6,7 @@
  * @module browser-analysis/lighthouse
  */
 
-import type { RealWebVitalMetric, MetricConfidence } from './index';
+import type { MetricConfidence, RealWebVitalMetric } from './index';
 
 /**
  * Lighthouse audit result structure
@@ -97,7 +97,7 @@ export function parseLighthouseResult(result: LighthouseResult): RealWebVitalMet
  */
 export function getLighthouseScore(result: LighthouseResult): number {
   const performance = result.lhr.categories.performance;
-  return performance.score !== null ? Math.round(performance.score * 100) : 0;
+  return (performance.score ?? 0) !== 0 ? Math.round((performance.score ?? 0) * 100) : 0;
 }
 
 /**
@@ -107,7 +107,7 @@ export function getCategoryScores(result: LighthouseResult): Record<string, numb
   const scores: Record<string, number> = {};
   
   for (const [id, category] of Object.entries(result.lhr.categories)) {
-    scores[id] = category.score !== null ? Math.round(category.score * 100) : 0;
+    scores[id] = (category.score ?? 0) !== 0 ? Math.round((category.score ?? 0) * 100) : 0;
   }
   
   return scores;
@@ -145,14 +145,14 @@ export function getPerformanceOpportunities(result: LighthouseResult): Array<{
 
   for (const auditId of opportunityAudits) {
     const audit = result.lhr.audits[auditId];
-    if (audit.score !== null && audit.score < 1) {
+    if ((audit.score ?? 1) < 1) {
       opportunities.push({
         id: auditId,
         title: audit.title,
         description: audit.description,
-        score: audit.score,
+        score: audit.score ?? 0,
         displayValue: audit.displayValue,
-        savings: audit.details !== undefined ? extractSavings(audit.details) : undefined
+        savings: audit.details !== undefined && audit.details !== null ? extractSavings(audit.details) : undefined
       });
     }
   }
@@ -166,10 +166,10 @@ export function getPerformanceOpportunities(result: LighthouseResult): Array<{
 function extractSavings(details: unknown): string | undefined {
   if (typeof details === 'object' && details !== null) {
     const d = details as Record<string, unknown>;
-    if ('overallSavingsMs' in d && typeof d.overallSavingsMs === 'number') {
+    if ('overallSavingsMs' in d && d.overallSavingsMs !== undefined && typeof d.overallSavingsMs === 'number') {
       return `${Math.round(d.overallSavingsMs)}ms`;
     }
-    if ('overallSavingsBytes' in d && typeof d.overallSavingsBytes === 'number') {
+    if ('overallSavingsBytes' in d && d.overallSavingsBytes !== undefined && typeof d.overallSavingsBytes === 'number') {
       return `${Math.round(d.overallSavingsBytes / 1024)}KB`;
     }
   }
@@ -251,35 +251,43 @@ export function getLighthouseRecommendations(result: LighthouseResult): string[]
   const { audits } = result.lhr;
 
   // Check for specific issues
-  if (audits['render-blocking-resources']?.score !== undefined && audits['render-blocking-resources'].score !== null && audits['render-blocking-resources'].score < 1) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (audits['render-blocking-resources']?.score != null && audits['render-blocking-resources'].score < 1) {
     recommendations.push('Eliminate render-blocking resources');
   }
 
-  if (audits['unused-css-rules']?.score !== undefined && audits['unused-css-rules'].score !== null && audits['unused-css-rules'].score < 1) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (audits['unused-css-rules']?.score != null && audits['unused-css-rules'].score < 1) {
     recommendations.push('Remove unused CSS');
   }
 
-  if (audits['unused-javascript']?.score !== undefined && audits['unused-javascript'].score !== null && audits['unused-javascript'].score < 1) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (audits['unused-javascript']?.score != null && audits['unused-javascript'].score < 1) {
     recommendations.push('Remove unused JavaScript');
   }
 
-  if (audits['modern-image-formats']?.score !== undefined && audits['modern-image-formats'].score !== null && audits['modern-image-formats'].score < 1) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (audits['modern-image-formats']?.score != null && audits['modern-image-formats'].score < 1) {
     recommendations.push('Use modern image formats (WebP, AVIF)');
   }
 
-  if (audits['efficiently-encode-images']?.score !== undefined && audits['efficiently-encode-images'].score !== null && audits['efficiently-encode-images'].score < 1) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (audits['efficiently-encode-images']?.score != null && audits['efficiently-encode-images'].score < 1) {
     recommendations.push('Efficiently encode images');
   }
 
-  if (audits['offscreen-images']?.score !== undefined && audits['offscreen-images'].score !== null && audits['offscreen-images'].score < 1) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (audits['offscreen-images']?.score != null && audits['offscreen-images'].score < 1) {
     recommendations.push('Defer offscreen images');
   }
 
-  if (audits['uses-text-compression']?.score !== undefined && audits['uses-text-compression'].score !== null && audits['uses-text-compression'].score < 1) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (audits['uses-text-compression']?.score != null && audits['uses-text-compression'].score < 1) {
     recommendations.push('Enable text compression');
   }
 
-  if (audits['uses-responsive-images']?.score !== undefined && audits['uses-responsive-images'].score !== null && audits['uses-responsive-images'].score < 1) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (audits['uses-responsive-images']?.score != null && audits['uses-responsive-images'].score < 1) {
     recommendations.push('Use responsive images');
   }
 

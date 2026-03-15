@@ -1,5 +1,5 @@
 import { Component, type ReactNode } from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -25,10 +25,10 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     // Log to error tracking service in production
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((import.meta as any).env?.PROD) {
+    const meta = import.meta as unknown as { env: { PROD: boolean } };
+    if (meta.env.PROD === true) {
       // Send to error tracking service - console.error allowed in production for error tracking
       console.error('ErrorBoundary caught an error:', error, errorInfo);
     }
@@ -36,17 +36,17 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({ errorInfo });
   }
 
-  handleReset = () => {
+  handleReset = (): void => {
     this.setState({ hasError: false, error: undefined, errorInfo: undefined });
   };
 
-  handleGoHome = () => {
+  handleGoHome = (): void => {
     window.location.href = '/';
   };
 
-  override render() {
+  override render(): ReactNode {
     if (this.state.hasError) {
-      if (this.props.fallback) {
+      if (this.props.fallback != null) {
         return this.props.fallback;
       }
 
@@ -57,16 +57,15 @@ export class ErrorBoundary extends Component<Props, State> {
           </div>
           <h2 className="text-xl font-semibold text-dev-text mb-2">Something went wrong</h2>
           <p className="text-dev-text-muted text-sm mb-2 max-w-md">
-            {this.props.componentName && (
+            {this.props.componentName != null && (
               <span className="text-xs uppercase tracking-wider text-dev-text-subtle block mb-2">
                 {this.props.componentName}
               </span>
             )}
-            {this.state.error?.message ||
+            {this.state.error?.message ??
               'An unexpected error occurred while rendering this component.'}
           </p>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {((import.meta as any).env?.DEV) && this.state.errorInfo && (
+          {(import.meta as unknown as { env: { DEV: boolean } }).env.DEV === true && (this.state.errorInfo != null) && (
             <pre className="mt-4 p-4 bg-dev-surface rounded-lg text-left text-xs text-dev-text-muted overflow-auto max-w-md max-h-40">
               {this.state.errorInfo.componentStack}
             </pre>
@@ -93,14 +92,14 @@ export class ErrorBoundary extends Component<Props, State> {
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
   displayName?: string
-) {
-  const WrappedComponent = (props: P) => (
-    <ErrorBoundary componentName={displayName || Component.displayName || Component.name}>
+): React.FC<P> {
+  const WrappedComponent = (props: P): React.JSX.Element => (
+    <ErrorBoundary componentName={displayName ?? Component.displayName ?? Component.name}>
       <Component {...props} />
     </ErrorBoundary>
   );
   WrappedComponent.displayName =
-    displayName || `withErrorBoundary(${Component.displayName || Component.name})`;
+    displayName ?? `withErrorBoundary(${Component.displayName ?? Component.name})`;
   return WrappedComponent;
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void] {
   // Get stored value or use initial value
@@ -9,7 +9,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
 
     try {
       const item = window.localStorage.getItem(key);
-      return item ? (JSON.parse(item) as T) : initialValue;
+      return item != null ? (JSON.parse(item) as T) : initialValue;
     } catch {
       return initialValue;
     }
@@ -40,7 +40,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
 
   // Listen for changes in other tabs/windows
   useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
+    const handleStorageChange = (event: StorageEvent): void => {
       if (event.key === key && event.newValue !== null) {
         try {
           setStoredValue(JSON.parse(event.newValue) as T);
@@ -52,11 +52,11 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
 
     // Listen for both storage events and custom local-storage events
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('local-storage', handleStorageChange as EventListener);
+    window.addEventListener('local-storage', handleStorageChange as unknown as EventListener);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('local-storage', handleStorageChange as EventListener);
+      window.removeEventListener('local-storage', handleStorageChange as unknown as EventListener);
     };
   }, [key]);
 

@@ -127,5 +127,5 @@ function getFileType(filename: string): string {
     'json': 'application/json',
     'map': 'application/json',
   };
-  return typeMap[ext || ''] || 'text/plain';
+  return typeMap[ext ?? ''] ?? 'text/plain';
 }

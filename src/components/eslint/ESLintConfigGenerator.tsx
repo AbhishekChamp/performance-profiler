@@ -1,13 +1,13 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Copy, Download, CheckCircle, AlertTriangle, Code2, FileJson, FileCode, BookOpen, Terminal } from 'lucide-react';
-import { generateESLintConfig, generateInstallCommands, presets, type ConfigFormat, type ConfigGenerationOptions } from '@/core/eslint';
+import { AlertTriangle, BookOpen, CheckCircle, Code2, Copy, Download, FileCode, FileJson, Terminal } from 'lucide-react';
+import { type ConfigFormat, type ConfigGenerationOptions, generateESLintConfig, generateInstallCommands, presets } from '@/core/eslint';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { Modal } from '@/components/ui/Modal';
 import { syntaxHighlight } from '@/utils/syntaxHighlight';
 import toast from 'react-hot-toast';
 
-export function ESLintConfigGenerator(): JSX.Element {
+export function ESLintConfigGenerator(): React.ReactNode {
   const report = useAnalysisStore((state) => state.currentReport);
   const [format, setFormat] = useState<ConfigFormat>('json');
   const [strictness, setStrictness] = useState<ConfigGenerationOptions['strictness']>('moderate');
@@ -19,7 +19,7 @@ export function ESLintConfigGenerator(): JSX.Element {
     ? generateESLintConfig(
         report.typescript,
         report.javascript,
-        report.react,
+        undefined,
         {
           format,
           presets: selectedPresets as ConfigGenerationOptions['presets'],

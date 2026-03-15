@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import { renderHook } from '@testing-library/react';
-import { useScrollReveal, useStaggeredReveal, useParallax } from '../useScrollReveal';
+import { describe, expect, it, vi } from 'vitest';
+import { renderHook, waitFor } from '@testing-library/react';
+import { useParallax, useScrollReveal, useStaggeredReveal } from '../useScrollReveal';
 
 describe('useScrollReveal', () => {
   it('should return ref and isVisible state', () => {
@@ -11,7 +11,7 @@ describe('useScrollReveal', () => {
     expect(result.current.isVisible).toBe(false);
   });
 
-  it('should respect reduced motion preference', () => {
+  it('should respect reduced motion preference', async () => {
     // Mock matchMedia to return reduced motion preference
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
@@ -24,12 +24,24 @@ describe('useScrollReveal', () => {
     const { result } = renderHook(() => useScrollReveal());
     
     // Should be visible immediately when reduced motion is preferred
-    expect(result.current.isVisible).toBe(true);
+    // The hook sets visibility via requestAnimationFrame in useEffect
+    await waitFor(() => {
+      expect(result.current.isVisible).toBe(true);
+    });
   });
 });
 
 describe('useStaggeredReveal', () => {
   it('should return containerRef and visibleItems array', () => {
+    // Mock matchMedia to return false for reduced motion (default behavior)
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+      })),
+    });
+
     const { result } = renderHook(() => useStaggeredReveal(5));
     
     expect(result.current.containerRef).toBeDefined();
@@ -37,7 +49,7 @@ describe('useStaggeredReveal', () => {
     expect(result.current.visibleItems.every(v => !v)).toBe(true);
   });
 
-  it('should respect reduced motion preference', () => {
+  it('should respect reduced motion preference', async () => {
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       value: vi.fn().mockImplementation((query: string) => ({
@@ -48,8 +60,11 @@ describe('useStaggeredReveal', () => {
 
     const { result } = renderHook(() => useStaggeredReveal(3));
     
-    // All items should be visible immediately
-    expect(result.current.visibleItems.every(v => v)).toBe(true);
+    // All items should be visible immediately when reduced motion is preferred
+    // The hook sets visibility via setState in useEffect
+    await waitFor(() => {
+      expect(result.current.visibleItems.every(v => v)).toBe(true);
+    });
   });
 });
 

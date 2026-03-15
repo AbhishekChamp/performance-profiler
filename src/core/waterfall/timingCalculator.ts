@@ -5,7 +5,7 @@
  * to create a waterfall visualization.
  */
 
-import type { Asset, ResourceHint, RenderBlockingResource } from '@/types';
+import type { Asset, RenderBlockingResource, ResourceHint } from '@/types';
 
 export interface WaterfallResource {
   id: string;

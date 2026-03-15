@@ -1,5 +1,5 @@
 import type { ImageAnalysis } from '@/types';
-import { Images, AlertTriangle, CheckCircle, Zap, Image, BarChart3 } from 'lucide-react';
+import { AlertTriangle, BarChart3, CheckCircle, Image, Images, Zap } from 'lucide-react';
 import { PieChart } from '../charts/PieChart';
 
 interface ImagesSectionProps {
@@ -14,7 +14,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }
 
-export function ImagesSection({ images }: ImagesSectionProps) {
+export function ImagesSection({ images }: ImagesSectionProps): React.ReactNode {
   const {
     images: imageList,
     totalSize,

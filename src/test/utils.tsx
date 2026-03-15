@@ -1,5 +1,5 @@
 import React from 'react';
-import { render as rtlRender, RenderOptions } from '@testing-library/react';
+import { RenderOptions, render as rtlRender } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Create a custom render function that includes providers

@@ -1,5 +1,5 @@
 import { memo, useState } from 'react';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Handle, type NodeProps, Position } from '@xyflow/react';
 import { getModuleColor } from '@/core/graph/layout';
 
 interface ModuleNodeData extends Record<string, unknown> {
@@ -26,18 +26,18 @@ interface ExtendedNodeProps extends NodeProps {
   data: ModuleNodeData;
 }
 
-function ModuleNodeComponent({ data, selected }: ExtendedNodeProps) {
+function ModuleNodeComponent({ data, selected }: ExtendedNodeProps): React.ReactNode {
   const [isHovered, setIsHovered] = useState(false);
   
   const size = Math.max(40, Math.min(120, 40 + Math.log10((data.size || 0) + 1) * 10));
   const color = getModuleColor(data.type || 'source');
-  const isDuplicate = data.isDuplicate;
-  const isUnused = data.isUnused;
+  const isDuplicate = data.isDuplicate ?? false;
+  const isUnused = data.isUnused ?? false;
   
   // Dynamic styles based on state
-  const opacity = data.isDimmed ? 0.3 : 1;
-  const strokeWidth = selected || data.isSelected ? 3 : isHovered ? 2 : 1;
-  const strokeColor = selected || data.isSelected ? '#58a6ff' : isDuplicate ? '#f85149' : '#30363d';
+  const opacity = data.isDimmed === true ? 0.3 : 1;
+  const strokeWidth = selected === true || data.isSelected === true ? 3 : isHovered ? 2 : 1;
+  const strokeColor = selected === true || data.isSelected === true ? '#58a6ff' : isDuplicate ? '#f85149' : '#30363d';
   
   return (
     <div
@@ -80,7 +80,7 @@ function ModuleNodeComponent({ data, selected }: ExtendedNodeProps) {
         />
         
         {/* Duplicate indicator */}
-        {isDuplicate && (
+        {isDuplicate === true && (
           <>
             <circle
               cx={size - 8}
@@ -102,7 +102,7 @@ function ModuleNodeComponent({ data, selected }: ExtendedNodeProps) {
         )}
         
         {/* Unused export indicator */}
-        {isUnused && (
+        {isUnused === true && (
           <>
             <circle
               cx={8}
@@ -124,7 +124,7 @@ function ModuleNodeComponent({ data, selected }: ExtendedNodeProps) {
         )}
         
         {/* Tree-shakable indicator */}
-        {data.isTreeShakable && (
+        {data.isTreeShakable === true && (
           <>
             <circle
               cx={size - 8}
@@ -171,12 +171,12 @@ function ModuleNodeComponent({ data, selected }: ExtendedNodeProps) {
           <div className="text-dev-text-muted">
             {((data.size || 0) / 1024).toFixed(2)} KB • {data.type}
           </div>
-          {(data.exports || []).length > 0 && (
+          {data.exports.length > 0 && (
             <div className="text-dev-text-muted">
               {data.exports.length} exports
             </div>
           )}
-          {(data.dependencies || []).length > 0 && (
+          {data.dependencies.length > 0 && (
             <div className="text-dev-text-muted">
               {data.dependencies.length} deps
             </div>

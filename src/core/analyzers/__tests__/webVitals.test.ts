@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { analyzeWebVitals } from '../webVitals';
-import type { BundleAnalysis, DOMAnalysis, AssetAnalysis } from '@/types';
+import type { AssetAnalysis, BundleAnalysis, DOMAnalysis } from '@/types';
 
 describe('analyzeWebVitals', () => {
   it('should estimate LCP based on image sizes', () => {

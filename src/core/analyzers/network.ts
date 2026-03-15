@@ -1,4 +1,4 @@
-import type { NetworkAnalysis, ResourceHint, RenderBlockingResource } from '@/types';
+import type { NetworkAnalysis, RenderBlockingResource, ResourceHint } from '@/types';
 
 export function analyzeNetwork(htmlContent: string): NetworkAnalysis {
   const hints: ResourceHint[] = [];
@@ -112,7 +112,7 @@ export function analyzeNetwork(htmlContent: string): NetworkAnalysis {
     const tag = match[0];
     const hrefMatch = tag.match(/href=["']([^"']+)["']/i);
     const mediaMatch = tag.match(/media=["']([^"']+)["']/i);
-    const href = hrefMatch?.[1] || 'unknown';
+    const href = hrefMatch?.[1] ?? 'unknown';
 
     // CSS is render-blocking if:
     // 1. No media attribute, or
@@ -160,16 +160,16 @@ export function analyzeNetwork(htmlContent: string): NetworkAnalysis {
 
   // Extract all CSS and JS resources
   const allResources = new Set<string>();
-  const allCssMatch = htmlContent.match(/href=["']([^"']+\.css)["']/gi) || [];
-  const allJsMatch = htmlContent.match(/src=["']([^"']+\.js)["']/gi) || [];
+  const allCssMatch = htmlContent.match(/href=["']([^"']+\.css)["']/gi) ?? [];
+  const allJsMatch = htmlContent.match(/src=["']([^"']+\.js)["']/gi) ?? [];
 
   for (const m of allCssMatch) {
     const href = m.match(/href=["']([^"']+)["']/i)?.[1];
-    if (href) allResources.add(href);
+    if (href !== undefined && href !== '') allResources.add(href);
   }
   for (const m of allJsMatch) {
     const src = m.match(/src=["']([^"']+)["']/i)?.[1];
-    if (src) allResources.add(src);
+    if (src !== undefined && src !== '') allResources.add(src);
   }
 
   // First 2 CSS and first 2 JS are likely critical

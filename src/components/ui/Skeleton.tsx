@@ -14,7 +14,7 @@ export function Skeleton({
   width,
   height,
   animate = true,
-}: SkeletonProps) {
+}: SkeletonProps): React.ReactNode {
   const baseClasses = 'bg-dev-border';
   
   const variantClasses = {
@@ -63,7 +63,7 @@ interface SkeletonCardProps {
   className?: string;
 }
 
-export function SkeletonCard({ hasImage = false, lines = 3, className = '' }: SkeletonCardProps) {
+export function SkeletonCard({ hasImage = false, lines = 3, className = '' }: SkeletonCardProps): React.ReactNode {
   return (
     <div className={`p-4 bg-dev-surface rounded-xl border border-dev-border ${className}`}>
       {hasImage && (
@@ -87,7 +87,7 @@ interface SkeletonStatsProps {
   className?: string;
 }
 
-export function SkeletonStats({ count = 4, className = '' }: SkeletonStatsProps) {
+export function SkeletonStats({ count = 4, className = '' }: SkeletonStatsProps): React.ReactNode {
   return (
     <div className={`grid grid-cols-2 md:grid-cols-${count} gap-4 ${className}`}>
       {Array.from({ length: count }).map((_, i) => (
@@ -106,7 +106,7 @@ interface SkeletonTableProps {
   className?: string;
 }
 
-export function SkeletonTable({ rows = 5, columns = 4, className = '' }: SkeletonTableProps) {
+export function SkeletonTable({ rows = 5, columns = 4, className = '' }: SkeletonTableProps): React.ReactNode {
   return (
     <div className={`bg-dev-surface rounded-xl border border-dev-border overflow-hidden ${className}`}>
       {/* Header */}
@@ -133,7 +133,7 @@ interface SkeletonListProps {
   className?: string;
 }
 
-export function SkeletonList({ items = 5, className = '' }: SkeletonListProps) {
+export function SkeletonList({ items = 5, className = '' }: SkeletonListProps): React.ReactNode {
   return (
     <div className={`space-y-3 ${className}`}>
       {Array.from({ length: items }).map((_, i) => (

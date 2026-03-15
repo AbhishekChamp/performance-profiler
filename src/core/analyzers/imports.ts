@@ -118,7 +118,7 @@ function getPackageSize(packageName: string): number {
 
 function isTreeShakable(packageName: string): boolean {
   // Check if package or its base is tree-shakable
-  if (TREE_SHAKABLE_PACKAGES.some(p => packageName === p || packageName.startsWith(p + '/'))) {
+  if (TREE_SHAKABLE_PACKAGES.some(p => packageName === p || packageName.startsWith(`${p  }/`))) {
     return true;
   }
   
@@ -182,7 +182,7 @@ export function analyzeImports(jsFiles: { name: string; content: string }[]): Im
           importCost.suggestions.push(`Import specific modules instead of the full package: import { feature } from '${fullPackage}/feature'`);
         }
         
-        if (!isTreeShakable && size > 50000) {
+        if (!treeShakable && size > 50000) {
           importCost.suggestions.push('This package may not be tree-shakable - ensure you\'re using the minimal imports');
         }
         

@@ -2,7 +2,7 @@
  * Skip to content link for accessibility
  * Allows keyboard users to skip navigation and jump to main content
  */
-export function SkipToContent() {
+export function SkipToContent(): React.ReactNode {
   return (
     <a
       href="#main-content"

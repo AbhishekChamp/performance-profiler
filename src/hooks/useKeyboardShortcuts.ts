@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { KeyboardShortcut } from '@/types';
 
 // Shortcut categories for organization
@@ -176,7 +176,7 @@ interface UseKeyboardShortcutsOptions {
   enabled?: boolean;
 }
 
-export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions) {
+export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions): void {
   const { enabled = true } = options;
 
   // Use refs to always have latest callbacks without re-registering
@@ -212,9 +212,9 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions) {
 
       const shortcut = KEYBOARD_SHORTCUTS.find((s) => {
         const keyMatch = s.key.toLowerCase() === event.key.toLowerCase();
-        const ctrlMatch = !!s.ctrl === (event.ctrlKey || event.metaKey);
-        const shiftMatch = !!s.shift === event.shiftKey;
-        const altMatch = !!s.alt === event.altKey;
+        const ctrlMatch = Boolean(s.ctrl) === (event.ctrlKey || event.metaKey);
+        const shiftMatch = Boolean(s.shift) === event.shiftKey;
+        const altMatch = Boolean(s.alt) === event.altKey;
         return keyMatch && ctrlMatch && shiftMatch && altMatch;
       });
 
@@ -281,10 +281,10 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions) {
 
 export function formatShortcut(shortcut: KeyboardShortcut): string {
   const parts: string[] = [];
-  if (shortcut.ctrl) parts.push('Ctrl');
-  if (shortcut.meta) parts.push('⌘');
-  if (shortcut.alt) parts.push('Alt');
-  if (shortcut.shift) parts.push('Shift');
+  if (shortcut.ctrl === true) parts.push('Ctrl');
+  if (shortcut.meta === true) parts.push('⌘');
+  if (shortcut.alt === true) parts.push('Alt');
+  if (shortcut.shift === true) parts.push('Shift');
   
   // Format special keys
   const keyDisplay: Record<string, string> = {
@@ -301,36 +301,39 @@ export function formatShortcut(shortcut: KeyboardShortcut): string {
 }
 
 // Hook for focus management
-export function useFocusTrap(isActive: boolean, containerRef: React.RefObject<HTMLElement | null>) {
+export function useFocusTrap(isActive: boolean, containerRef: React.RefObject<HTMLElement | null>): void {
   useEffect(() => {
     if (!isActive || !containerRef.current) return;
 
     const container = containerRef.current;
-    const focusableElements = container.querySelectorAll<HTMLElement>(
+    const focusableElements = Array.from(container.querySelectorAll<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
+    ));
     
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
+    // Early return if no focusable elements
+    if (focusableElements.length === 0) return;
+    
+    const firstElement = focusableElements[0] as HTMLElement;
+    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
 
-    const handleTabKey = (e: KeyboardEvent) => {
+    const handleTabKey = (e: KeyboardEvent): void => {
       if (e.key !== 'Tab') return;
 
       if (e.shiftKey) {
         if (document.activeElement === firstElement) {
           e.preventDefault();
-          lastElement?.focus();
+          lastElement.focus();
         }
       } else {
         if (document.activeElement === lastElement) {
           e.preventDefault();
-          firstElement?.focus();
+          firstElement.focus();
         }
       }
     };
 
     // Focus first element when trap is activated
-    firstElement?.focus();
+    firstElement.focus();
 
     container.addEventListener('keydown', handleTabKey);
     return () => container.removeEventListener('keydown', handleTabKey);
@@ -338,7 +341,7 @@ export function useFocusTrap(isActive: boolean, containerRef: React.RefObject<HT
 }
 
 // Hook for managing focus on mount/unmount
-export function useFocusRestore() {
+export function useFocusRestore(): { saveFocus: () => void; restoreFocus: () => void } {
   const lastFocusedElement = useRef<HTMLElement | null>(null);
 
   const saveFocus = useCallback(() => {

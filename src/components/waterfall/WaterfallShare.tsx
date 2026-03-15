@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Share2, Copy, CheckCircle } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { CheckCircle, Copy, Share2 } from 'lucide-react';
 import type { WaterfallData } from '@/core/waterfall/timingCalculator';
 import toast from 'react-hot-toast';
 
@@ -10,7 +10,7 @@ interface WaterfallShareProps {
 /**
  * Component for sharing waterfall view via URL hash
  */
-export function WaterfallShare({ data }: WaterfallShareProps): JSX.Element {
+export function WaterfallShare({ data }: WaterfallShareProps): React.ReactNode {
   const [copied, setCopied] = useState(false);
   
   const shareUrl = useMemo(() => {
@@ -30,7 +30,7 @@ export function WaterfallShare({ data }: WaterfallShareProps): JSX.Element {
     return url.toString();
   }, [data]);
 
-  const handleCopyLink = useCallback(async () => {
+  const handleCopyLink = useCallback(async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
@@ -41,8 +41,8 @@ export function WaterfallShare({ data }: WaterfallShareProps): JSX.Element {
     }
   }, [shareUrl]);
 
-  const handleShare = useCallback(async () => {
-    if (navigator.share) {
+  const handleShare = useCallback(async (): Promise<void> => {
+    if (typeof navigator.share === 'function') {
       try {
         await navigator.share({
           title: 'Performance Waterfall',
@@ -98,7 +98,9 @@ export function useWaterfallShare(): {
 
   useEffect(() => {
     const hash = window.location.hash.slice(1);
-    if (hash.length === 0) return;
+    if (hash.length === 0) {
+      return;
+    }
 
     const params = new URLSearchParams(hash);
     const view = params.get('view');

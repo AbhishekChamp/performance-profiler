@@ -1,17 +1,17 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { 
-  Plus, 
-  Folder, 
-  MoreVertical, 
-  Trash2, 
+  BarChart3, 
+  ChevronRight, 
+  Clock, 
+  Database, 
   Edit2, 
   FileCode, 
-  Clock,
-  TrendingUp,
-  ChevronRight,
+  Folder,
+  MoreVertical,
+  Plus,
   Search,
-  BarChart3,
-  Database
+  Trash2,
+  TrendingUp
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { clearAllStorage, getStorageStats } from '@/utils/offlineStorage';
@@ -24,7 +24,7 @@ interface ProjectsListProps {
   onOpenProject: (projectId: string) => void;
 }
 
-export function ProjectsList({ onCreateProject, onOpenProject }: ProjectsListProps) {
+export function ProjectsList({ onCreateProject, onOpenProject }: ProjectsListProps): React.ReactNode {
   const { projects, deleteProject } = useProjectStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [editingProject, setEditingProject] = useState<string | null>(null);
@@ -37,32 +37,32 @@ export function ProjectsList({ onCreateProject, onOpenProject }: ProjectsListPro
     return projects.filter(
       (p) =>
         p.name.toLowerCase().includes(query) ||
-        p.description?.toLowerCase().includes(query)
+        (p.description?.toLowerCase().includes(query) ?? false)
     );
   }, [projects, searchQuery]);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: string): void => {
     if (confirm('Are you sure you want to delete this project? This cannot be undone.')) {
       deleteProject(id);
     }
     setMenuOpen(null);
   };
 
-  const handleEditStart = (project: ProjectSummary) => {
+  const handleEditStart = (project: ProjectSummary): void => {
     setEditingProject(project.id);
     setEditName(project.name);
     setMenuOpen(null);
   };
 
-  const handleEditSave = () => {
-    if (editingProject && editName.trim()) {
+  const handleEditSave = (): void => {
+    if (editingProject !== null && editName.trim() !== '') {
       useProjectStore.getState().updateProject(editingProject, { name: editName.trim() });
     }
     setEditingProject(null);
     setEditName('');
   };
 
-  const getScoreColor = (score?: number) => {
+  const getScoreColor = (score?: number): string => {
     if (score === undefined) return 'text-dev-text-muted';
     if (score >= 70) return 'text-green-500';
     if (score >= 50) return 'text-yellow-500';
@@ -168,21 +168,21 @@ export function ProjectsList({ onCreateProject, onOpenProject }: ProjectsListPro
 }
 
 // Clear Storage Section Component
-function ClearStorageSection() {
+function ClearStorageSection(): React.ReactNode {
   const [storageInfo, setStorageInfo] = useState<{ totalReports: number; totalSize: number } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const loadStorageInfo = useCallback(async () => {
+  const loadStorageInfo = useCallback(async (): Promise<void> => {
     const stats = await getStorageStats();
     setStorageInfo(stats);
   }, []);
 
   // Load storage info on mount
-  useState(() => {
+  useState((): void => {
     loadStorageInfo();
   });
 
-  const handleClearAll = async () => {
+  const handleClearAll = async (): Promise<void> => {
     const confirmed = confirm(
       'WARNING: This will permanently delete ALL your data including:\n\n' +
       '• All projects\n' +
@@ -220,9 +220,9 @@ function ClearStorageSection() {
     }
   };
 
-  const hasData = storageInfo && (storageInfo.totalReports > 0 || storageInfo.totalSize > 0);
+  const hasData = storageInfo !== null && (storageInfo.totalReports > 0 || storageInfo.totalSize > 0);
 
-  if (!hasData) return null;
+  if (hasData !== true) return null;
 
   return (
     <div className="mt-12 pt-8 border-t border-dev-border">
@@ -239,13 +239,6 @@ function ClearStorageSection() {
               This action cannot be undone.
             </p>
             
-            {storageInfo && (
-              <div className="flex items-center gap-4 text-sm text-dev-text-muted mb-4">
-                <span>{storageInfo.totalReports} reports stored</span>
-                <span>•</span>
-                <span>Storage used</span>
-              </div>
-            )}
             
             <button
               onClick={handleClearAll}
@@ -293,7 +286,7 @@ function ProjectCard({
   isMenuOpen,
   onMenuToggle,
   getScoreColor,
-}: ProjectCardProps) {
+}: ProjectCardProps): React.ReactNode {
   return (
     <div className="group relative bg-dev-surface border border-dev-border rounded-xl p-5
                     hover:border-dev-accent/50 hover:shadow-lg hover:shadow-dev-accent/5
@@ -380,7 +373,7 @@ function ProjectCard({
       </div>
       
       {/* Description */}
-      {project.description && (
+      {project.description !== undefined && project.description !== '' && (
         <p className="text-sm text-dev-text-muted mb-4 line-clamp-2">
           {project.description}
         </p>
@@ -416,7 +409,7 @@ function ProjectCard({
       </div>
       
       {/* Last Analysis */}
-      {project.lastAnalysisAt && (
+      {project.lastAnalysisAt !== undefined && (
         <div className="flex items-center gap-1.5 text-xs text-dev-text-muted mb-4">
           <Clock className="w-3.5 h-3.5" />
           <span>Analyzed {formatDate(project.lastAnalysisAt)}</span>

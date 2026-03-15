@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { 
   AppError, 
   ErrorCodes, 
@@ -7,6 +7,25 @@ import {
   safeLocalStorage,
   withErrorHandling,
 } from '../errorHandler';
+
+// Simple localStorage mock that stores values in memory
+const localStorageStore: Record<string, string> = {};
+
+beforeEach(() => {
+  // Clear the store before each test
+  Object.keys(localStorageStore).forEach((key) => {
+    localStorageStore[key] = '';
+  });
+  
+  // Mock localStorage methods
+  vi.spyOn(window.localStorage, 'getItem').mockImplementation((key: string) => {
+    return localStorageStore[key] ?? null;
+  });
+  
+  vi.spyOn(window.localStorage, 'setItem').mockImplementation((key: string, value: string) => {
+    localStorageStore[key] = value;
+  });
+});
 
 describe('errorHandler', () => {
   describe('AppError', () => {

@@ -201,7 +201,7 @@ function exportHTML(report: AnalysisReport): void {
     <div class="recommendation">
       <h4>${i + 1}. ${opt.title} <span class="badge badge-${opt.impact}">${opt.impact.toUpperCase()}</span></h4>
       <p>${opt.description}</p>
-      ${opt.code ? `<pre><code>${escapeHtml(opt.code)}</code></pre>` : ''}
+      ${opt.code != null ? `<pre><code>${escapeHtml(opt.code)}</code></pre>` : ''}
     </div>
     `).join('')}
   </div>
@@ -256,7 +256,7 @@ ${report.summary.optimizations.slice(0, 10).map((opt, i) => `
 
 ${opt.description}
 
-${opt.code ? `\`\`\`\n${opt.code}\n\`\`\`` : ''}
+${opt.code != null ? `\`\`\`\n${opt.code}\n\`\`\`` : ''}
 `).join('\n---\n')}
 
 ---

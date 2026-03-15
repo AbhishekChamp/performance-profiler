@@ -1,6 +1,6 @@
 import { ESLintConfigGenerator } from '@/components/eslint';
 
-export function ESLintSection(): JSX.Element {
+export function ESLintSection(): React.ReactNode {
   return (
     <div className="h-full">
       <ESLintConfigGenerator />

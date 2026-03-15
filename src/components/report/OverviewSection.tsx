@@ -1,6 +1,6 @@
 import { ScoreGauge } from '@/components/charts/ScoreGauge';
 import type { AnalysisReport } from '@/types';
-import { AlertTriangle, CheckCircle, Lightbulb, Zap, Shield, Accessibility, Search, Gauge } from 'lucide-react';
+import { Accessibility, AlertTriangle, CheckCircle, Gauge, Lightbulb, Search, Shield, Zap } from 'lucide-react';
 
 interface OverviewSectionProps {
   report: AnalysisReport;
@@ -14,7 +14,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }
 
-function getRiskBadge(level: string) {
+function getRiskBadge(level: string): React.ReactNode {
   switch (level) {
     case 'low':
       return <span className="status-badge-success">Low Risk</span>;
@@ -37,7 +37,7 @@ function ScoreCard({
   label: string; 
   score: number | undefined; 
   icon: React.ElementType;
-}) {
+}): React.ReactNode {
   if (score === undefined) return null;
   
   return (
@@ -55,7 +55,7 @@ function ScoreCard({
   );
 }
 
-export function OverviewSection({ report }: OverviewSectionProps) {
+export function OverviewSection({ report }: OverviewSectionProps): React.ReactNode {
   const { score, renderRisk, summary, bundle, webVitals } = report;
 
   return (

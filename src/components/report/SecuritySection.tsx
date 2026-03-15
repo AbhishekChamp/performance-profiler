@@ -1,11 +1,11 @@
 import type { SecurityAnalysis, SecurityVulnerability } from '@/types';
-import { Shield, ShieldAlert, ShieldCheck, AlertTriangle, Code, Lock, ExternalLink, CheckCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Code, ExternalLink, Lock, Shield, ShieldAlert, ShieldCheck } from 'lucide-react';
 
 interface SecuritySectionProps {
   security: SecurityAnalysis;
 }
 
-function getSeverityIcon(severity: SecurityVulnerability['severity']) {
+function getSeverityIcon(severity: SecurityVulnerability['severity']): React.ReactNode {
   switch (severity) {
     case 'critical':
       return <ShieldAlert className="w-5 h-5 text-red-400" />;
@@ -31,7 +31,7 @@ function getSeverityClass(severity: SecurityVulnerability['severity']): string {
   }
 }
 
-function getTypeIcon(type: SecurityVulnerability['type']) {
+function getTypeIcon(type: SecurityVulnerability['type']): React.ReactNode {
   switch (type) {
     case 'xss':
       return <Code className="w-4 h-4" />;
@@ -62,7 +62,7 @@ function getTypeLabel(type: SecurityVulnerability['type']): string {
   return labels[type] || type;
 }
 
-export function SecuritySection({ security }: SecuritySectionProps) {
+export function SecuritySection({ security }: SecuritySectionProps): React.ReactNode {
   const { score, vulnerabilities, stats, recommendations } = security;
 
   const criticalVulns = vulnerabilities.filter(v => v.severity === 'critical');

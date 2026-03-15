@@ -77,7 +77,7 @@ export function analyzeImages(
 
     // Extract attributes
     const srcMatch = tag.match(/src=["']([^"']+)["']/i);
-    const src = srcMatch?.[1] || '';
+    const src = srcMatch?.[1] ?? '';
 
     if (!src || src.startsWith('data:')) continue; // Skip data URIs for now
 
@@ -93,10 +93,10 @@ export function analyzeImages(
     const height = heightMatch ? parseInt(heightMatch[1], 10) : undefined;
 
     // Estimate size (use provided asset sizes or estimate)
-    let currentSize = assetSizes?.get(src) || 0;
+    let currentSize = assetSizes?.get(src) ?? 0;
     if (currentSize === 0) {
       // Rough estimate based on dimensions if available
-      if (width && height) {
+      if (width != null && height != null) {
         // Assume ~3 bytes per pixel for uncompressed, adjust for format
         const pixelCount = width * height;
         const bytesPerPixel = format === 'jpeg' ? 0.15 : format === 'png' ? 0.3 : 0.2;
@@ -136,7 +136,7 @@ export function analyzeImages(
 
   // Mark LCP image
   if (largestImage) {
-    const lcpIndex = images.findIndex(img => img.src === largestImage!.src);
+    const lcpIndex = images.findIndex(img => img.src === largestImage.src);
     if (lcpIndex >= 0) {
       images[lcpIndex].isLCP = true;
     }

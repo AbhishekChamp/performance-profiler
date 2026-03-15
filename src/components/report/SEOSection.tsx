@@ -1,11 +1,11 @@
 import type { SEOAnalysis } from '@/types';
-import { Search, AlertCircle, CheckCircle, Link, FileText, Hash, Globe } from 'lucide-react';
+import { AlertCircle, CheckCircle, FileText, Globe, Hash, Link, Search } from 'lucide-react';
 
 interface SEOSectionProps {
   seo: SEOAnalysis;
 }
 
-export function SEOSection({ seo }: SEOSectionProps) {
+export function SEOSection({ seo }: SEOSectionProps): React.ReactNode {
   const { meta, openGraph, twitterCard, structuredData, headings, score, issues } = seo;
 
   const hasIssues = issues.length > 0;
@@ -96,7 +96,7 @@ export function SEOSection({ seo }: SEOSectionProps) {
             <div>
               <span className="text-sm font-medium text-dev-text">Canonical</span>
               <p className="text-sm text-dev-text-muted mt-1">
-                {meta.canonical ? (
+                {meta.canonical != null ? (
                   <>
                     <CheckCircle className="w-4 h-4 text-green-400 inline mr-1" />
                     <span className="truncate">{meta.canonical}</span>
@@ -112,7 +112,7 @@ export function SEOSection({ seo }: SEOSectionProps) {
             <div>
               <span className="text-sm font-medium text-dev-text">Robots</span>
               <p className="text-sm text-dev-text-muted mt-1">
-                {meta.robots || (
+                {meta.robots ?? (
                   <span className="text-dev-text-subtle">Not set (defaults to index, follow)</span>
                 )}
               </p>
@@ -132,25 +132,25 @@ export function SEOSection({ seo }: SEOSectionProps) {
             </h3>
           </div>
           <div className="p-4 space-y-3">
-            {openGraph.title ? (
+            {openGraph.title != null ? (
               <>
                 <div>
                   <span className="text-xs text-dev-text-subtle">Title</span>
                   <p className="text-sm text-dev-text">{openGraph.title}</p>
                 </div>
-                {openGraph.description && (
+                {openGraph.description != null && (
                   <div>
                     <span className="text-xs text-dev-text-subtle">Description</span>
                     <p className="text-sm text-dev-text">{openGraph.description}</p>
                   </div>
                 )}
-                {openGraph.image && (
+                {openGraph.image != null && (
                   <div>
                     <span className="text-xs text-dev-text-subtle">Image</span>
                     <p className="text-sm text-dev-text truncate">{openGraph.image}</p>
                   </div>
                 )}
-                {openGraph.type && (
+                {openGraph.type != null && (
                   <div>
                     <span className="text-xs text-dev-text-subtle">Type</span>
                     <p className="text-sm text-dev-text">{openGraph.type}</p>
@@ -175,25 +175,25 @@ export function SEOSection({ seo }: SEOSectionProps) {
             </h3>
           </div>
           <div className="p-4 space-y-3">
-            {twitterCard.title || openGraph.title ? (
+            {twitterCard.title != null || openGraph.title != null ? (
               <>
                 <div>
                   <span className="text-xs text-dev-text-subtle">Title</span>
-                  <p className="text-sm text-dev-text">{twitterCard.title || openGraph.title}</p>
+                  <p className="text-sm text-dev-text">{twitterCard.title ?? openGraph.title}</p>
                 </div>
-                {(twitterCard.description || openGraph.description) && (
+                {(twitterCard.description ?? openGraph.description) != null && (
                   <div>
                     <span className="text-xs text-dev-text-subtle">Description</span>
-                    <p className="text-sm text-dev-text">{twitterCard.description || openGraph.description}</p>
+                    <p className="text-sm text-dev-text">{twitterCard.description ?? openGraph.description}</p>
                   </div>
                 )}
-                {(twitterCard.image || openGraph.image) && (
+                {(twitterCard.image ?? openGraph.image) != null && (
                   <div>
                     <span className="text-xs text-dev-text-subtle">Image</span>
-                    <p className="text-sm text-dev-text truncate">{twitterCard.image || openGraph.image}</p>
+                    <p className="text-sm text-dev-text truncate">{twitterCard.image ?? openGraph.image}</p>
                   </div>
                 )}
-                {twitterCard.type && (
+                {twitterCard.type != null && (
                   <div>
                     <span className="text-xs text-dev-text-subtle">Card Type</span>
                     <p className="text-sm text-dev-text">{twitterCard.type}</p>

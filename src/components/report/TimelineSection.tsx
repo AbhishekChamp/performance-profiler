@@ -14,7 +14,7 @@ const TYPE_COLORS: Record<string, string> = {
   paint: '#a371f7',
 };
 
-export function TimelineSection({ timeline }: TimelineSectionProps) {
+export function TimelineSection({ timeline }: TimelineSectionProps): React.ReactNode {
   const criticalEvents = timeline.events.filter((e: TimelineEvent) => timeline.criticalPath.includes(e.name));
   const criticalTime = criticalEvents.reduce((sum: number, e: TimelineEvent) => sum + e.duration, 0);
 

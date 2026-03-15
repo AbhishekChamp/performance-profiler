@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import type { PlaygroundFile, PlaygroundLanguage, PlaygroundAnalysis, EditorState } from '@/types/playground';
+import type { EditorState, PlaygroundAnalysis, PlaygroundFile, PlaygroundLanguage } from '@/types/playground';
 
 interface PlaygroundStoreState {
   // Files
@@ -100,7 +100,7 @@ export const usePlaygroundStore = create<PlaygroundStoreState>()(
               : state.activeFileId;
             
             // Clean up editor state
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+             
             const { [id]: _removed, ...restEditorState } = state.editorState;
             
             return { files, activeFileId, editorState: restEditorState };

@@ -1,4 +1,4 @@
-import { useEffect, useRef, memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { getScoreColor, getScoreLabel } from '@/core/scoring';
 
@@ -9,7 +9,7 @@ interface ScoreGaugeProps {
   showLabel?: boolean;
 }
 
-function ScoreGaugeComponent({ score, size = 120, label, showLabel = true }: ScoreGaugeProps) {
+function ScoreGaugeComponent({ score, size = 120, label, showLabel = true }: ScoreGaugeProps): React.JSX.Element {
   const svgRef = useRef<SVGSVGElement>(null);
   const color = getScoreColor(score);
   const scoreLabel = getScoreLabel(score);
@@ -61,7 +61,7 @@ function ScoreGaugeComponent({ score, size = 120, label, showLabel = true }: Sco
         return function(t: number) {
           const angle = interpolate(t);
           const arcGenerator = arc.endAngle(angle);
-          return arcGenerator ? (arcGenerator as unknown as () => string)() || '' : '';
+          return (arcGenerator as unknown as () => string)() || '';
         };
       });
 
@@ -99,7 +99,7 @@ function ScoreGaugeComponent({ score, size = 120, label, showLabel = true }: Sco
   return (
     <div className="flex flex-col items-center">
       <svg ref={svgRef} width={size} height={size} />
-      {label && (
+      {label != null && label !== '' && (
         <span className="text-xs text-dev-text-muted mt-2">{label}</span>
       )}
     </div>

@@ -1,5 +1,5 @@
 import type { FontAnalysis } from '@/types';
-import { Type, AlertTriangle, Zap, Download, Monitor } from 'lucide-react';
+import { AlertTriangle, Download, Monitor, Type, Zap } from 'lucide-react';
 
 interface FontsSectionProps {
   fonts: FontAnalysis;
@@ -28,7 +28,7 @@ function getDisplayLabel(display: string): { text: string; color: string } {
   }
 }
 
-export function FontsSection({ fonts }: FontsSectionProps) {
+export function FontsSection({ fonts }: FontsSectionProps): React.ReactNode {
   const {
     fonts: fontList,
     totalFontSize,
@@ -161,7 +161,7 @@ export function FontsSection({ fonts }: FontsSectionProps) {
                   <div className="flex items-center gap-4 text-xs text-dev-text-muted">
                     <span className="uppercase">{font.format}</span>
                     <span>{formatBytes(font.estimatedSize)}</span>
-                    {font.unicodeRange && (
+                    {font.unicodeRange != null && font.unicodeRange !== '' && (
                       <span className="truncate max-w-xs">{font.unicodeRange}</span>
                     )}
                   </div>

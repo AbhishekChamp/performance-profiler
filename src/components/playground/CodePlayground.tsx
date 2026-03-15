@@ -1,21 +1,21 @@
-import { useState, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useCallback, useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import Editor from '@monaco-editor/react';
 import { 
-  RotateCcw, 
-  Download, 
-  Copy, 
   Check, 
-  FileCode, 
-  X,
-  Plus,
+  ChevronRight, 
+  Code2, 
+  Copy, 
+  Download, 
+  FileCode,
   FileJson,
   FileText,
-  ChevronRight,
-  Code2,
+  Plus,
+  RotateCcw,
+  X,
 } from 'lucide-react';
-import { usePlaygroundStore, SAMPLE_FILES } from '@/stores/playgroundStore';
-import { analyzeFile, calculateAnalysis, applyQuickFix } from '@/core/playground/analyzer';
+import { SAMPLE_FILES, usePlaygroundStore } from '@/stores/playgroundStore';
+import { analyzeFile, applyQuickFix, calculateAnalysis } from '@/core/playground/analyzer';
 import { createPatch } from '@/core/playground/transformer';
 import { ScoreComparison } from './ScoreComparison';
 import { OptimizationPanel } from './OptimizationPanel';
@@ -50,8 +50,8 @@ function FileTab({
   isActive: boolean; 
   onClick: () => void;
   onClose: (e: React.MouseEvent) => void;
-}) {
-  const Icon = FILE_ICONS[file.language] || FileCode;
+}): React.ReactNode {
+  const Icon = FILE_ICONS[file.language] ?? FileCode;
   
   return (
     <motion.button
@@ -79,7 +79,7 @@ function FileTab({
   );
 }
 
-export function CodePlayground() {
+export function CodePlayground(): React.ReactNode {
   const [isDark, setIsDark] = useState(true);
   const [showSidebar, setShowSidebar] = useState(true);
   const [activeSidebarTab, setActiveSidebarTab] = useState<'issues' | 'optimizations'>('issues');
@@ -132,17 +132,17 @@ export function CodePlayground() {
     return () => clearTimeout(timer);
   }, [files]);
   
-  const handleEditorChange = useCallback((value: string | undefined) => {
+  const handleEditorChange = useCallback((value: string | undefined): void => {
     if (activeFile && value !== undefined) {
       updateFileContent(activeFile.id, value);
     }
   }, [activeFile, updateFileContent]);
   
-  const handleApplyFix = useCallback((issueId: string) => {
+  const handleApplyFix = useCallback((issueId: string): void => {
     if (!activeFile) return;
     
     const issue = activeFile.issues.find(i => i.id === issueId);
-    if (!issue || !issue.fixable) return;
+    if (issue?.fixable !== true) return;
     
     const fixed = applyQuickFix(
       activeFile.modifiedContent,
@@ -154,13 +154,13 @@ export function CodePlayground() {
     toast.success('Fix applied!');
   }, [activeFile, updateFileContent]);
   
-  const handleRevert = useCallback(() => {
+  const handleRevert = useCallback((): void => {
     if (!activeFile) return;
     revertFile(activeFile.id);
     toast.success('File reverted to original');
   }, [activeFile, revertFile]);
   
-  const handleExport = useCallback(() => {
+  const handleExport = useCallback((): void => {
     if (!activeFile) return;
     
     const exported = exportFile(activeFile.id);
@@ -179,7 +179,7 @@ export function CodePlayground() {
     toast.success('File downloaded!');
   }, [activeFile, exportFile]);
   
-  const handleCopy = useCallback(async () => {
+  const handleCopy = useCallback(async (): Promise<void> => {
     if (!activeFile) return;
     
     try {
@@ -192,7 +192,7 @@ export function CodePlayground() {
     }
   }, [activeFile]);
   
-  const handleDownloadPatch = useCallback(() => {
+  const handleDownloadPatch = useCallback((): void => {
     if (!activeFile) return;
     
     const patch = createPatch(
@@ -214,7 +214,7 @@ export function CodePlayground() {
     toast.success('Patch downloaded!');
   }, [activeFile]);
   
-  const getLanguage = (filename: string) => {
+  const getLanguage = (filename: string): string => {
     if (filename.endsWith('.tsx')) return 'typescript';
     if (filename.endsWith('.ts')) return 'typescript';
     if (filename.endsWith('.jsx') || filename.endsWith('.js')) return 'javascript';
@@ -399,7 +399,7 @@ export function CodePlayground() {
                     }
                   `}
                 >
-                  Issues ({activeFile?.issues.length || 0})
+                  Issues ({activeFile?.issues.length ?? 0})
                 </button>
                 <button
                   onClick={() => setActiveSidebarTab('optimizations')}

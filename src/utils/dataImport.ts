@@ -64,7 +64,8 @@ export async function parseImportFile(file: File): Promise<AppDataExport | null>
     
     const data = JSON.parse(content) as AppDataExport;
     
-    // Basic validation
+    // Basic validation - runtime checks needed for imported data
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (data.version == null || data.schema == null || data.data == null) {
       return null;
     }
@@ -89,10 +90,12 @@ export function validateImportData(data: AppDataExport): ImportError[] {
     });
   }
   
-  // Validate reports
+  // Validate reports - runtime checks needed for imported data
   for (const report of data.data.reports) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (report.id == null || report.timestamp == null || report.score == null) {
       errors.push({
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         message: `Invalid report structure: ${report.id ?? 'unknown'}`,
         code: 'validation-error',
       });

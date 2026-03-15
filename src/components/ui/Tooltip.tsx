@@ -8,7 +8,7 @@ interface TooltipProps {
 /**
  * Simple tooltip component
  */
-export function Tooltip({ content, children }: TooltipProps): JSX.Element {
+export function Tooltip({ content, children }: TooltipProps): React.ReactNode {
   const [show, setShow] = useState(false);
 
   return (

@@ -1,29 +1,29 @@
-import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { 
+  AlertCircle, 
+  Check, 
   Copy, 
   Download, 
-  Check, 
   FileCode, 
-  Terminal, 
-  AlertCircle,
+  Image,
 
   Package,
-  Zap,
-  Image,
+  Settings,
+  Terminal,
   Type,
-  Settings
+  Zap
 } from 'lucide-react';
 import { PlatformCard } from './PlatformSelector';
 import { Button } from '@/components/ui/Button';
 import { 
-  generateConfig, 
   generateBudgetCheckScript, 
+  generateConfig, 
   getAllPlatforms,
   validateBudget
 } from '@/core/ci-cd';
 import { createCodeBlock, getLanguageFromFilename } from '@/utils/syntaxHighlight';
-import type { CIPlatform, BudgetConfig, PerformanceBudget } from '@/types/cicd';
+import type { BudgetConfig, CIPlatform, PerformanceBudget } from '@/types/cicd';
 import toast from 'react-hot-toast';
 
 // Budget input component
@@ -43,7 +43,7 @@ function BudgetInput({
   icon: React.ElementType;
   min?: number;
   max?: number;
-}) {
+}): React.ReactNode {
   return (
     <div className="space-y-2">
       <label className="flex items-center gap-2 text-sm font-medium text-dev-text">
@@ -53,7 +53,7 @@ function BudgetInput({
       <div className="flex items-center gap-2">
         <input
           type="number"
-          value={value || ''}
+          value={value ?? ''}
           onChange={(e) => {
             const val = e.target.value ? parseInt(e.target.value) : undefined;
             onChange(val);
@@ -72,7 +72,7 @@ function BudgetInput({
 }
 
 // Tab component
-function Tab({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function Tab({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }): React.ReactNode {
   return (
     <button
       onClick={onClick}
@@ -90,7 +90,7 @@ function Tab({ active, onClick, children }: { active: boolean; onClick: () => vo
 }
 
 // Setup instructions component
-function SetupInstructions({ config }: { config: ReturnType<typeof generateConfig> }) {
+function SetupInstructions({ config }: { config: ReturnType<typeof generateConfig> }): React.ReactNode {
   return (
     <div className="space-y-4">
       <h3 className="font-medium text-dev-text flex items-center gap-2">
@@ -139,7 +139,7 @@ function SetupInstructions({ config }: { config: ReturnType<typeof generateConfi
   );
 }
 
-export function CICDConfigGenerator() {
+export function CICDConfigGenerator(): React.ReactNode {
   const [selectedPlatform, setSelectedPlatform] = useState<CIPlatform | null>(null);
   const [activeTab, setActiveTab] = useState<'config' | 'script' | 'instructions'>('config');
   const [copied, setCopied] = useState(false);
@@ -181,7 +181,7 @@ export function CICDConfigGenerator() {
     return createCodeBlock(config.content, lang);
   }, [config]);
   
-  const handleCopy = async () => {
+  const handleCopy = async (): Promise<void> => {
     if (!config) return;
     
     try {
@@ -194,14 +194,14 @@ export function CICDConfigGenerator() {
     }
   };
   
-  const handleDownload = () => {
+  const handleDownload = (): void => {
     if (!config) return;
     
     const blob = new Blob([config.content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = config.filename.split('/').pop() || 'config.yml';
+    a.download = config.filename.split('/').pop() ?? 'config.yml';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -210,7 +210,7 @@ export function CICDConfigGenerator() {
     toast.success('Config downloaded!');
   };
   
-  const handleDownloadScript = () => {
+  const handleDownloadScript = (): void => {
     const blob = new Blob([checkScript.script], { type: 'text/javascript' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

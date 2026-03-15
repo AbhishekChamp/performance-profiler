@@ -1,5 +1,5 @@
-import { useCallback, useState, useRef } from 'react';
-import { Upload, File, FileCode, FolderUp, FileJson, FileType } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
+import { File, FileCode, FileJson, FileType, FolderUp, Upload } from 'lucide-react';
 import type { UploadedFile } from '@/types';
 import toast from 'react-hot-toast';
 
@@ -12,10 +12,10 @@ function formatBytes(bytes: number): string {
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i] ?? 'B'}`;
 }
 
-function getFileIcon(filename: string) {
+function getFileIcon(filename: string): React.ReactNode {
   if (filename.endsWith('.html')) return <FileType className="w-5 h-5 text-orange-400" />;
   if (filename.endsWith('.json')) return <FileJson className="w-5 h-5 text-yellow-400" />;
   if (filename.endsWith('.js') || filename.endsWith('.jsx')) {
@@ -57,14 +57,14 @@ function isSupportedFile(filename: string): boolean {
   return Array.from(SUPPORTED_EXTENSIONS).some(ext => lowerName.endsWith(ext));
 }
 
-export function ProjectFileUpload({ onFilesUploaded }: ProjectFileUploadProps) {
+export function ProjectFileUpload({ onFilesUploaded }: ProjectFileUploadProps): React.ReactNode {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<{ name: string; size: number }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
-  const processFiles = async (fileList: FileList | null) => {
+  const processFiles = async (fileList: FileList | null): Promise<void> => {
     if (!fileList || fileList.length === 0) return;
 
     setIsProcessing(true);
@@ -116,24 +116,24 @@ export function ProjectFileUpload({ onFilesUploaded }: ProjectFileUploadProps) {
     setIsProcessing(false);
   };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent): void => {
     e.preventDefault();
     setIsDragging(false);
     processFiles(e.dataTransfer.files);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: React.DragEvent): void => {
     e.preventDefault();
     setIsDragging(true);
   }, []);
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = useCallback((e: React.DragEvent): void => {
     e.preventDefault();
     setIsDragging(false);
   }, []);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>): void => {
     processFiles(e.target.files);
     e.target.value = ''; // Reset input
   };
@@ -255,5 +255,5 @@ function getFileType(filename: string): string {
     'json': 'application/json',
     'map': 'application/json',
   };
-  return typeMap[ext || ''] || 'text/plain';
+  return typeMap[ext ?? ''] ?? 'text/plain';
 }

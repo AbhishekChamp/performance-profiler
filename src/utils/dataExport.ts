@@ -167,9 +167,10 @@ export async function createExport(
   // Filter reports by date range if specified
   let filteredReports = reports;
   if (config.scope === 'date-range' && config.dateRange) {
+    const { start, end } = config.dateRange;
     filteredReports = reports.filter(r => {
       const date = new Date(r.timestamp);
-      return date >= config.dateRange.start && date <= config.dateRange.end;
+      return date >= start && date <= end;
     });
   }
   

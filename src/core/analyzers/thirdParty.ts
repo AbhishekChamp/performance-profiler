@@ -238,7 +238,7 @@ export function analyzeThirdParty(
     detectedUrls.add(src);
     
     // Skip same-origin scripts
-    const hostname = typeof window !== 'undefined' ? window.location?.hostname : '';
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
     if (!src.startsWith('http') || src.includes(hostname || '')) {
       continue;
     }
@@ -311,7 +311,7 @@ export function analyzeThirdParty(
   
   // Suggest alternatives for high-privacy-impact scripts
   scripts
-    .filter(s => s.privacyImpact === 'high' && s.alternatives)
+    .filter(s => s.privacyImpact === 'high' && s.alternatives != null)
     .forEach(s => {
       recommendations.push(`Consider ${s.alternatives?.join(' or ')} as a privacy-friendly alternative to ${s.name}`);
     });

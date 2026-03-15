@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { analyzeReact } from '../react';
 import type { JSFileAnalysis } from '@/types';
 
@@ -67,7 +67,7 @@ describe('analyzeReact', () => {
         path: 'LargeComponent.jsx',
         content: `
           function LargeComponent() {
-            ${Array(100).fill('const x = 1;').join('\n')}
+            ${Array(100).fill(0).map((_, i) => `const x${i} = ${i};`).join('\n')}
             return <div>Large</div>;
           }
         `,

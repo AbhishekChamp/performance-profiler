@@ -51,7 +51,7 @@ export function analyzeFonts(cssFiles: { name: string; content: string }[]): Fon
 
       // Extract font-family
       const familyMatch = declaration.match(/font-family:\s*["']?([^;"']+)["']?/i);
-      const family = familyMatch?.[1].trim() || 'Unknown';
+      const family = familyMatch?.[1].trim() ?? 'Unknown';
 
       // Extract src URLs
       const srcMatch = declaration.match(/src:\s*([^;]+)/i);
@@ -69,7 +69,8 @@ export function analyzeFonts(cssFiles: { name: string; content: string }[]): Fon
 
         // Extract font-display
         const displayMatch = declaration.match(/font-display:\s*([^;]+)/i);
-        const display = (displayMatch?.[1].trim() as FontFace['display']) || 'auto';
+        const displayValue = displayMatch?.[1].trim();
+        const display: FontFace['display'] = (displayValue ?? 'auto') as FontFace['display'];
 
         // Extract unicode-range
         const unicodeRangeMatch = declaration.match(/unicode-range:\s*([^;]+)/i);
@@ -93,12 +94,14 @@ export function analyzeFonts(cssFiles: { name: string; content: string }[]): Fon
         fonts.push(font);
 
         // Track family stats
-        fontFamilySizes.set(family, (fontFamilySizes.get(family) || 0) + estimatedSize);
+        fontFamilySizes.set(family, (fontFamilySizes.get(family) ?? 0) + estimatedSize);
 
-        if (!fontFamilyVariations.has(family)) {
-          fontFamilyVariations.set(family, new Set());
+        let variations = fontFamilyVariations.get(family);
+        if (!variations) {
+          variations = new Set();
+          fontFamilyVariations.set(family, variations);
         }
-        fontFamilyVariations.get(family)!.add(declaration);
+        variations.add(declaration);
       }
     }
   }
@@ -121,7 +124,7 @@ export function analyzeFonts(cssFiles: { name: string; content: string }[]): Fon
   for (const [family, variations] of fontFamilyVariations) {
     if (variations.size >= 4) {
       // Many variations suggest this could be a variable font candidate
-      const totalSize = fontFamilySizes.get(family) || 0;
+      const totalSize = fontFamilySizes.get(family) ?? 0;
       if (totalSize > 100000) { // >100KB in variations
         variableFontOpportunities.push(
           `${family} (${variations.size} variations, ~${(totalSize / 1024).toFixed(0)}KB)`

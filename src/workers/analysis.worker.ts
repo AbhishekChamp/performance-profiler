@@ -8,18 +8,18 @@
  */
 
 import { runAnalysisPipeline } from '@/core/pipeline';
-import type { InputFile, AnalysisOptions, AnalysisReport } from '@/types';
+import type { AnalysisOptions, AnalysisReport, InputFile } from '@/types';
 import type { 
-  WorkerRequest, 
-  WorkerResponse, 
-  AnalysisStage,
-  AnalysisProgress 
+  AnalysisProgress, 
+  AnalysisStage, 
+  WorkerRequest,
+  WorkerResponse 
 } from './types';
 import { 
-  validateRequest, 
-  createInitialProgress, 
-  calculateOverallProgress,
-  CancellationToken 
+  CancellationToken, 
+  calculateOverallProgress, 
+  createInitialProgress,
+  validateRequest 
 } from './types';
 
 // Track active analysis for cancellation

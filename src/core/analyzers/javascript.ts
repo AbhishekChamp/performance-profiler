@@ -1,6 +1,6 @@
 import { parse } from 'acorn';
 import type { JSFileAnalysis, JSFunction, JSWarning } from '@/types';
-import type { Node, FunctionDeclaration, FunctionExpression, ArrowFunctionExpression, MethodDefinition, BlockStatement, ForStatement, WhileStatement, DoWhileStatement, ForInStatement, ForOfStatement, IfStatement, ConditionalExpression, SwitchCase, LogicalExpression, CatchClause } from 'acorn';
+import type { ArrowFunctionExpression, BlockStatement, CatchClause, ConditionalExpression, DoWhileStatement, ForInStatement, ForOfStatement, ForStatement, FunctionDeclaration, FunctionExpression, IfStatement, LogicalExpression, MethodDefinition, Node, SwitchCase, WhileStatement } from 'acorn';
 
 function isLoopStatement(node: Node): node is ForStatement | WhileStatement | DoWhileStatement | ForInStatement | ForOfStatement {
   return node.type === 'ForStatement' || 
@@ -11,7 +11,7 @@ function isLoopStatement(node: Node): node is ForStatement | WhileStatement | Do
 }
 
 function countNestedLoops(node: Node, depth = 0): number {
-  if (!node || typeof node !== 'object') return 0;
+  if (typeof node !== 'object') return 0;
   
   let maxDepth = depth;
   
@@ -22,13 +22,13 @@ function countNestedLoops(node: Node, depth = 0): number {
   for (const key of Object.keys(node)) {
     if (key === 'type' || key === 'loc') continue;
     const value = node[key as keyof Node];
-    if (Array.isArray(value)) {
+    if (value !== undefined && Array.isArray(value)) {
       for (const item of value) {
-        if (item && typeof item === 'object') {
+        if (typeof item === 'object') {
           maxDepth = Math.max(maxDepth, countNestedLoops(item as unknown as Node, maxDepth));
         }
       }
-    } else if (value && typeof value === 'object') {
+    } else if (value !== undefined && value !== null && typeof value === 'object') {
       maxDepth = Math.max(maxDepth, countNestedLoops(value as unknown as Node, maxDepth));
     }
   }
@@ -43,7 +43,7 @@ function isComplexityNode(node: Node): node is IfStatement | ConditionalExpressi
 }
 
 function calculateCyclomaticComplexity(node: Node): number {
-  if (!node || typeof node !== 'object') return 0;
+  if (typeof node !== 'object') return 0;
   
   let complexity = 1;
   
@@ -54,13 +54,13 @@ function calculateCyclomaticComplexity(node: Node): number {
   for (const key of Object.keys(node)) {
     if (key === 'type' || key === 'loc') continue;
     const value = node[key as keyof Node];
-    if (Array.isArray(value)) {
+    if (value !== undefined && Array.isArray(value)) {
       for (const item of value) {
-        if (item && typeof item === 'object') {
+        if (typeof item === 'object') {
           complexity += calculateCyclomaticComplexity(item as unknown as Node);
         }
       }
-    } else if (value && typeof value === 'object') {
+    } else if (value !== undefined && value !== null && typeof value === 'object') {
       complexity += calculateCyclomaticComplexity(value as unknown as Node);
     }
   }
@@ -71,18 +71,18 @@ function calculateCyclomaticComplexity(node: Node): number {
 function extractFunctions(ast: Node): JSFunction[] {
   const functions: JSFunction[] = [];
   
-  function traverse(node: Node) {
-    if (!node || typeof node !== 'object') return;
+  function traverse(node: Node): void {
+    if (typeof node !== 'object') return;
     
     if (node.type === 'FunctionDeclaration' || 
         node.type === 'FunctionExpression' || 
         node.type === 'ArrowFunctionExpression') {
       
       const funcNode = node as FunctionDeclaration | FunctionExpression | ArrowFunctionExpression;
-      const name = funcNode.id?.name || 
+      const name = funcNode.id?.name ?? 
                    (node.type === 'ArrowFunctionExpression' ? 'arrow' : 'anonymous');
       
-      const lines = funcNode.loc 
+      const lines = funcNode.loc
         ? funcNode.loc.end.line - funcNode.loc.start.line + 1
         : 0;
       
@@ -90,44 +90,50 @@ function extractFunctions(ast: Node): JSFunction[] {
       
       functions.push({
         name,
-        line: funcNode.loc?.start.line || 0,
-        column: funcNode.loc?.start.column || 0,
+        line: funcNode.loc?.start.line ?? 0,
+        column: funcNode.loc?.start.column ?? 0,
         lines,
         nestedLoops: countNestedLoops(body, 0),
         cyclomaticComplexity: calculateCyclomaticComplexity(body),
         parameters: funcNode.params.length,
       });
+      
+      // Don't traverse into function bodies to avoid double-counting
+      return;
     }
     
     // Handle method definitions in classes
     if (node.type === 'MethodDefinition') {
       const methodNode = node as MethodDefinition;
-      const name = (methodNode.key as { name?: string })?.name || 'method';
-      const lines = methodNode.value.loc 
+      const name = (methodNode.key as { name?: string }).name ?? 'method';
+      const lines = methodNode.value.loc
         ? methodNode.value.loc.end.line - methodNode.value.loc.start.line + 1
         : 0;
       
       functions.push({
         name,
-        line: methodNode.value.loc?.start.line || 0,
-        column: methodNode.value.loc?.start.column || 0,
+        line: methodNode.value.loc?.start.line ?? 0,
+        column: methodNode.value.loc?.start.column ?? 0,
         lines,
         nestedLoops: countNestedLoops(methodNode.value.body, 0),
         cyclomaticComplexity: calculateCyclomaticComplexity(methodNode.value.body),
         parameters: methodNode.value.params.length,
       });
+      
+      // Don't traverse into method bodies to avoid double-counting
+      return;
     }
     
     for (const key of Object.keys(node)) {
       if (key === 'type') continue;
       const value = node[key as keyof Node];
-      if (Array.isArray(value)) {
+      if (value !== undefined && Array.isArray(value)) {
         value.forEach((item) => {
-          if (item && typeof item === 'object') {
+          if (typeof item === 'object') {
             traverse(item as unknown as Node);
           }
         });
-      } else if (value && typeof value === 'object') {
+      } else if (value !== undefined && value !== null && typeof value === 'object') {
         traverse(value as unknown as Node);
       }
     }
@@ -181,7 +187,7 @@ export function analyzeJavaScript(
       
       // Function warnings
       for (const func of functions) {
-        if (func.lines > 100) {
+        if (func.lines > 50) {
           warnings.push({
             type: 'large-function',
             message: `Large function "${func.name}" (${func.lines} lines)`,

@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { 
-  Github, 
-  Gitlab, 
+  Check, 
+  ChevronDown, 
   CircleDot, 
   Cloud, 
-  Server, 
-  Triangle,
-  CloudCog,
-  ChevronDown,
-  Check
+  CloudCog, 
+  Github,
+  Gitlab,
+  Server,
+  Triangle
 } from 'lucide-react';
 import type { CIPlatform, PlatformInfo } from '@/types/cicd';
 import { PLATFORMS } from '@/core/ci-cd';
@@ -31,7 +31,7 @@ interface PlatformSelectorProps {
   onSelect: (platform: CIPlatform) => void;
 }
 
-export function PlatformSelector({ selected, onSelect }: PlatformSelectorProps) {
+export function PlatformSelector({ selected, onSelect }: PlatformSelectorProps): React.ReactNode {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   useClickOutside(containerRef, () => setIsOpen(false));
@@ -51,10 +51,10 @@ export function PlatformSelector({ selected, onSelect }: PlatformSelectorProps) 
       >
         {selectedPlatform ? (
           <div className="flex items-center gap-3">
-            {(() => {
-              const Icon = ICONS[selectedPlatform.icon] || Server;
+            <>{((): React.ReactNode => {
+              const Icon = ICONS[selectedPlatform.icon] ?? Server;
               return <Icon className="w-6 h-6 text-dev-accent" />;
-            })()}
+            })()}</>
             <div className="text-left">
               <p className="font-medium text-dev-text">{selectedPlatform.name}</p>
               <p className="text-sm text-dev-text-muted">{selectedPlatform.description}</p>
@@ -79,7 +79,7 @@ export function PlatformSelector({ selected, onSelect }: PlatformSelectorProps) 
           >
             <div className="p-2 space-y-1 max-h-80 overflow-y-auto">
               {PLATFORMS.map(platform => {
-                const Icon = ICONS[platform.icon] || Server;
+                const Icon = ICONS[platform.icon] ?? Server;
                 const isSelected = selected === platform.id;
                 
                 return (
@@ -123,8 +123,8 @@ export function PlatformCard({ platform, isSelected, onClick }: {
   platform: PlatformInfo;
   isSelected: boolean;
   onClick: () => void;
-}) {
-  const Icon = ICONS[platform.icon] || Server;
+}): React.ReactNode {
+  const Icon = ICONS[platform.icon] ?? Server;
   
   return (
     <motion.button

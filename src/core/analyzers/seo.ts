@@ -1,4 +1,4 @@
-import type { SEOAnalysis, SEOMeta, OpenGraph } from '@/types';
+import type { OpenGraph, SEOAnalysis, SEOMeta } from '@/types';
 
 export function analyzeSEO(htmlContent: string): SEOAnalysis {
   const issues: string[] = [];
@@ -23,7 +23,7 @@ export function analyzeSEO(htmlContent: string): SEOAnalysis {
 
   // Extract meta title
   const titleMatch = htmlContent.match(/<title>([^<]*)<\/title>/i);
-  const title = titleMatch?.[1]?.trim() || '';
+  const title = titleMatch?.[1]?.trim() ?? '';
   const titleLength = title.length;
 
   if (titleLength === 0) {
@@ -35,9 +35,9 @@ export function analyzeSEO(htmlContent: string): SEOAnalysis {
   }
 
   // Extract meta description
-  const descMatch = htmlContent.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+  const descMatch = htmlContent.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*>/i) ??
                      htmlContent.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["'][^>]*>/i);
-  const description = descMatch?.[1]?.trim() || '';
+  const description = descMatch?.[1]?.trim() ?? '';
   const descriptionLength = description.length;
 
   if (descriptionLength === 0) {
@@ -49,25 +49,25 @@ export function analyzeSEO(htmlContent: string): SEOAnalysis {
   }
 
   // Extract viewport
-  const viewportMatch = htmlContent.match(/<meta[^>]*name=["']viewport["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+  const viewportMatch = htmlContent.match(/<meta[^>]*name=["']viewport["'][^>]*content=["']([^"']*)["'][^>]*>/i) ??
                         htmlContent.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']viewport["'][^>]*>/i);
-  const viewport = viewportMatch?.[1] || '';
+  const viewport = viewportMatch?.[1] ?? '';
 
-  if (!viewport) {
+  if (viewport === '') {
     issues.push('Missing viewport meta tag (affects mobile SEO)');
   }
 
   // Extract canonical URL
-  const canonicalMatch = htmlContent.match(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["'][^>]*>/i) ||
+  const canonicalMatch = htmlContent.match(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["'][^>]*>/i) ??
                          htmlContent.match(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']canonical["'][^>]*>/i);
   const canonical = canonicalMatch?.[1];
 
-  if (!canonical) {
+  if (canonical === undefined) {
     issues.push('Missing canonical URL');
   }
 
   // Extract robots meta
-  const robotsMatch = htmlContent.match(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["'][^>]*>/i) ||
+  const robotsMatch = htmlContent.match(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["'][^>]*>/i) ??
                       htmlContent.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["'][^>]*>/i);
   const robots = robotsMatch?.[1];
 
@@ -95,9 +95,9 @@ export function analyzeSEO(htmlContent: string): SEOAnalysis {
   if (ogTypeMatch) openGraph.type = ogTypeMatch[1];
   if (ogUrlMatch) openGraph.url = ogUrlMatch[1];
 
-  if (!openGraph.title) issues.push('Missing Open Graph title');
-  if (!openGraph.description) issues.push('Missing Open Graph description');
-  if (!openGraph.image) issues.push('Missing Open Graph image');
+  if (openGraph.title === undefined) issues.push('Missing Open Graph title');
+  if (openGraph.description === undefined) issues.push('Missing Open Graph description');
+  if (openGraph.image === undefined) issues.push('Missing Open Graph image');
 
   // Extract Twitter Card tags
   const twitterCard: Partial<OpenGraph> = {};
@@ -111,8 +111,8 @@ export function analyzeSEO(htmlContent: string): SEOAnalysis {
   if (twImageMatch) twitterCard.image = twImageMatch[1];
   if (twCardMatch) twitterCard.type = twCardMatch[1];
 
-  if (!twitterCard.title && !openGraph.title) issues.push('Missing Twitter Card title');
-  if (!twitterCard.image && !openGraph.image) issues.push('Missing Twitter Card image');
+  if (twitterCard.title === undefined && openGraph.title === undefined) issues.push('Missing Twitter Card title');
+  if (twitterCard.image === undefined && openGraph.image === undefined) issues.push('Missing Twitter Card image');
 
   // Extract structured data (JSON-LD)
   const structuredData: unknown[] = [];
@@ -182,7 +182,7 @@ export function analyzeSEO(htmlContent: string): SEOAnalysis {
   const criticalIssues = ['Missing page title', 'Missing meta description', 'Missing H1 heading'];
 
   for (const issue of issues) {
-    if (criticalIssues.some(ci => issue.includes(ci))) {
+    if (criticalIssues.some(ci => issue.length > 0 && issue.includes(ci))) {
       score -= 15;
     } else {
       score -= 5;
@@ -191,8 +191,8 @@ export function analyzeSEO(htmlContent: string): SEOAnalysis {
 
   // Bonus points
   if (structuredData.length > 0) score += 5;
-  if (openGraph.title && openGraph.description && openGraph.image) score += 5;
-  if (canonical) score += 5;
+  if (openGraph.title !== undefined && openGraph.description !== undefined && openGraph.image !== undefined) score += 5;
+  if (canonical !== undefined && canonical !== '') score += 5;
 
   return {
     meta,

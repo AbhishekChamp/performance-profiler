@@ -10,7 +10,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { usePWA } from '@/hooks/usePWA';
 import toast from 'react-hot-toast';
 
-export function RootComponent() {
+export function RootComponent(): React.JSX.Element {
   const { currentReport, reset } = useAnalysisStore();
   const { toggleMode, mode } = useThemeStore();
   const { confirm, dialog } = useConfirm();
@@ -71,7 +71,7 @@ export function RootComponent() {
 
   // Announce page changes to screen readers
   useEffect(() => {
-    const announcePageLoad = () => {
+    const announcePageLoad = (): void => {
       const announcement = document.createElement('div');
       announcement.setAttribute('role', 'status');
       announcement.setAttribute('aria-live', 'polite');

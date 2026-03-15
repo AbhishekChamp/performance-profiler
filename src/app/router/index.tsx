@@ -30,7 +30,7 @@ declare module '@tanstack/react-router' {
   }
 }
 
-export function AppRouter() {
+export function AppRouter(): React.JSX.Element {
   return (
     <ErrorBoundary componentName="Application">
       <RouterProvider router={router} />

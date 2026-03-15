@@ -1,17 +1,17 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAnalysis } from '@/hooks/useAnalysis';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { getSectionByIndex, getNextSection, getPreviousSection } from '@/components/layout/sidebarData';
+import { getNextSection, getPreviousSection, getSectionByIndex } from '@/components/layout/sidebarData';
 import { OverviewSection } from '@/components/report/OverviewSection';
 import { BundleSection } from '@/components/report/BundleSection';
 import { DOMSection } from '@/components/report/DOMSection';
 import { CSSSection } from '@/components/report/CSSSection';
 import { AssetsSection } from '@/components/report/AssetsSection';
 import { JavaScriptSection } from '@/components/report/JavaScriptSection';
-import { ReactSection } from '@/components/report/ReactSection';
+
 import { TimelineSection } from '@/components/report/TimelineSection';
 import { RisksSection } from '@/components/report/RisksSection';
 import { WebVitalsSection } from '@/components/report/WebVitalsSection';
@@ -34,27 +34,27 @@ import { CICDConfigGenerator } from '@/components/cicd';
 import { CodePlayground } from '@/components/playground';
 import { WaterfallSection } from '@/components/report/WaterfallSection';
 import { ESLintSection } from '@/components/report/ESLintSection';
-import { ProjectsList, CreateProjectDialog, ProjectDetail } from '@/components/projects';
+import { CreateProjectDialog, ProjectDetail, ProjectsList } from '@/components/projects';
 import { SectionErrorBoundary } from '@/components/ui/SectionErrorBoundary';
 import type { AnalysisSection } from '@/components/layout/types';
 import {
   Activity,
-  Zap,
-  Shield,
+  ArrowRight,
   BarChart3,
   Code2,
-  Sparkles,
-  Gauge,
-  Layers,
   Cpu,
   Folder,
-  ArrowRight,
+  Gauge,
+  Layers,
+  Shield,
+  Sparkles,
+  Zap,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ThemeToggleSimple } from '@/components/ui/ThemeToggle';
 
 // Static background - no animations to prevent memory issues
-function StaticBackground(): JSX.Element {
+function StaticBackground(): React.ReactNode {
   return (
     <div 
       className="fixed inset-0 pointer-events-none opacity-30"
@@ -79,7 +79,7 @@ function FeatureCard({
   description: string;
   gradient: string;
   delay?: number;
-}): JSX.Element {
+}): React.ReactNode {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -131,7 +131,7 @@ function FeatureCard({
 }
 
 // Animated Counter using requestAnimationFrame
-function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: string }): JSX.Element {
+function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: string }): React.ReactNode {
   const [displayValue, setDisplayValue] = useState(0);
   const frameRef = useRef<number | undefined>(undefined);
 
@@ -172,7 +172,7 @@ function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: strin
 }
 
 // Stats Bar
-function StatsBar(): JSX.Element {
+function StatsBar(): React.ReactNode {
   const stats = [
     { icon: Gauge, value: 16, suffix: '+', label: 'Analyzers' },
     { icon: Layers, value: 50, suffix: '+', label: 'Metrics' },
@@ -198,7 +198,7 @@ function StatsBar(): JSX.Element {
 }
 
 // Modern Hero Section
-function HeroSection({ onNavigateToProjects }: { onNavigateToProjects: () => void }): JSX.Element {
+function HeroSection({ onNavigateToProjects }: { onNavigateToProjects: () => void }): React.ReactNode {
   return (
     <div className="relative text-center mb-8 pt-16">
       <div className="absolute top-4 right-0 z-20">
@@ -323,7 +323,7 @@ function AnalysisProgress({
   progress,
 }: {
   progress: { message: string; progress: number } | null;
-}): JSX.Element {
+}): React.ReactNode {
   const progressValue = progress?.progress ?? 0;
 
   // Get current message based on progress
@@ -377,7 +377,7 @@ function AnalysisProgress({
   );
 }
 
-function NoData({ section }: { section: string }): JSX.Element {
+function NoData({ section }: { section: string }): React.ReactNode {
   return (
     <div className="flex flex-col items-center justify-center h-64 text-center">
       <div className="w-16 h-16 rounded-2xl bg-(--dev-surface) flex items-center justify-center mb-4">
@@ -397,7 +397,7 @@ type ViewState =
   | { type: 'project'; projectId: string }
   | { type: 'report'; projectId: string; reportId: string };
 
-export function IndexComponent(): JSX.Element {
+export function IndexComponent(): React.ReactNode {
   const [activeSection, setActiveSection] = useState<AnalysisSection>('overview');
   const [viewState, setViewState] = useState<ViewState>({ type: 'home' });
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -436,7 +436,7 @@ export function IndexComponent(): JSX.Element {
   });
 
   useEffect(() => {
-    if (error != null && error !== '') {
+    if (error !== null && error !== '') {
       toast.error(error, { duration: 5000 });
     }
   }, [error]);
@@ -453,8 +453,8 @@ export function IndexComponent(): JSX.Element {
 
   const handleViewReport = async (reportId: string, projectId?: string): Promise<void> => {
     // Load the project and find the report
-    const targetProjectId = projectId ?? (viewState.type === 'project' ? viewState.projectId : null);
-    if (!targetProjectId) return;
+    const targetProjectId = projectId ?? (viewState.type === 'project' ? viewState.projectId : undefined);
+    if (targetProjectId === undefined) return;
     
     // Load project data
     const project = await useProjectStore.getState().loadProject(targetProjectId);
@@ -484,7 +484,7 @@ export function IndexComponent(): JSX.Element {
     setViewState({ type: 'projects' });
   };
 
-  const renderContent = (): JSX.Element | null => {
+  const renderContent = (): React.ReactNode | null => {
     // Analysis in progress
     if (isAnalyzing) {
       return (
@@ -534,8 +534,15 @@ export function IndexComponent(): JSX.Element {
       );
     }
 
-    // Report view
-    if (viewState.type === 'report' && currentReport != null) {
+    // Report view - when viewing a report, currentReport is guaranteed to be set
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (viewState.type === 'report') {
+      // Type guard: currentReport must exist for report view
+      if (!currentReport) {
+        return null;
+      }
+      const report = currentReport;
+      
       return (
         <div className="bg-(--dev-bg)">
           {/* Back button and report info */}
@@ -548,7 +555,7 @@ export function IndexComponent(): JSX.Element {
             </button>
             <div className="text-right">
               <p className="text-sm text-(--dev-text-muted)">
-                Viewing historical report from {new Date(currentReport.timestamp).toLocaleString()}
+                Viewing historical report from {new Date(report.timestamp).toLocaleString()}
               </p>
             </div>
           </div>
@@ -556,122 +563,116 @@ export function IndexComponent(): JSX.Element {
           {(() => {
             switch (activeSection) {
               case 'overview':
-                return <OverviewSection report={currentReport} />;
+                return <OverviewSection report={report} />;
               case 'bundle':
-                return currentReport.bundle ? (
-                  <BundleSection bundle={currentReport.bundle} />
+                return report.bundle ? (
+                  <BundleSection bundle={report.bundle} />
                 ) : (
                   <NoData section="Bundle" />
                 );
               case 'dom':
-                return currentReport.dom ? (
-                  <DOMSection dom={currentReport.dom} />
+                return report.dom ? (
+                  <DOMSection dom={report.dom} />
                 ) : (
                   <NoData section="DOM" />
                 );
               case 'css':
-                return currentReport.css ? (
-                  <CSSSection css={currentReport.css} />
+                return report.css ? (
+                  <CSSSection css={report.css} />
                 ) : (
                   <NoData section="CSS" />
                 );
               case 'images':
-                return currentReport.images ? (
-                  <ImagesSection images={currentReport.images} />
+                return report.images ? (
+                  <ImagesSection images={report.images} />
                 ) : (
                   <NoData section="Images" />
                 );
               case 'fonts':
-                return currentReport.fonts ? (
-                  <FontsSection fonts={currentReport.fonts} />
+                return report.fonts ? (
+                  <FontsSection fonts={report.fonts} />
                 ) : (
                   <NoData section="Fonts" />
                 );
               case 'assets':
-                return currentReport.assets ? (
-                  <AssetsSection assets={currentReport.assets} />
+                return report.assets ? (
+                  <AssetsSection assets={report.assets} />
                 ) : (
                   <NoData section="Assets" />
                 );
               case 'javascript':
-                return currentReport.javascript && currentReport.javascript.length > 0 ? (
-                  <JavaScriptSection js={currentReport.javascript} />
+                return report.javascript && report.javascript.length > 0 ? (
+                  <JavaScriptSection js={report.javascript} />
                 ) : (
                   <NoData section="JavaScript" />
                 );
-              case 'react':
-                return currentReport.react ? (
-                  <ReactSection react={currentReport.react} />
-                ) : (
-                  <NoData section="React" />
-                );
               case 'webvitals':
-                return currentReport.webVitals ? (
-                  <WebVitalsSection webVitals={currentReport.webVitals} />
+                return report.webVitals ? (
+                  <WebVitalsSection webVitals={report.webVitals} />
                 ) : (
                   <NoData section="Web Vitals" />
                 );
               case 'network':
-                return currentReport.network ? (
-                  <NetworkSection network={currentReport.network} />
+                return report.network ? (
+                  <NetworkSection network={report.network} />
                 ) : (
                   <NoData section="Network" />
                 );
               case 'accessibility':
-                return currentReport.accessibility ? (
-                  <AccessibilitySection accessibility={currentReport.accessibility} />
+                return report.accessibility ? (
+                  <AccessibilitySection accessibility={report.accessibility} />
                 ) : (
                   <NoData section="Accessibility" />
                 );
               case 'seo':
-                return currentReport.seo ? (
-                  <SEOSection seo={currentReport.seo} />
+                return report.seo ? (
+                  <SEOSection seo={report.seo} />
                 ) : (
                   <NoData section="SEO" />
                 );
               case 'typescript':
-                return currentReport.typescript ? (
-                  <TypeScriptSection typescript={currentReport.typescript} />
+                return report.typescript ? (
+                  <TypeScriptSection typescript={report.typescript} />
                 ) : (
                   <NoData section="TypeScript" />
                 );
               case 'security':
-                return currentReport.security ? (
-                  <SecuritySection security={currentReport.security} />
+                return report.security ? (
+                  <SecuritySection security={report.security} />
                 ) : (
                   <NoData section="Security" />
                 );
               case 'thirdparty':
-                return currentReport.thirdParty ? (
-                  <ThirdPartySection thirdParty={currentReport.thirdParty} />
+                return report.thirdParty ? (
+                  <ThirdPartySection thirdParty={report.thirdParty} />
                 ) : (
                   <NoData section="Third-Party" />
                 );
               case 'memory':
-                return currentReport.memory ? (
-                  <MemorySection memory={currentReport.memory} />
+                return report.memory ? (
+                  <MemorySection memory={report.memory} />
                 ) : (
                   <NoData section="Memory" />
                 );
               case 'imports':
-                return currentReport.imports ? (
-                  <ImportsSection imports={currentReport.imports} />
+                return report.imports ? (
+                  <ImportsSection imports={report.imports} />
                 ) : (
                   <NoData section="Imports" />
                 );
               case 'graph':
                 return <GraphSection />;
               case 'timeline':
-                return <TimelineSection timeline={currentReport.timeline} />;
+                return <TimelineSection timeline={report.timeline} />;
               case 'risks':
                 return (
                   <RisksSection
-                    risk={currentReport.renderRisk}
-                    optimizations={currentReport.summary.optimizations}
+                    risk={report.renderRisk}
+                    optimizations={report.summary.optimizations}
                   />
                 );
               case 'budget':
-                return <BudgetSettings report={currentReport} />;
+                return <BudgetSettings report={report} />;
               case 'templates':
                 return (
                   <div className="p-6">
@@ -720,11 +721,11 @@ export function IndexComponent(): JSX.Element {
 
   return (
     <div className="flex flex-1 overflow-hidden">
-      {currentReport && !isAnalyzing && viewState.type === 'report' && (
+      {currentReport !== null && !isAnalyzing && viewState.type === 'report' && (
         <Sidebar
           activeSection={activeSection}
           onSectionChange={setActiveSection}
-          hasReport={currentReport != null}
+          hasReport={true}
         />
       )}
       <main
@@ -733,7 +734,7 @@ export function IndexComponent(): JSX.Element {
         tabIndex={-1}
         aria-label="Report content"
       >
-        <div className={currentReport && viewState.type === 'report' ? 'max-w-5xl mx-auto p-6 bg-(--dev-bg)' : ''}>
+        <div className={viewState.type === 'report' && currentReport !== null ? 'max-w-5xl mx-auto p-6 bg-(--dev-bg)' : ''}>
           {renderContent()}
         </div>
       </main>

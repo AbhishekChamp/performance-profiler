@@ -1,11 +1,11 @@
 import type { 
   DependencyGraph, 
-  GraphNode, 
   GraphEdge, 
-  ModuleType,
+  GraphFilter, 
+  GraphLayout,
+  GraphNode,
   GraphStats,
-  GraphFilter,
-  GraphLayout 
+  ModuleType 
 } from '@/types/graph';
 
 /**
@@ -16,7 +16,7 @@ export function parseImports(content: string): string[] {
   
   // ES6 import statements
   const es6Regex = /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)\s+from\s+)?['"]([^'"]+)['"];?/g;
-  let match;
+  let match: RegExpExecArray | null = null;
   while ((match = es6Regex.exec(content)) !== null) {
     imports.push(match[1]);
   }
@@ -73,14 +73,14 @@ export function buildDependencyGraph(
   const importsMap: Map<string, string[]> = new Map();
   
   // First pass: Create nodes for all files
-  files.forEach(file => {
+  files.forEach((file): void => {
     const id = generateNodeId(file.name);
     const imports = parseImports(file.content);
     importsMap.set(id, imports);
     
     const node: GraphNode = {
       id,
-      label: file.name.split('/').pop() || file.name,
+      label: file.name.split('/').pop() ?? file.name,
       type: getModuleType(file.name),
       size: file.size,
       path: file.name,
@@ -95,14 +95,14 @@ export function buildDependencyGraph(
   });
   
   // Second pass: Create edges and link dependencies
-  importsMap.forEach((imports, sourceId) => {
+  importsMap.forEach((imports, sourceId): void => {
     const sourceNode = nodes.get(sourceId);
-    if (!sourceNode) return;
+    if (sourceNode === undefined) return;
     
-    imports.forEach(importPath => {
+    imports.forEach((importPath): void => {
       // Try to resolve the import to a file
       const targetId = resolveImport(importPath, files);
-      if (!targetId || targetId === sourceId) return;
+      if (targetId === null || targetId === sourceId) return;
       
       const targetNode = nodes.get(targetId);
       if (!targetNode) return;
@@ -134,13 +134,13 @@ export function buildDependencyGraph(
   });
   
   // Detect entry points (files with no dependents or explicitly marked)
-  const entryPoints = entryFiles?.map(f => generateNodeId(f)) || 
+  const entryPoints = entryFiles?.map((f): string => generateNodeId(f)) ?? 
     Array.from(nodes.values())
-      .filter(n => n.dependents.length === 0 && n.dependencies.length > 0)
-      .map(n => n.id);
+      .filter((n): boolean => n.dependents.length === 0 && n.dependencies.length > 0)
+      .map((n): string => n.id);
   
   // Mark entry nodes
-  entryPoints.forEach(id => {
+  entryPoints.forEach((id): void => {
     const node = nodes.get(id);
     if (node) node.type = 'entry';
   });
@@ -152,7 +152,7 @@ export function buildDependencyGraph(
   const circularDeps = detectCircularDependencies(nodes);
   
   // Mark circular edges
-  circularDeps.forEach(cycle => {
+  circularDeps.forEach((cycle): void => {
     for (let i = 0; i < cycle.length; i++) {
       const source = cycle[i];
       const target = cycle[(i + 1) % cycle.length];
@@ -166,8 +166,8 @@ export function buildDependencyGraph(
   
   // Detect duplicates (same label, different paths)
   const duplicates = detectDuplicates(Array.from(nodes.values()));
-  duplicates.forEach(({ duplicates }) => {
-    duplicates.forEach(dup => {
+  duplicates.forEach(({ duplicates }): void => {
+    duplicates.forEach((dup): void => {
       const node = nodes.get(dup.id);
       if (node) node.isDuplicate = true;
     });
@@ -195,7 +195,7 @@ function parseExports(content: string): string[] {
   
   // Named exports
   const namedRegex = /export\s+(?:const|let|var|function|class|interface|type|enum)\s+(\w+)/g;
-  let match;
+  let match: RegExpExecArray | null = null;
   while ((match = namedRegex.exec(content)) !== null) {
     exports.push(match[1]);
   }
@@ -218,7 +218,7 @@ function resolveImport(
   if (directMatch) return generateNodeId(directMatch.name);
   
   // Try with extensions
-  const withExt = files.find(f => 
+  const withExt = files.find((f): boolean => 
     f.name === `${importPath}.js` ||
     f.name === `${importPath}.ts` ||
     f.name === `${importPath}.jsx` ||
@@ -230,8 +230,8 @@ function resolveImport(
   
   // Try matching just the file name for vendor imports
   const fileName = importPath.split('/').pop();
-  if (fileName) {
-    const nameMatch = files.find(f => f.name.includes(fileName));
+  if (fileName !== undefined && fileName.length > 0) {
+    const nameMatch = files.find((f): boolean => f.name.includes(fileName));
     if (nameMatch) return generateNodeId(nameMatch.name);
   }
   
@@ -253,7 +253,8 @@ function calculateLevels(nodes: Map<string, GraphNode>, entryPoints: string[]): 
   });
   
   while (queue.length > 0) {
-    const currentId = queue.shift()!;
+    const currentId = queue.shift();
+    if (currentId === undefined) continue;
     const current = nodes.get(currentId);
     if (!current) continue;
     
@@ -326,18 +327,18 @@ function detectCircularDependencies(nodes: Map<string, GraphNode>): string[][] {
 function detectDuplicates(nodes: GraphNode[]): { original: GraphNode; duplicates: GraphNode[] }[] {
   const byName = new Map<string, GraphNode[]>();
   
-  nodes.forEach(node => {
-    const existing = byName.get(node.label) || [];
+  nodes.forEach((node): void => {
+    const existing = byName.get(node.label) ?? [];
     existing.push(node);
     byName.set(node.label, existing);
   });
   
   const duplicates: { original: GraphNode; duplicates: GraphNode[] }[] = [];
   
-  byName.forEach((moduleNodes) => {
+  byName.forEach((moduleNodes): void => {
     if (moduleNodes.length > 1) {
       // Sort by size, largest is considered "original"
-      moduleNodes.sort((a, b) => b.size - a.size);
+      moduleNodes.sort((a, b): number => b.size - a.size);
       duplicates.push({
         original: moduleNodes[0],
         duplicates: moduleNodes.slice(1),
@@ -356,21 +357,21 @@ export function calculateGraphStats(graph: DependencyGraph): GraphStats {
   const edges = graph.edges;
   
   const largestModule = nodes.length > 0 
-    ? nodes.reduce((max, n) => n.size > max.size ? n : max)
+    ? nodes.reduce((max, n): GraphNode => n.size > max.size ? n : max)
     : null;
   
   const deepestLevel = nodes.length > 0
-    ? Math.max(...nodes.map(n => n.level))
+    ? Math.max(...nodes.map((n): number => n.level))
     : 0;
   
-  const duplicateCount = nodes.filter(n => n.isDuplicate).length;
+  const duplicateCount = nodes.filter(n => n.isDuplicate ?? false).length;
   
   return {
     totalModules: nodes.length,
     totalDependencies: edges.length,
     circularDependencyCount: graph.circularDependencies.length,
     duplicateModuleCount: duplicateCount,
-    unusedExportCount: nodes.filter(n => n.isUnused).length,
+    unusedExportCount: nodes.filter(n => n.isUnused ?? false).length,
     largestModule,
     deepestLevel,
   };
@@ -380,14 +381,14 @@ export function calculateGraphStats(graph: DependencyGraph): GraphStats {
  * Filter nodes based on filter criteria
  */
 export function filterNodes(nodes: GraphNode[], filter: GraphFilter): GraphNode[] {
-  return nodes.filter(node => {
+  return nodes.filter((node): boolean => {
     // Type filter
     if (filter.types.length > 0 && !filter.types.includes(node.type)) {
       return false;
     }
     
     // Search filter
-    if (filter.searchQuery) {
+    if (filter.searchQuery && filter.searchQuery.length > 0) {
       const query = filter.searchQuery.toLowerCase();
       const matches = 
         node.label.toLowerCase().includes(query) ||
@@ -396,12 +397,12 @@ export function filterNodes(nodes: GraphNode[], filter: GraphFilter): GraphNode[
     }
     
     // Duplicates only
-    if (filter.showDuplicatesOnly && !node.isDuplicate) {
+    if (filter.showDuplicatesOnly && !(node.isDuplicate ?? false)) {
       return false;
     }
     
     // Unused only
-    if (filter.showUnusedOnly && !node.isUnused) {
+    if (filter.showUnusedOnly && !(node.isUnused ?? false)) {
       return false;
     }
     
@@ -409,7 +410,7 @@ export function filterNodes(nodes: GraphNode[], filter: GraphFilter): GraphNode[
     if (node.size < filter.minSize) {
       return false;
     }
-    if (filter.maxSize !== null && node.size > filter.maxSize) {
+    if (filter.maxSize != null && node.size > filter.maxSize) {
       return false;
     }
     
@@ -423,18 +424,18 @@ export function filterNodes(nodes: GraphNode[], filter: GraphFilter): GraphNode[
 export function generateReactFlowElements(
   graph: DependencyGraph,
   layout: GraphLayout[]
-) {
+): { nodes: Array<{ id: string; type: string; position: GraphLayout; data: Record<string, unknown> }>; edges: Array<{ id: string; source: string; target: string; type: string; animated: boolean; style: Record<string, unknown>; data: GraphEdge }> } {
   const flowNodes = graph.nodes.map((node, index) => ({
     id: node.id,
     type: 'moduleNode',
-    position: layout[index] || { x: 0, y: 0 },
+    position: layout[index] ?? { x: 0, y: 0 },
     data: {
       ...node,
       label: node.label,
     },
   }));
   
-  const flowEdges = graph.edges.map(edge => ({
+  const flowEdges = graph.edges.map((edge) => ({
     id: edge.id,
     source: edge.source,
     target: edge.target,
@@ -454,8 +455,8 @@ export function generateReactFlowElements(
  * Get nodes connected to a specific node (neighbors)
  */
 export function getConnectedNodes(nodeId: string, graph: DependencyGraph): string[] {
-  const node = graph.nodes.find(n => n.id === nodeId);
-  if (!node) return [];
+  const node = graph.nodes.find((n): boolean => n.id === nodeId);
+  if (node === undefined) return [];
   
   return [...node.dependencies, ...node.dependents];
 }
@@ -474,10 +475,13 @@ export function findPath(
   const queue: { id: string; path: string[] }[] = [{ id: sourceId, path: [sourceId] }];
   
   while (queue.length > 0) {
-    const { id, path } = queue.shift()!;
+    const item = queue.shift();
+    if (item === undefined) continue;
+    const { id, path } = item;
+    if (id === '') continue;
     
-    const node = graph.nodes.find(n => n.id === id);
-    if (!node) continue;
+    const node = graph.nodes.find((n): boolean => n.id === id);
+    if (node === undefined) continue;
     
     for (const depId of node.dependencies) {
       if (depId === targetId) {

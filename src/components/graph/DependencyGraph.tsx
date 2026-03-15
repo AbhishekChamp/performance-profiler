@@ -1,26 +1,26 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ReactFlow,
   Background,
   Controls,
-  MiniMap,
-  useNodesState,
-  useEdgesState,
-  Panel,
-  type Node,
   type Edge,
-  type NodeTypes,
   type EdgeTypes,
+  MiniMap,
+  type Node,
+  type NodeTypes,
+  Panel,
+  ReactFlow,
+  useEdgesState,
+  useNodesState,
   useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Search,
   AlertTriangle,
-  Package,
-  Layers,
   GitCommit,
+  Layers,
+  Package,
+  Search,
   X,
 } from 'lucide-react';
 import { useAnalysisStore } from '@/stores/analysisStore';
@@ -30,10 +30,10 @@ import {
   buildDependencyGraph, 
   calculateGraphStats, 
   filterNodes,
-  getConnectedNodes,
   generateReactFlowElements,
+  getConnectedNodes,
 } from '@/core/graph';
-import { calculateLayout, type LayoutAlgorithm } from '@/core/graph/layout';
+import { type LayoutAlgorithm, calculateLayout } from '@/core/graph/layout';
 import type { GraphFilter, GraphNode, GraphOptions } from '@/types/graph';
 import { Button } from '@/components/ui/Button';
 
@@ -54,7 +54,7 @@ function ModuleDetailPanel({
   node: GraphNode; 
   onClose: () => void;
   graph: ReturnType<typeof buildDependencyGraph>;
-}) {
+}): React.ReactNode {
   return (
     <motion.div
       initial={{ x: 300, opacity: 0 }}
@@ -93,22 +93,22 @@ function ModuleDetailPanel({
         </div>
         
         {/* Warnings */}
-        {(node.isDuplicate || node.isUnused || node.isTreeShakable) && (
+        {((node.isDuplicate ?? false) || (node.isUnused ?? false) || (node.isTreeShakable ?? false)) && (
           <div className="space-y-2">
             <label className="text-xs text-dev-text-muted uppercase tracking-wide">Warnings</label>
-            {node.isDuplicate && (
+            {node.isDuplicate === true && (
               <div className="flex items-center gap-2 text-sm text-dev-warning">
                 <AlertTriangle size={14} />
                 <span>Duplicate module detected</span>
               </div>
             )}
-            {node.isUnused && (
+            {node.isUnused === true && (
               <div className="flex items-center gap-2 text-sm text-dev-warning">
                 <AlertTriangle size={14} />
                 <span>Unused exports</span>
               </div>
             )}
-            {node.isTreeShakable && (
+            {node.isTreeShakable === true && (
               <div className="flex items-center gap-2 text-sm text-dev-success">
                 <GitCommit size={14} />
                 <span>Tree-shaking candidate</span>
@@ -202,15 +202,15 @@ function GraphControls({
   setOptions: (o: GraphOptions) => void;
   onSearch: (query: string) => void;
   stats: ReturnType<typeof calculateGraphStats>;
-}) {
+}): React.ReactNode {
   const [searchQuery, setSearchQuery] = useState('');
   
-  const handleSearch = () => {
+  const handleSearch = (): void => {
     onSearch(searchQuery);
     setFilter({ ...filter, searchQuery });
   };
   
-  const toggleType = (type: GraphFilter['types'][number]) => {
+  const toggleType = (type: GraphFilter['types'][number]): void => {
     const types = filter.types.includes(type)
       ? filter.types.filter(t => t !== type)
       : [...filter.types, type];
@@ -333,7 +333,7 @@ function GraphControls({
   );
 }
 
-export function DependencyGraph() {
+export function DependencyGraph(): React.ReactNode {
   const { currentReport } = useAnalysisStore();
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -421,7 +421,7 @@ export function DependencyGraph() {
   }, [graph, options.layout, filter, setNodes, setEdges]);
   
   // Handle node click
-  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node): void => {
     if (!graph) return;
     
     const graphNode = graph.nodes.find(n => n.id === node.id);
@@ -435,7 +435,7 @@ export function DependencyGraph() {
   }, [graph]);
   
   // Handle search
-  const handleSearch = useCallback((query: string) => {
+  const handleSearch = useCallback((query: string): void => {
     if (!graph || !query) return;
     
     const matches = graph.nodes.filter(n => 
@@ -452,7 +452,7 @@ export function DependencyGraph() {
   }, [graph, reactFlow]);
   
   // Clear highlighting when clicking background
-  const onPaneClick = useCallback(() => {
+  const onPaneClick = useCallback((): void => {
     setSelectedNode(null);
     setHighlightedNodes(new Set());
   }, []);
@@ -471,9 +471,9 @@ export function DependencyGraph() {
         const isDimmed = highlightedNodeIds.size > 0 && !highlightedNodeIds.has(node.id);
         const isSelected = node.id === selectedNodeId;
         return (
-          node.data?.isHighlighted !== isHighlighted ||
-          node.data?.isDimmed !== isDimmed ||
-          node.data?.isSelected !== isSelected
+          (node.data as { isHighlighted?: boolean; isDimmed?: boolean; isSelected?: boolean } | undefined)?.isHighlighted !== isHighlighted ||
+          (node.data as { isHighlighted?: boolean; isDimmed?: boolean; isSelected?: boolean } | undefined)?.isDimmed !== isDimmed ||
+          (node.data as { isHighlighted?: boolean; isDimmed?: boolean; isSelected?: boolean } | undefined)?.isSelected !== isSelected
         );
       });
       
@@ -535,7 +535,8 @@ export function DependencyGraph() {
         <Controls className="!bg-dev-surface !border-dev-border" />
         <MiniMap
           className="!bg-dev-surface !border-dev-border"
-          nodeColor={(node) => getModuleColor((node.data?.type as string) || 'source')}
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          nodeColor={(node): string => getModuleColor((node.data.type as string) ?? 'source')}
           maskColor="rgba(13, 17, 23, 0.7)"
         />
         
@@ -586,7 +587,7 @@ export function DependencyGraph() {
       
       {/* Module Detail Panel */}
       <AnimatePresence>
-        {selectedNode && graph && (
+        {selectedNode !== null && (
           <ModuleDetailPanel
             node={selectedNode}
             onClose={() => setSelectedNode(null)}

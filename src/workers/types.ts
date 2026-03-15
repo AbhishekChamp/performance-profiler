@@ -7,7 +7,7 @@
  * @module workers/types
  */
 
-import type { AnalysisReport, AnalysisOptions, InputFile } from '@/types';
+import type { AnalysisOptions, AnalysisReport, InputFile } from '@/types';
 
 // ============================================================================
 // Worker Request Messages (Main → Worker)
@@ -126,7 +126,6 @@ export type AnalysisStage =
   | 'css'
   | 'assets'
   | 'javascript'
-  | 'react'
   | 'web-vitals'
   | 'network'
   | 'images'
@@ -239,7 +238,6 @@ export function createInitialProgress(): AnalysisProgress {
       css: 0,
       assets: 0,
       javascript: 0,
-      react: 0,
       'web-vitals': 0,
       network: 0,
       images: 0,

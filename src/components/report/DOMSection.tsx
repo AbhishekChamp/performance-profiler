@@ -1,12 +1,12 @@
 import { BarChart } from '../charts/BarChart';
 import type { DOMAnalysis } from '@/types';
-import { FileCode, AlertTriangle, Image } from 'lucide-react';
+import { AlertTriangle, FileCode, Image } from 'lucide-react';
 
 interface DOMSectionProps {
   dom: DOMAnalysis;
 }
 
-export function DOMSection({ dom }: DOMSectionProps) {
+export function DOMSection({ dom }: DOMSectionProps): React.ReactNode {
   const depthData = Object.entries(dom.nodesPerLevel)
     .slice(0, 15)
     .map(([depth, count]) => ({
@@ -75,7 +75,7 @@ export function DOMSection({ dom }: DOMSectionProps) {
                 }`} />
                 <div>
                   <p className="text-sm text-dev-text">{warning.message}</p>
-                  {warning.element && (
+                  {warning.element != null && warning.element !== '' && (
                     <p className="text-xs text-dev-text-muted mt-1">Element: {warning.element}</p>
                   )}
                 </div>

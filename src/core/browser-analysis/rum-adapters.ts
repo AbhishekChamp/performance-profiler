@@ -6,7 +6,7 @@
  * @module browser-analysis/rum-adapters
  */
 
-import type { RealWebVitalMetric, MetricConfidence } from './index';
+import type { MetricConfidence, RealWebVitalMetric } from './index';
 
 /**
  * Generic RUM data point
@@ -105,7 +105,7 @@ type _RUMAdapter<T> = (data: T) => RealWebVitalMetric[];
  * Parse Vercel Analytics data
  */
 export function parseVercelAnalytics(data: VercelAnalyticsData): RealWebVitalMetric[] {
-  if (!data.webVitals) return [];
+  if (data.webVitals === undefined) return [];
 
   return data.webVitals.map(vital => ({
     name: vital.name,
@@ -123,7 +123,7 @@ export function parseVercelAnalytics(data: VercelAnalyticsData): RealWebVitalMet
 export function parseGA4WebVitals(data: GA4WebVitalsData): RealWebVitalMetric[] {
   const metrics: RealWebVitalMetric[] = [];
   
-  if (!data.reports || !data.metricNames) return metrics;
+  if (data.reports === undefined || data.metricNames === undefined) return metrics;
 
   const metricMapping: Record<string, 'LCP' | 'FID' | 'CLS' | 'FCP' | 'TTFB'> = {
     'largestContentfulPaint': 'LCP',
@@ -138,7 +138,8 @@ export function parseGA4WebVitals(data: GA4WebVitalsData): RealWebVitalMetric[] 
       const metricName = data.metricNames[i];
       const mappedName = metricMapping[metricName];
       
-      if (mappedName !== undefined && report.metricValues[i] !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (mappedName != null) {
         metrics.push({
           name: mappedName,
           value: report.metricValues[i],
@@ -160,11 +161,11 @@ export function parseGA4WebVitals(data: GA4WebVitalsData): RealWebVitalMetric[] 
 export function parseCloudflareAnalytics(data: CloudflareAnalyticsData): RealWebVitalMetric[] {
   const metrics: RealWebVitalMetric[] = [];
   
-  if (!data.data?.coreWebVitals) return metrics;
+  if (data.data?.coreWebVitals === undefined) return metrics;
 
   const cwv = data.data.coreWebVitals;
 
-  if (cwv.lcp?.p75 !== undefined && cwv.lcp.p75 !== null) {
+  if (cwv.lcp?.p75 !== undefined && cwv.lcp.p75 > 0) {
     metrics.push({
       name: 'LCP',
       value: cwv.lcp.p75,
@@ -175,7 +176,7 @@ export function parseCloudflareAnalytics(data: CloudflareAnalyticsData): RealWeb
     });
   }
 
-  if (cwv.fid?.p75 !== undefined && cwv.fid.p75 !== null) {
+  if (cwv.fid?.p75 !== undefined && cwv.fid.p75 > 0) {
     metrics.push({
       name: 'FID',
       value: cwv.fid.p75,
@@ -197,7 +198,7 @@ export function parseCloudflareAnalytics(data: CloudflareAnalyticsData): RealWeb
     });
   }
 
-  if (cwv.fcp?.p75 !== undefined && cwv.fcp.p75 !== null) {
+  if (cwv.fcp?.p75 !== undefined && cwv.fcp.p75 > 0) {
     metrics.push({
       name: 'FCP',
       value: cwv.fcp.p75,
@@ -208,7 +209,7 @@ export function parseCloudflareAnalytics(data: CloudflareAnalyticsData): RealWeb
     });
   }
 
-  if (cwv.ttfb?.p75 !== undefined && cwv.ttfb.p75 !== null) {
+  if (cwv.ttfb?.p75 !== undefined && cwv.ttfb.p75 > 0) {
     metrics.push({
       name: 'TTFB',
       value: cwv.ttfb.p75,
@@ -228,7 +229,7 @@ export function parseCloudflareAnalytics(data: CloudflareAnalyticsData): RealWeb
 export function parseNewRelicBrowser(data: NewRelicBrowserData): RealWebVitalMetric[] {
   const metrics: RealWebVitalMetric[] = [];
   
-  if (!data.metricData?.metrics) return metrics;
+  if (data.metricData?.metrics === undefined) return metrics;
 
   const metricMapping: Record<string, 'LCP' | 'FID' | 'CLS' | 'FCP' | 'TTFB'> = {
     'Browser/LargestContentfulPaint': 'LCP',
@@ -241,7 +242,8 @@ export function parseNewRelicBrowser(data: NewRelicBrowserData): RealWebVitalMet
   for (const metric of data.metricData.metrics) {
     const mappedName = metricMapping[metric.name];
     
-    if (mappedName !== undefined && metric.timeslices?.[0]?.values?.percentile75 !== undefined) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (mappedName != null && metric.timeslices?.[0]?.values?.percentile75 != null) {
       metrics.push({
         name: mappedName,
         value: metric.timeslices[0].values.percentile75,
@@ -262,7 +264,7 @@ export function parseNewRelicBrowser(data: NewRelicBrowserData): RealWebVitalMet
 export function parseDatadogRUM(data: DatadogRUMData): RealWebVitalMetric[] {
   const metrics: RealWebVitalMetric[] = [];
   
-  if (!data.series) return metrics;
+  if (data.series === undefined) return metrics;
 
   const metricMapping: Record<string, 'LCP' | 'FID' | 'CLS' | 'FCP' | 'TTFB'> = {
     'web_vitals.lcp': 'LCP',
@@ -275,7 +277,8 @@ export function parseDatadogRUM(data: DatadogRUMData): RealWebVitalMetric[] {
   for (const series of data.series) {
     const mappedName = metricMapping[series.metric];
     
-    if (mappedName !== undefined && series.pointlist !== undefined && series.pointlist.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (mappedName != null && series.pointlist != null && series.pointlist.length > 0) {
       // Get the latest value
       const latestPoint = series.pointlist[series.pointlist.length - 1];
       metrics.push({
@@ -301,27 +304,27 @@ export function parseRUMData(data: unknown): RealWebVitalMetric[] {
     const obj = data as Record<string, unknown>;
 
     // Check for Vercel Analytics
-    if ('webVitals' in obj && Array.isArray(obj.webVitals)) {
+    if ('webVitals' in obj && obj.webVitals !== undefined && obj.webVitals !== null && Array.isArray(obj.webVitals)) {
       return parseVercelAnalytics(data as VercelAnalyticsData);
     }
 
     // Check for Cloudflare
-    if ('data' in obj && typeof obj.data === 'object' && obj.data !== null && 'coreWebVitals' in obj.data) {
+    if ('data' in obj && obj.data !== undefined && obj.data !== null && typeof obj.data === 'object' && 'coreWebVitals' in (obj.data as Record<string, unknown>)) {
       return parseCloudflareAnalytics(data as CloudflareAnalyticsData);
     }
 
     // Check for GA4
-    if ('reports' in obj && Array.isArray(obj.reports)) {
+    if ('reports' in obj && obj.reports !== undefined && obj.reports !== null && Array.isArray(obj.reports)) {
       return parseGA4WebVitals(data as GA4WebVitalsData);
     }
 
     // Check for New Relic
-    if ('metricData' in obj) {
+    if ('metricData' in obj && obj.metricData !== undefined && obj.metricData !== null) {
       return parseNewRelicBrowser(data as NewRelicBrowserData);
     }
 
     // Check for Datadog
-    if ('series' in obj && Array.isArray(obj.series)) {
+    if ('series' in obj && obj.series !== undefined && obj.series !== null && Array.isArray(obj.series)) {
       return parseDatadogRUM(data as DatadogRUMData);
     }
   }

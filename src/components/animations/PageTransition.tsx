@@ -1,4 +1,3 @@
-import type { JSX } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLocation } from '@tanstack/react-router';
 
@@ -30,7 +29,7 @@ const variants = {
   },
 };
 
-export function PageTransition({ children, mode = 'fade' }: PageTransitionProps): JSX.Element {
+export function PageTransition({ children, mode = 'fade' }: PageTransitionProps): React.ReactNode {
   const location = useLocation();
   const prefersReducedMotion = typeof window !== 'undefined' 
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
@@ -69,7 +68,7 @@ export function StaggerContainer({
   children, 
   staggerDelay = 0.1,
   className,
-}: StaggerContainerProps): JSX.Element {
+}: StaggerContainerProps): React.ReactNode {
   const prefersReducedMotion = typeof window !== 'undefined' 
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
     : false;
@@ -103,7 +102,7 @@ interface StaggerItemProps {
   className?: string;
 }
 
-export function StaggerItem({ children, className }: StaggerItemProps): JSX.Element {
+export function StaggerItem({ children, className }: StaggerItemProps): React.ReactNode {
   const prefersReducedMotion = typeof window !== 'undefined' 
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
     : false;
@@ -138,7 +137,7 @@ interface ExitAnimationProps {
   onExit?: () => void;
 }
 
-export function ExitAnimation({ children, isVisible, onExit }: ExitAnimationProps): JSX.Element {
+export function ExitAnimation({ children, isVisible, onExit }: ExitAnimationProps): React.ReactNode {
   const prefersReducedMotion = typeof window !== 'undefined' 
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
     : false;

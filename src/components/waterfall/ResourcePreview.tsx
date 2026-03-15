@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Image, Type, FileText, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { FileText, Image, Type, X } from 'lucide-react';
 import type { WaterfallResource } from '@/core/waterfall/timingCalculator';
 
 interface ResourcePreviewProps {
@@ -10,7 +10,7 @@ interface ResourcePreviewProps {
 /**
  * Preview component for images and fonts
  */
-export function ResourcePreview({ resource, onClose }: ResourcePreviewProps): JSX.Element | null {
+export function ResourcePreview({ resource, onClose }: ResourcePreviewProps): React.ReactNode {
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +78,7 @@ export function ResourcePreview({ resource, onClose }: ResourcePreviewProps): JS
         <div className="p-6 flex items-center justify-center min-h-[300px] bg-dev-bg">
           {loading ? (
             <div className="animate-pulse text-dev-text-muted">Loading preview...</div>
-          ) : error ? (
+          ) : error !== null ? (
             <div className="text-dev-danger flex flex-col items-center gap-2">
               <FileText className="w-12 h-12 opacity-50" />
               <p>{error}</p>

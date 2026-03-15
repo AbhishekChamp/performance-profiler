@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Activity, Upload, Download, ExternalLink, Info } from 'lucide-react';
+import { Activity, Download, ExternalLink, Info, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { AccuracyIndicator, MetricComparison } from './AccuracyIndicator';
 import { rumAdapters } from '@/core/browser-analysis/rum-adapters';
 import { generateLighthouseCIConfig } from '@/core/browser-analysis/lighthouse';
-import type { RealWebVitalMetric, MetricComparison as MetricComparisonType } from '@/core/browser-analysis';
+import type { MetricComparison as MetricComparisonType, RealWebVitalMetric } from '@/core/browser-analysis';
 import type { WebVitalsAnalysis } from '@/types';
 
 interface RealMetricsSectionProps {
@@ -16,7 +16,7 @@ interface RealMetricsSectionProps {
 /**
  * Section for displaying and importing real browser metrics
  */
-export function RealMetricsSection({ estimatedMetrics, onImportRUM }: RealMetricsSectionProps): JSX.Element {
+export function RealMetricsSection({ estimatedMetrics, onImportRUM }: RealMetricsSectionProps): React.ReactNode {
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [realMetrics, setRealMetrics] = useState<RealWebVitalMetric[]>([]);
   const [comparisons, setComparisons] = useState<MetricComparisonType[]>([]);
@@ -179,7 +179,7 @@ function RUMImportForm({
 }: { 
   onImport: (data: string, adapter: keyof typeof rumAdapters) => void;
   error: string | null;
-}): JSX.Element {
+}): React.ReactNode {
   const [jsonData, setJsonData] = useState('');
   const [selectedAdapter, setSelectedAdapter] = useState<keyof typeof rumAdapters>('auto');
 
@@ -287,7 +287,7 @@ function formatMetricValue(value: number, unit: string): string {
   return value.toFixed(3);
 }
 
-function downloadLighthouseCIConfig() {
+function downloadLighthouseCIConfig(): void {
   const config = generateLighthouseCIConfig(['https://example.com']);
   const blob = new Blob([config], { type: 'application/json' });
   const url = URL.createObjectURL(blob);

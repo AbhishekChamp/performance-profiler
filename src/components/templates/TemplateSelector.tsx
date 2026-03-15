@@ -1,23 +1,23 @@
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useTemplateStore } from '@/stores/templateStore';
 import type { ReportTemplate } from '@/types';
 import { 
+  AppWindow, 
   Check, 
   Download, 
-  Upload, 
-  Plus, 
-  Trash2, 
+  FileJson, 
+  FileText, 
  
-  Sparkles,
-  X,
-  FileJson,
-  ShoppingCart,
-  AppWindow,
-  FileText,
   LayoutDashboard,
   Megaphone,
   Package,
+  Plus,
   Settings,
+  ShoppingCart,
+  Sparkles,
+  Trash2,
+  Upload,
+  X,
 
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -37,7 +37,7 @@ interface TemplateSelectorProps {
   showCustomOnly?: boolean;
 }
 
-export function TemplateSelector({ onSelect, showCustomOnly = false }: TemplateSelectorProps) {
+export function TemplateSelector({ onSelect, showCustomOnly = false }: TemplateSelectorProps): React.ReactNode {
   const { 
     currentTemplate, 
     setTemplate, 
@@ -60,13 +60,13 @@ export function TemplateSelector({ onSelect, showCustomOnly = false }: TemplateS
     activeTab === 'builtin' ? builtinTemplates :
     customTemplates;
 
-  const handleSelect = (template: ReportTemplate) => {
+  const handleSelect = (template: ReportTemplate): void => {
     setTemplate(template);
     onSelect?.(template);
     toast.success(`Applied "${template.name}" template`, { duration: 2000 });
   };
 
-  const handleExport = (template: ReportTemplate, e: React.MouseEvent) => {
+  const handleExport = (template: ReportTemplate, e: React.MouseEvent): void => {
     e.stopPropagation();
     const json = exportTemplate(template.id);
     
@@ -84,7 +84,7 @@ export function TemplateSelector({ onSelect, showCustomOnly = false }: TemplateS
     toast.success('Template exported!', { duration: 2000 });
   };
 
-  const handleImport = () => {
+  const handleImport = (): void => {
     const template = importTemplate(importJson);
     if (template) {
       setShowImportModal(false);
@@ -95,7 +95,7 @@ export function TemplateSelector({ onSelect, showCustomOnly = false }: TemplateS
     }
   };
 
-  const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -117,7 +117,7 @@ export function TemplateSelector({ onSelect, showCustomOnly = false }: TemplateS
     }
   };
 
-  const handleDelete = (template: ReportTemplate, e: React.MouseEvent) => {
+  const handleDelete = (template: ReportTemplate, e: React.MouseEvent): void => {
     e.stopPropagation();
     if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
       deleteCustomTemplate(template.id);
@@ -125,8 +125,8 @@ export function TemplateSelector({ onSelect, showCustomOnly = false }: TemplateS
     }
   };
 
-  const TemplateCard = ({ template }: { template: ReportTemplate }) => {
-    const Icon = ICON_MAP[template.icon] || Settings;
+  const TemplateCard = ({ template }: { template: ReportTemplate }): React.ReactNode => {
+    const Icon = ICON_MAP[template.icon] ?? Settings;
     const isActive = currentTemplate.id === template.id;
     const isCustom = !template.isBuiltIn;
 
@@ -349,12 +349,12 @@ export function TemplateSelector({ onSelect, showCustomOnly = false }: TemplateS
 }
 
 // Compact version for sidebar/settings
-export function TemplateSelectorCompact() {
+export function TemplateSelectorCompact(): React.ReactNode {
   const { currentTemplate, setTemplate, getAllTemplates } = useTemplateStore();
   const [isOpen, setIsOpen] = useState(false);
   
   const templates = getAllTemplates();
-  const Icon = ICON_MAP[currentTemplate.icon] || Settings;
+  const Icon = ICON_MAP[currentTemplate.icon] ?? Settings;
 
   return (
     <div className="relative">
@@ -381,7 +381,7 @@ export function TemplateSelectorCompact() {
           max-h-64 overflow-y-auto
         ">
           {templates.map((template) => {
-            const TIcon = ICON_MAP[template.icon] || Settings;
+            const TIcon = ICON_MAP[template.icon] ?? Settings;
             return (
               <button
                 key={template.id}

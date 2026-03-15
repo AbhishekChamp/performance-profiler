@@ -1,19 +1,19 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { persist, type StorageValue } from 'zustand/middleware';
-import { get, set, del } from 'idb-keyval';
+import { type StorageValue, persist } from 'zustand/middleware';
+import { del, get, set } from 'idb-keyval';
 import type { 
   AnalysisReport, 
-  TrendDataPoint, 
-  ProjectTrend,
-  TrendFilters,
-  RegressionPoint 
+  ProjectTrend, 
+  RegressionPoint,
+  TrendDataPoint,
+  TrendFilters 
 } from '@/types';
 import { 
-  reportToTrendData, 
-  calculateTrendSummary,
+  calculateTrendSummary, 
   detectRegressions,
   filterTrendData,
+  reportToTrendData,
 } from '@/core/trends';
 import { getAllReports } from '@/utils/offlineStorage';
 import { logError } from '@/utils/errorHandler';
@@ -70,10 +70,12 @@ function recomputeState(
   // Group by project and create ProjectTrend objects
   const projectMap = new Map<string, TrendDataPoint[]>();
   filtered.forEach(point => {
-    if (!projectMap.has(point.projectName)) {
-      projectMap.set(point.projectName, []);
+    const existing = projectMap.get(point.projectName);
+    if (existing) {
+      existing.push(point);
+    } else {
+      projectMap.set(point.projectName, [point]);
     }
-    projectMap.get(point.projectName)!.push(point);
   });
   
   const projects: ProjectTrend[] = Array.from(projectMap.entries()).map(
@@ -177,11 +179,7 @@ export const useTrendStore = create<TrendState>()(
         setFilters: (filters) => {
           const currentState = get();
           const currentFilters = currentState.filters;
-          const newFilters = { ...currentFilters, ...filters };
-          // Ensure metrics array is always present
-          if (!newFilters.metrics) {
-            newFilters.metrics = currentFilters.metrics || ['overallScore'];
-          }
+          const newFilters: TrendFilters = { ...currentFilters, ...filters };
           
           // Recompute with new filters in single batch
           const filtered = filterTrendData(currentState.trendData, newFilters);
@@ -244,20 +242,20 @@ export const useTrendStore = create<TrendState>()(
 );
 
 // Selectors - use memoized results to prevent unnecessary re-renders
-export const selectTrendData = (state: TrendState) => 
+export const selectTrendData = (state: TrendState): TrendDataPoint[] => 
   state.selectedProject === 'all' 
     ? state.filteredData 
     : state.filteredData.filter(d => d.projectName === state.selectedProject);
 
-export const selectCurrentProject = (state: TrendState) =>
+export const selectCurrentProject = (state: TrendState): ProjectTrend | null =>
   state.selectedProject === 'all'
     ? null
-    : state.projects.find(p => p.projectName === state.selectedProject);
+    : state.projects.find(p => p.projectName === state.selectedProject) ?? null;
 
 // Memoized selector to prevent array reference changes
 let cachedProjects: string[] = [];
 let cachedResult: string[] = [];
-export const selectAvailableProjects = (state: TrendState) => {
+export const selectAvailableProjects = (state: TrendState): string[] => {
   const projectNames = state.projects.map(p => p.projectName);
   // Only create new array if projects changed
   if (

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import type { AnalysisReport, ReportComparison, MetricDiff } from '@/types';
+import type { AnalysisReport, MetricDiff, ReportComparison } from '@/types';
 
 interface ComparisonState {
   // Comparison state
@@ -61,7 +61,7 @@ export const useComparisonStore = create<ComparisonState>()(
         });
       },
 
-      generateComparison: () => {
+      generateComparison: (): void => {
         const { baseline, current } = getState();
         
         if (!baseline || !current) {
@@ -167,7 +167,7 @@ export const useComparisonStore = create<ComparisonState>()(
         setState({ comparison });
       },
 
-      swapReports: () => {
+      swapReports: (): void => {
         const { baseline, current } = getState();
         setState({
           baseline: current,
@@ -192,6 +192,6 @@ function formatBytes(bytes: number): string {
 }
 
 // Selectors
-export const selectComparison = (state: ComparisonState) => state.comparison;
-export const selectBaseline = (state: ComparisonState) => state.baseline;
-export const selectCurrentCompare = (state: ComparisonState) => state.current;
+export const selectComparison = (state: ComparisonState): ReportComparison | null => state.comparison;
+export const selectBaseline = (state: ComparisonState): AnalysisReport | null => state.baseline;
+export const selectCurrentCompare = (state: ComparisonState): AnalysisReport | null => state.current;

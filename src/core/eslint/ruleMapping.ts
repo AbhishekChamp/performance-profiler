@@ -316,25 +316,33 @@ export const issueToRuleMapping: Record<string, IssueToRuleMap> = {
 export function getAllRules(): ESLintRule[] {
   const rules: ESLintRule[] = [];
   
-  Object.values(issueToRuleMapping).forEach((mapping) => {
+  Object.values(issueToRuleMapping).forEach((mapping): void => {
     rules.push(...mapping.rules);
   });
   
-  return rules.sort((a, b) => b.priority - a.priority);
+  return rules.sort((a, b): number => b.priority - a.priority);
 }
 
 // Get rules for specific issue types
 export function getRulesForIssues(issueTypes: string[]): ESLintRule[] {
   const rules: ESLintRule[] = [];
+  const seenRules = new Set<string>();
   
-  issueTypes.forEach((issueType) => {
+  issueTypes.forEach((issueType): void => {
     const mapping = issueToRuleMapping[issueType];
-    if (mapping !== undefined) {
-      rules.push(...mapping.rules);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (mapping != null) {
+      mapping.rules.forEach((rule): void => {
+        // Only add if we haven't seen this rule before
+        if (!seenRules.has(rule.rule)) {
+          seenRules.add(rule.rule);
+          rules.push(rule);
+        }
+      });
     }
   });
   
-  return rules.sort((a, b) => b.priority - a.priority);
+  return rules.sort((a, b): number => b.priority - a.priority);
 }
 
 // Calculate estimated impact of rules
@@ -344,13 +352,14 @@ export function calculateEstimatedImpact(
   let wouldCatch = 0;
   let totalIssues = 0;
   
-  detectedIssues.forEach((issue) => {
+  detectedIssues.forEach((issue): void => {
     totalIssues += issue.count;
     const mapping = issueToRuleMapping[issue.type];
-    if (mapping.rules.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (mapping != null && mapping.rules.length > 0) {
       // Assume high priority rules catch ~80%, lower priority ~50%
       const avgPriority =
-        mapping.rules.reduce((sum, r) => sum + r.priority, 0) /
+        mapping.rules.reduce((sum, r): number => sum + r.priority, 0) /
         mapping.rules.length;
       const catchRate = avgPriority >= 8 ? 0.8 : avgPriority >= 5 ? 0.5 : 0.3;
       wouldCatch += issue.count * catchRate;

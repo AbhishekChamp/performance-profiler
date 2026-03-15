@@ -1,27 +1,27 @@
-import { useState, useMemo, useRef, memo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { memo, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  Filter,
-
   AlertTriangle,
+  BarChart3,
+  Calendar,
   CheckCircle,
-  Minus,
+
   ChevronDown,
   ChevronUp,
   FileSpreadsheet,
-  Trash2,
+  Filter,
+  Minus,
   RefreshCw,
-  BarChart3,
+  Trash2,
+  TrendingDown,
+  TrendingUp,
 } from 'lucide-react';
-import { useTrendStore, selectAvailableProjects } from '@/stores/trendStore';
+import { selectAvailableProjects, useTrendStore } from '@/stores/trendStore';
 import { TrendLineChart } from '@/components/charts/TrendLineChart';
 import { Button } from '@/components/ui/Button';
 import { Select, SelectItem } from '@/components/ui/Select';
-import type { TrendDataPoint, TrendSeries, RegressionPoint, TrendFilters } from '@/types';
-import { exportTrendDataAsCSV, getAvailableMetrics, formatTrendDirection } from '@/core/trends';
+import type { RegressionPoint, TrendDataPoint, TrendFilters, TrendSeries } from '@/types';
+import { exportTrendDataAsCSV, formatTrendDirection, getAvailableMetrics } from '@/core/trends';
 import { useClickOutside } from '@/hooks/useClickOutside';
 
 // Metric selector component
@@ -31,14 +31,14 @@ function MetricSelector({
 }: {
   selected: string[];
   onChange: (metrics: string[]) => void;
-}) {
+}): React.ReactNode {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   useClickOutside(containerRef, () => setIsOpen(false));
 
   const metrics = getAvailableMetrics();
 
-  const toggleMetric = (key: string) => {
+  const toggleMetric = (key: string): void => {
     if (selected.includes(key)) {
       onChange(selected.filter(m => m !== key));
     } else {
@@ -95,7 +95,7 @@ function MetricSelector({
 }
 
 // Regression list component
-function RegressionList({ regressions }: { regressions: RegressionPoint[] }) {
+function RegressionList({ regressions }: { regressions: RegressionPoint[] }): React.ReactNode {
   const [showAll, setShowAll] = useState(false);
   const displayRegressions = showAll ? regressions : regressions.slice(0, 5);
 
@@ -149,6 +149,7 @@ function RegressionList({ regressions }: { regressions: RegressionPoint[] }) {
                 {reg.severity}
               </span>
             </div>
+            {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
             {reg.percentageChange !== undefined && (
               <div className="mt-2 flex items-center gap-4 text-xs">
                 <span className="text-dev-text-muted">
@@ -180,7 +181,7 @@ function RegressionList({ regressions }: { regressions: RegressionPoint[] }) {
 }
 
 // Summary stats component - memoized to prevent unnecessary re-renders
-const TrendSummary = memo(function TrendSummary() {
+const TrendSummary = memo(function TrendSummary(): React.ReactNode {
   const { projects, selectedProject } = useTrendStore();
 
   const summary = useMemo(() => {
@@ -275,7 +276,7 @@ const TrendSummary = memo(function TrendSummary() {
 });
 
 // Main dashboard component
-export function TrendDashboard() {
+export function TrendDashboard(): React.ReactNode {
   const {
     trendData,
     filteredData,
@@ -325,7 +326,7 @@ export function TrendDashboard() {
   }, [filteredData, selectedMetrics, selectedProject]);
 
   // Handle CSV export
-  const handleExportCSV = () => {
+  const handleExportCSV = (): void => {
     const csv = exportTrendDataAsCSV(filteredData);
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -337,7 +338,7 @@ export function TrendDashboard() {
   };
 
   // Handle date range change
-  const handleDateRangeChange = (value: string) => {
+  const handleDateRangeChange = (value: string): void => {
     setFilters({ dateRange: value as TrendFilters['dateRange'] });
   };
 

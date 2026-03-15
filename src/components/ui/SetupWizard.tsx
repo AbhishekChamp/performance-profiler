@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-  X,
-  ChevronRight,
-  ChevronLeft,
-  Check,
-  Zap,
-  Shield,
   BarChart3,
+  Check,
+  ChevronLeft,
+  ChevronRight,
   FileCode,
   Settings,
+  Shield,
+  X,
+  Zap,
 } from 'lucide-react';
 import { useSetupStore } from '@/stores/setupStore';
 import { ThemeToggle } from './ThemeToggle';
@@ -47,7 +47,7 @@ const steps = [
   },
 ];
 
-export function SetupWizard() {
+export function SetupWizard(): React.JSX.Element | null {
   const { isFirstRun, completeSetup } = useSetupStore();
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(isFirstRun);
@@ -59,7 +59,7 @@ export function SetupWizard() {
   const isLastStep = currentStep === steps.length - 1;
   const isFirstStep = currentStep === 0;
 
-  const handleNext = () => {
+  const handleNext = (): void => {
     if (isLastStep) {
       completeSetup();
       setIsVisible(false);
@@ -68,11 +68,11 @@ export function SetupWizard() {
     }
   };
 
-  const handleBack = () => {
+  const handleBack = (): void => {
     setCurrentStep(prev => prev - 1);
   };
 
-  const handleSkip = () => {
+  const handleSkip = (): void => {
     completeSetup();
     setIsVisible(false);
   };
@@ -164,7 +164,7 @@ export function SetupWizard() {
   );
 }
 
-function WelcomeContent() {
+function WelcomeContent(): React.JSX.Element {
   return (
     <div className="py-4">
       <div className="flex flex-col gap-3">
@@ -189,7 +189,7 @@ function WelcomeContent() {
   );
 }
 
-function ThemeContent() {
+function ThemeContent(): React.JSX.Element {
   return (
     <div className="flex flex-col items-center gap-4 py-4">
       <p className="text-sm text-dev-text-subtle">Select your preferred theme:</p>
@@ -200,7 +200,7 @@ function ThemeContent() {
   );
 }
 
-function FeaturesContent() {
+function FeaturesContent(): React.JSX.Element {
   const features = [
     'Bundle Analyzer - Check webpack/vite output',
     'Web Vitals - LCP, FID, CLS scoring',
@@ -225,7 +225,7 @@ function FeaturesContent() {
   );
 }
 
-function PrivacyContent() {
+function PrivacyContent(): React.JSX.Element {
   return (
     <div className="py-4">
       <div className="bg-dev-bg rounded-xl p-6 text-center">
@@ -242,7 +242,7 @@ function PrivacyContent() {
   );
 }
 
-function ReadyContent() {
+function ReadyContent(): React.JSX.Element {
   return (
     <div className="py-4 text-center">
       <div className="text-5xl mb-4">🚀</div>

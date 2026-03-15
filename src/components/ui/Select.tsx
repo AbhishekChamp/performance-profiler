@@ -1,4 +1,4 @@
-import { forwardRef, type SelectHTMLAttributes, type ReactNode, type ChangeEvent } from 'react';
+import { type ChangeEvent, type OptionHTMLAttributes, type ReactNode, type SelectHTMLAttributes, forwardRef } from 'react';
 
 interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
   children: ReactNode;
@@ -7,8 +7,8 @@ interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onC
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ children, className = '', onChange, ...props }, ref) => {
-    const handleChange = (e: ChangeEvent<HTMLSelectElement>) => {
+  ({ children, className = '', onChange, ...props }, ref): React.JSX.Element => {
+    const handleChange = (e: ChangeEvent<HTMLSelectElement>): void => {
       onChange?.(e.target.value);
     };
 
@@ -38,10 +38,8 @@ interface SelectItemProps extends OptionHTMLAttributes<HTMLOptionElement> {
   value: string;
 }
 
-import { type OptionHTMLAttributes } from 'react';
-
 export const SelectItem = forwardRef<HTMLOptionElement, SelectItemProps>(
-  ({ children, ...props }, ref) => {
+  ({ children, ...props }, ref): React.JSX.Element => {
     return (
       <option ref={ref} {...props}>
         {children}

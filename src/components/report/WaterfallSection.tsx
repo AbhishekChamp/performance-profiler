@@ -4,15 +4,15 @@ import { generateWaterfallData } from '@/core/waterfall/timingCalculator';
 import { WaterfallChart } from '@/components/waterfall';
 import { Waves } from 'lucide-react';
 
-export function WaterfallSection() {
+export function WaterfallSection(): React.ReactNode | null {
   const report = useAnalysisStore((state) => state.currentReport);
 
   const waterfallData = useMemo(() => {
     if (!report) return null;
 
-    const htmlContent = report.files.find((f) => f.name.endsWith('.html'))?.content || '';
+    const htmlContent = report.files.find((f) => f.name.endsWith('.html'))?.content ?? '';
     const assets = report.assets?.breakdown
-      ? Object.entries(report.assets.byType || {}).flatMap(([type, items]) =>
+      ? Object.entries(report.assets.byType).flatMap(([type, items]) =>
           items.map((item) => ({ ...item, type }))
         )
       : [];
@@ -97,7 +97,7 @@ export function WaterfallSection() {
                 className="flex items-center justify-between py-2 px-3 bg-dev-bg rounded text-sm"
               >
                 <span className="text-dev-text truncate" title={resource.url}>
-                  {resource.url.split('/').pop() || resource.url}
+                  {resource.url.split('/').pop() ?? resource.url}
                 </span>
                 <span className="text-dev-text-muted">
                   {Math.round(resource.duration)}ms

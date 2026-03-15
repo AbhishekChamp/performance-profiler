@@ -17,7 +17,7 @@ const TYPE_COLORS: Record<string, string> = {
   paint: '#a371f7',
 };
 
-export function TimelineChart({ timeline, width = 700, height = 180 }: TimelineChartProps) {
+export function TimelineChart({ timeline, width = 700, height = 180 }: TimelineChartProps): React.JSX.Element {
   const svgRef = useRef<SVGSVGElement>(null);
   const { resolvedMode } = useThemeStore();
   const isDark = resolvedMode === 'dark';
@@ -92,10 +92,10 @@ export function TimelineChart({ timeline, width = 700, height = 180 }: TimelineC
       .join('rect')
       .attr('class', 'bar')
       .attr('x', (d: TimelineEvent) => xScale(d.start))
-      .attr('y', (d: TimelineEvent) => yScale(d.name) || 0)
+      .attr('y', (d: TimelineEvent) => yScale(d.name) ?? 0)
       .attr('width', 0)
       .attr('height', yScale.bandwidth())
-      .attr('fill', (d: TimelineEvent) => TYPE_COLORS[d.type] || '#8b949e')
+      .attr('fill', (d: TimelineEvent) => TYPE_COLORS[d.type] ?? '#8b949e')
       .attr('rx', 3)
       .transition()
       .duration(800)
@@ -108,7 +108,7 @@ export function TimelineChart({ timeline, width = 700, height = 180 }: TimelineC
       .join('text')
       .attr('class', 'duration-label')
       .attr('x', (d: TimelineEvent) => xScale(d.end) + 5)
-      .attr('y', (d: TimelineEvent) => (yScale(d.name) || 0) + yScale.bandwidth() / 2)
+      .attr('y', (d: TimelineEvent) => (yScale(d.name) ?? 0) + yScale.bandwidth() / 2)
       .attr('dy', '0.35em')
       .style('fill', textMutedColor)
       .style('font-size', '10px')
@@ -127,7 +127,7 @@ export function TimelineChart({ timeline, width = 700, height = 180 }: TimelineC
         .map((e: TimelineEvent) => yScale(e.name));
       
       if (criticalY.length > 0) {
-        const avgY = criticalY.reduce((a: number, b: number | undefined) => a + (b || 0), 0) / criticalY.length;
+        const avgY = criticalY.reduce((a: number, b: number | undefined) => a + (b ?? 0), 0) / criticalY.length;
         
         g.append('text')
           .attr('x', chartWidth + 10)

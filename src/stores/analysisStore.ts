@@ -1,15 +1,15 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import { set, get as idbGet } from 'idb-keyval';
-import { storeReport, deleteStoredReport } from '@/utils/offlineStorage';
+import { get as idbGet, set } from 'idb-keyval';
+import { deleteStoredReport, storeReport } from '@/utils/offlineStorage';
 import { logError } from '@/utils/errorHandler';
 import type {
-  AnalysisReport,
   AnalysisOptions,
-  AnalysisStatus,
   AnalysisProgress,
-  UploadedProject,
+  AnalysisReport,
+  AnalysisStatus,
   HistoryFilters,
+  UploadedProject,
 } from '@/types';
 
 interface PinnedReport {
@@ -63,7 +63,6 @@ const defaultOptions: AnalysisOptions = {
   includeCSS: true,
   includeAssets: true,
   includeJS: true,
-  includeReact: true,
   includeWebVitals: true,
   includeNetwork: true,
   includeImages: true,
@@ -191,7 +190,7 @@ export const useAnalysisStore = create<AnalysisState>()(
           });
         },
 
-        isPinned: (reportId) => {
+        isPinned: (reportId): boolean => {
           return get().pinnedReports.some((p) => p.id === reportId);
         },
 
@@ -268,7 +267,7 @@ export const useAnalysisStore = create<AnalysisState>()(
           });
         },
 
-        loadReportFromHistory: (reportId) => {
+        loadReportFromHistory: (reportId): AnalysisReport | undefined => {
           return get().history.find((r) => r.id === reportId);
         },
       }),
@@ -287,12 +286,12 @@ export const useAnalysisStore = create<AnalysisState>()(
 );
 
 // Selectors
-export const selectCurrentReport = (state: AnalysisState) => state.currentReport;
-export const selectAnalysisStatus = (state: AnalysisState) => state.status;
-export const selectAnalysisProgress = (state: AnalysisState) => state.progress;
-export const selectAnalysisError = (state: AnalysisState) => state.error;
-export const selectHistory = (state: AnalysisState) => state.history;
-export const selectPinnedReports = (state: AnalysisState) => state.pinnedReports;
-export const selectHistoryFilters = (state: AnalysisState) => state.historyFilters;
-export const selectCurrentProject = (state: AnalysisState) => state.currentProject;
-export const selectOptions = (state: AnalysisState) => state.options;
+export const selectCurrentReport = (state: AnalysisState): AnalysisReport | null => state.currentReport;
+export const selectAnalysisStatus = (state: AnalysisState): AnalysisStatus => state.status;
+export const selectAnalysisProgress = (state: AnalysisState): AnalysisProgress | null => state.progress;
+export const selectAnalysisError = (state: AnalysisState): string | null => state.error;
+export const selectHistory = (state: AnalysisState): AnalysisReport[] => state.history;
+export const selectPinnedReports = (state: AnalysisState): PinnedReport[] => state.pinnedReports;
+export const selectHistoryFilters = (state: AnalysisState): HistoryFilters => state.historyFilters;
+export const selectCurrentProject = (state: AnalysisState): UploadedProject | null => state.currentProject;
+export const selectOptions = (state: AnalysisState): AnalysisOptions => state.options;

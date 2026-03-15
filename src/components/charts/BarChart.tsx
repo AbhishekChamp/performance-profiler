@@ -22,7 +22,7 @@ export function BarChart({
   height = 200,
   maxValue,
   formatValue = (v) => v.toString()
-}: BarChartProps) {
+}: BarChartProps): React.ReactNode {
   const svgRef = useRef<SVGSVGElement>(null);
   const { resolvedMode } = useThemeStore();
   const isDark = resolvedMode === 'dark';
@@ -47,7 +47,7 @@ export function BarChart({
 
     // Scales
     const xScale = d3.scaleLinear()
-      .domain([0, maxValue || d3.max(data, d => d.value) || 0])
+      .domain([0, maxValue ?? d3.max(data, d => d.value) ?? 0])
       .range([0, chartWidth]);
 
     const yScale = d3.scaleBand<string>()
@@ -61,10 +61,10 @@ export function BarChart({
       .join('rect')
       .attr('class', 'bar')
       .attr('x', 0)
-      .attr('y', d => yScale(d.label) || 0)
+      .attr('y', d => yScale(d.label) ?? 0)
       .attr('width', 0)
       .attr('height', yScale.bandwidth())
-      .attr('fill', d => d.color || defaultBarColor)
+      .attr('fill', d => d.color ?? defaultBarColor)
       .attr('rx', 2)
       .transition()
       .duration(750)
@@ -86,7 +86,7 @@ export function BarChart({
       .join('text')
       .attr('class', 'value-label')
       .attr('x', d => xScale(d.value) + 5)
-      .attr('y', d => (yScale(d.label) || 0) + yScale.bandwidth() / 2)
+      .attr('y', d => (yScale(d.label) ?? 0) + yScale.bandwidth() / 2)
       .attr('dy', '0.35em')
       .style('fill', textMutedColor)
       .style('font-size', '11px')
@@ -97,7 +97,7 @@ export function BarChart({
       .delay((d, i) => i * 50 + 300)
       .style('opacity', 1);
 
-    function wrap(textSelection: d3.Selection<SVGTextElement, string, SVGGElement, unknown>, wrapWidth: number) {
+    function wrap(textSelection: d3.Selection<SVGTextElement, string, SVGGElement, unknown>, wrapWidth: number): void {
       textSelection.each(function() {
         const text = d3.select(this);
         const words = text.text().split(/\s+/).reverse();
@@ -107,17 +107,17 @@ export function BarChart({
         const lineHeight = 1.1;
         const y = text.attr('y');
         const dy = parseFloat(text.attr('dy')) || 0;
-        let tspan = text.text(null).append('tspan').attr('x', -10).attr('y', y).attr('dy', dy + 'em');
+        let tspan = text.text(null).append('tspan').attr('x', -10).attr('y', y).attr('dy', `${dy  }em`);
         
-        // eslint-disable-next-line no-cond-assign
-        while (word = words.pop()) {
+         
+        while ((word = words.pop()) !== undefined) {
           line.push(word);
           tspan.text(line.join(' '));
-          if ((tspan.node()?.getComputedTextLength() || 0) > wrapWidth) {
+          if ((tspan.node()?.getComputedTextLength() ?? 0) > wrapWidth) {
             line.pop();
             tspan.text(line.join(' '));
             line = [word];
-            tspan = text.append('tspan').attr('x', -10).attr('y', y).attr('dy', ++lineNumber * lineHeight + dy + 'em').text(word);
+            tspan = text.append('tspan').attr('x', -10).attr('y', y).attr('dy', `${++lineNumber * lineHeight + dy  }em`).text(word);
           }
         }
       });

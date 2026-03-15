@@ -1,22 +1,22 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Image, 
   Accessibility, 
-  Terminal, 
-  Package, 
-  Type, 
-  Zap, 
+  AlertCircle, 
+  Check, 
+  ChevronDown, 
+  ChevronUp, 
   Code, 
+  Image, 
+  Package,
   RefreshCw,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  AlertCircle,
   Sparkles,
+  Terminal,
+  Type,
+  Zap,
 } from 'lucide-react';
 import type { PlaygroundFile } from '@/types/playground';
-import { getApplicablePresets, applyPresets, estimateSizeChange } from '@/core/playground/transformer';
+import { applyPresets, estimateSizeChange, getApplicablePresets } from '@/core/playground/transformer';
 import { Button } from '@/components/ui/Button';
 import toast from 'react-hot-toast';
 
@@ -36,30 +36,30 @@ interface OptimizationPanelProps {
   onApply: (content: string) => void;
 }
 
-export function OptimizationPanel({ file, onApply }: OptimizationPanelProps) {
+export function OptimizationPanel({ file, onApply }: OptimizationPanelProps): React.ReactNode {
   const [selectedPresets, setSelectedPresets] = useState<string[]>([]);
   const [preview, setPreview] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   
   const presets = useMemo(() => {
-    if (!file) return [];
+    if (file === undefined) return [];
     return getApplicablePresets(file.language);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file?.language]);
   
   const sizeChange = useMemo(() => {
-    if (!file || !preview) return null;
+    if (file === undefined || preview === null) return null;
     return estimateSizeChange(file.modifiedContent, preview);
   }, [file, preview]);
   
-  const togglePreset = (presetId: string) => {
+  const togglePreset = (presetId: string): void => {
     setSelectedPresets(prev => {
       const newSelection = prev.includes(presetId)
         ? prev.filter(id => id !== presetId)
         : [...prev, presetId];
       
       // Update preview
-      if (file && newSelection.length > 0) {
+      if (file !== undefined && newSelection.length > 0) {
         const result = applyPresets(file.modifiedContent, newSelection, file.language);
         setPreview(result);
         setShowPreview(true);
@@ -72,8 +72,8 @@ export function OptimizationPanel({ file, onApply }: OptimizationPanelProps) {
     });
   };
   
-  const handleApply = () => {
-    if (!file || !preview) return;
+  const handleApply = (): void => {
+    if (file === undefined || preview === null) return;
     
     onApply(preview);
     toast.success(`${selectedPresets.length} optimization${selectedPresets.length > 1 ? 's' : ''} applied!`);
@@ -84,8 +84,8 @@ export function OptimizationPanel({ file, onApply }: OptimizationPanelProps) {
     setShowPreview(false);
   };
   
-  const handleApplyAll = () => {
-    if (!file) return;
+  const handleApplyAll = (): void => {
+    if (file === undefined) return;
     
     const allPresetIds = presets.map(p => p.id);
     const result = applyPresets(file.modifiedContent, allPresetIds, file.language);
@@ -98,7 +98,7 @@ export function OptimizationPanel({ file, onApply }: OptimizationPanelProps) {
     setShowPreview(false);
   };
   
-  if (!file) {
+  if (file === undefined) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
         <Sparkles size={48} className="text-dev-text-subtle mb-4" />
@@ -134,7 +134,7 @@ export function OptimizationPanel({ file, onApply }: OptimizationPanelProps) {
       {/* Presets List */}
       <div className="space-y-2">
         {presets.map(preset => {
-          const Icon = ICONS[preset.icon] || Zap;
+          const Icon = ICONS[preset.icon] ?? Zap;
           const isSelected = selectedPresets.includes(preset.id);
           
           return (
@@ -172,7 +172,7 @@ export function OptimizationPanel({ file, onApply }: OptimizationPanelProps) {
       </div>
       
       {/* Preview Panel */}
-      {showPreview && preview && (
+      {showPreview === true && preview !== null && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
@@ -184,9 +184,11 @@ export function OptimizationPanel({ file, onApply }: OptimizationPanelProps) {
             className="w-full flex items-center justify-between p-3 bg-dev-surface hover:bg-dev-surface-hover transition-colors"
           >
             <span className="font-medium text-dev-text">Preview Changes</span>
+            {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
             {showPreview ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
           
+          {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
           {showPreview && (
             <div className="p-3 space-y-3">
               {/* Size Impact */}

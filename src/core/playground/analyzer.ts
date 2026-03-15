@@ -1,4 +1,4 @@
-import type { PlaygroundFile, PlaygroundIssue, PlaygroundAnalysis, PlaygroundLanguage } from '@/types/playground';
+import type { PlaygroundAnalysis, PlaygroundFile, PlaygroundIssue, PlaygroundLanguage } from '@/types/playground';
 
 interface AnalysisResult {
   issues: PlaygroundIssue[];
@@ -16,7 +16,7 @@ function analyzeHTML(content: string): AnalysisResult {
   const issues: PlaygroundIssue[] = [];
   const lines = content.split('\n');
   
-  lines.forEach((line, index) => {
+  lines.forEach((line, index): void => {
     // Check for images without lazy loading
     if (line.includes('<img') && !line.includes('loading=')) {
       issues.push({
@@ -121,7 +121,7 @@ function analyzeCSS(content: string): AnalysisResult {
   // Track selectors to find unused ones (simplified)
   // const selectors: string[] = [];
   
-  lines.forEach((line, index) => {
+  lines.forEach((line, index): void => {
     // Check for unused CSS (heuristic: if it looks like a demo)
     if (line.includes('.unused') || line.includes('.test') || line.includes('.demo')) {
       const match = line.match(/\.([a-zA-Z-_]+)/);
@@ -213,11 +213,11 @@ function analyzeCSS(content: string): AnalysisResult {
 }
 
 // JavaScript/TypeScript Analysis
-function analyzeJavaScript(content: string, _lang: PlaygroundLanguage): AnalysisResult { // eslint-disable-line @typescript-eslint/no-unused-vars
+function analyzeJavaScript(content: string, _lang: PlaygroundLanguage): AnalysisResult {  
   const issues: PlaygroundIssue[] = [];
   const lines = content.split('\n');
   
-  lines.forEach((line, index) => {
+  lines.forEach((line, index): void => {
     // Check for console.log
     if (line.includes('console.log') || line.includes('console.warn') || line.includes('console.error')) {
       issues.push({
@@ -236,7 +236,7 @@ function analyzeJavaScript(content: string, _lang: PlaygroundLanguage): Analysis
     if (line.includes('import') && line.includes('from')) {
       const match = line.match(/import\s+(?:{([^}]+)}|(\w+))/);
       if (match) {
-        const imported = (match[1] || match[2])?.trim();
+        const imported = (match[1] || match[2]).trim();
         // Check if imported item is used in rest of file
         const restOfFile = lines.slice(index + 1).join('\n');
         if (imported && !restOfFile.includes(imported.split(',')[0].trim())) {
@@ -305,7 +305,7 @@ function analyzeJavaScript(content: string, _lang: PlaygroundLanguage): Analysis
     score,
     metrics: {
       bundleSize: content.length,
-      complexity: (content.match(/function|=>/g) || []).length,
+      complexity: (content.match(/function|=>/g) ?? []).length,
       efficiency: 100 - issues.filter(i => i.rule === 'no-console' || i.rule === 'unused-import').length * 12,
       accessibility: 100,
     },
@@ -333,13 +333,13 @@ export function analyzeFile(file: PlaygroundFile): AnalysisResult {
 export function calculateAnalysis(files: PlaygroundFile[]): PlaygroundAnalysis {
   const results = files.map(analyzeFile);
   
-  const totalIssues = results.reduce((sum, r) => sum + r.issues.length, 0);
+  const totalIssues = results.reduce((sum, r): number => sum + r.issues.length, 0);
   // const totalFixed = files.reduce((sum, f) => 
   //   sum + f.issues.filter(i => !f.modifiedContent.includes(i.message.split(' ')[0])).length, 0
   // );
   
   const avgScore = results.length > 0 
-    ? results.reduce((sum, r) => sum + r.score, 0) / results.length 
+    ? results.reduce((sum, r): number => sum + r.score, 0) / results.length 
     : 100;
   
   const originalScore = avgScore;
@@ -353,20 +353,20 @@ export function calculateAnalysis(files: PlaygroundFile[]): PlaygroundAnalysis {
     },
     metrics: {
       bundleSize: {
-        before: results.reduce((sum, r) => sum + r.metrics.bundleSize, 0),
-        after: results.reduce((sum, r) => sum + r.metrics.bundleSize * 0.9, 0), // Estimate 10% reduction
+        before: results.reduce((sum, r): number => sum + r.metrics.bundleSize, 0),
+        after: results.reduce((sum, r): number => sum + r.metrics.bundleSize * 0.9, 0), // Estimate 10% reduction
       },
       jsComplexity: {
-        before: results.reduce((sum, r) => sum + r.metrics.complexity, 0),
-        after: results.reduce((sum, r) => sum + Math.max(0, r.metrics.complexity - 2), 0),
+        before: results.reduce((sum, r): number => sum + r.metrics.complexity, 0),
+        after: results.reduce((sum, r): number => sum + Math.max(0, r.metrics.complexity - 2), 0),
       },
       cssEfficiency: {
-        before: results.reduce((sum, r) => sum + r.metrics.efficiency, 0) / (results.length || 1),
-        after: Math.min(100, results.reduce((sum, r) => sum + r.metrics.efficiency, 0) / (results.length || 1) + 10),
+        before: results.reduce((sum, r): number => sum + r.metrics.efficiency, 0) / (results.length > 0 ? results.length : 1),
+        after: Math.min(100, results.reduce((sum, r): number => sum + r.metrics.efficiency, 0) / (results.length > 0 ? results.length : 1) + 10),
       },
       accessibility: {
-        before: results.reduce((sum, r) => sum + r.metrics.accessibility, 0) / (results.length || 1),
-        after: Math.min(100, results.reduce((sum, r) => sum + r.metrics.accessibility, 0) / (results.length || 1) + 15),
+        before: results.reduce((sum, r): number => sum + r.metrics.accessibility, 0) / (results.length > 0 ? results.length : 1),
+        after: Math.min(100, results.reduce((sum, r): number => sum + r.metrics.accessibility, 0) / (results.length > 0 ? results.length : 1) + 15),
       },
     },
     issues: {
@@ -382,7 +382,7 @@ export const QUICK_FIXES = {
   'img-lazy-loading': (code: string, line: number) => {
     const lines = code.split('\n');
     const targetLine = lines[line - 1];
-    if (targetLine && targetLine.includes('<img')) {
+    if (targetLine.includes('<img')) {
       lines[line - 1] = targetLine.replace('<img', '<img loading="lazy"');
     }
     return lines.join('\n');
@@ -391,7 +391,7 @@ export const QUICK_FIXES = {
   'img-alt': (code: string, line: number) => {
     const lines = code.split('\n');
     const targetLine = lines[line - 1];
-    if (targetLine && targetLine.includes('<img')) {
+    if (targetLine.includes('<img')) {
       lines[line - 1] = targetLine.replace('<img', '<img alt="Description"');
     }
     return lines.join('\n');
@@ -414,6 +414,7 @@ export const QUICK_FIXES = {
 
 export function applyQuickFix(code: string, rule: string, line: number): string {
   const fix = QUICK_FIXES[rule as keyof typeof QUICK_FIXES];
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unnecessary-condition
   if (fix) {
     return fix(code, line);
   }

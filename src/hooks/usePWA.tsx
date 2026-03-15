@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { usePWAStore } from '@/stores/pwaStore';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import toast from 'react-hot-toast';
@@ -9,7 +9,19 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
-export function usePWA() {
+interface UsePWAReturn {
+  isOnline: boolean;
+  wasOffline: boolean;
+  canInstall: boolean;
+  isInstalled: boolean;
+  hasUpdate: boolean;
+  offlineReady: boolean;
+  installApp: () => Promise<boolean>;
+  skipWaiting: () => void;
+  updateServiceWorker: () => void;
+}
+
+export function usePWA(): UsePWAReturn {
   const {
     setCanInstall,
     setIsInstalled,
@@ -97,7 +109,7 @@ export function usePWA() {
 
   // Listen for beforeinstallprompt event
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
+    const handleBeforeInstallPrompt = (e: Event): void => {
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
       
@@ -115,7 +127,7 @@ export function usePWA() {
 
   // Check if app is already installed
   useEffect(() => {
-    const checkInstalled = () => {
+    const checkInstalled = (): void => {
       // Check if running in standalone mode (installed PWA)
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches
         || (window.navigator as { standalone?: boolean }).standalone === true;
@@ -129,7 +141,7 @@ export function usePWA() {
     checkInstalled();
 
     // Listen for appinstalled event
-    const handleAppInstalled = () => {
+    const handleAppInstalled = (): void => {
       setIsInstalled(true);
       setCanInstall(false);
       setDeferredPrompt(null);
@@ -149,7 +161,7 @@ export function usePWA() {
 
   // Listen for online/offline events
   useEffect(() => {
-    const handleOnline = () => {
+    const handleOnline = (): void => {
       setIsOnline(true);
       
       // Show reconnection toast
@@ -159,7 +171,7 @@ export function usePWA() {
       });
     };
 
-    const handleOffline = () => {
+    const handleOffline = (): void => {
       setIsOnline(false);
       
       // Show offline toast
@@ -195,26 +207,30 @@ export function usePWA() {
 
   // Listen for messages from service worker
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'SKIP_WAITING') {
+    const handleMessage = (event: MessageEvent): void => {
+      if (event.data?.type === 'SKIP_WAITING') {
         setHasUpdate(true);
       }
     };
 
-    navigator.serviceWorker?.addEventListener('message', handleMessage);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleMessage);
+    }
 
     return () => {
-      navigator.serviceWorker?.removeEventListener('message', handleMessage);
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleMessage);
+      }
     };
   }, [setHasUpdate]);
 
-  const handleInstall = useCallback(async () => {
+  const handleInstall = useCallback(async (): Promise<boolean> => {
     return await installApp();
   }, [installApp]);
 
-  const handleSkipWaiting = useCallback(() => {
+  const handleSkipWaiting = useCallback((): void => {
     skipWaiting();
-    updateServiceWorker(true);
+    void updateServiceWorker(true);
   }, [skipWaiting, updateServiceWorker]);
 
   return {
@@ -229,6 +245,8 @@ export function usePWA() {
     // Actions
     installApp: handleInstall,
     skipWaiting: handleSkipWaiting,
-    updateServiceWorker: () => updateServiceWorker(true),
+    updateServiceWorker: (): void => {
+      void updateServiceWorker(true);
+    },
   };
 }

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
 import { useNotificationStore } from '@/stores/notificationStore';
 
 const icons = {
@@ -17,7 +17,7 @@ const colors = {
   info: 'border-l-blue-500 text-blue-500',
 };
 
-export function NotificationContainer() {
+export function NotificationContainer(): React.JSX.Element | null {
   const { notifications, removeNotification } = useNotificationStore();
 
   return (
@@ -45,7 +45,7 @@ interface NotificationItemProps {
   onClose: () => void;
 }
 
-function NotificationItem({ notification, onClose }: NotificationItemProps) {
+function NotificationItem({ notification, onClose }: NotificationItemProps): React.JSX.Element {
   const { type, message, duration = 5000 } = notification;
   const Icon = icons[type];
 

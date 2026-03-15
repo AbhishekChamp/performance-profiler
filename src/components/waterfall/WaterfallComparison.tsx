@@ -17,7 +17,7 @@ interface ResourceComparison {
   status: 'added' | 'removed' | 'improved' | 'regressed' | 'unchanged';
 }
 
-export function WaterfallComparison({ baseline, current }: WaterfallComparisonProps): JSX.Element {
+export function WaterfallComparison({ baseline, current }: WaterfallComparisonProps): React.ReactNode {
   const [sortBy, setSortBy] = useState<'delta' | 'name'>('delta');
   const [showOnlyChanges, setShowOnlyChanges] = useState(true);
 
@@ -63,7 +63,7 @@ export function WaterfallComparison({ baseline, current }: WaterfallComparisonPr
   }, [baseline, current]);
 
   const filteredComparisons = useMemo(() => {
-    let filtered = showOnlyChanges 
+    const filtered = showOnlyChanges 
       ? comparisons.filter(c => c.status !== 'unchanged')
       : comparisons;
     
@@ -182,7 +182,7 @@ export function WaterfallComparison({ baseline, current }: WaterfallComparisonPr
   );
 }
 
-function StatCard({ label, value, color }: { label: string; value: string | number; color: string }): JSX.Element {
+function StatCard({ label, value, color }: { label: string; value: string | number; color: string }): React.ReactNode {
   const colorClasses = {
     red: 'bg-red-500/10 border-red-500/30 text-red-400',
     green: 'bg-green-500/10 border-green-500/30 text-green-400',

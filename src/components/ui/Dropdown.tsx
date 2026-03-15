@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback, useEffect, createContext, useContext } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 
 interface DropdownContextType {
@@ -17,7 +17,7 @@ interface DropdownProps {
   className?: string;
 }
 
-export function Dropdown({ children, className = '' }: DropdownProps) {
+export function Dropdown({ children, className = '' }: DropdownProps): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const itemCount = useRef(0);
@@ -31,8 +31,7 @@ export function Dropdown({ children, className = '' }: DropdownProps) {
   // Reset active index when closing
   useEffect(() => {
     if (!isOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setActiveIndex(-1);
+        setActiveIndex(-1);
     }
   }, [isOpen]);
 
@@ -45,7 +44,7 @@ export function Dropdown({ children, className = '' }: DropdownProps) {
   );
 }
 
-function useDropdown() {
+function useDropdown(): NonNullable<DropdownContextType> {
   const context = useContext(DropdownContext);
   if (!context) {
     throw new Error('Dropdown components must be used within a Dropdown provider');
@@ -58,7 +57,7 @@ interface DropdownTriggerProps {
   className?: string;
 }
 
-export function DropdownTrigger({ children, className = '' }: DropdownTriggerProps) {
+export function DropdownTrigger({ children, className = '' }: DropdownTriggerProps): React.JSX.Element {
   const { isOpen, setIsOpen } = useDropdown();
 
   return (
@@ -88,7 +87,7 @@ interface DropdownMenuProps {
   className?: string;
 }
 
-export function DropdownMenu({ children, className = '' }: DropdownMenuProps) {
+export function DropdownMenu({ children, className = '' }: DropdownMenuProps): React.JSX.Element | null {
   const { isOpen, setIsOpen, activeIndex, setActiveIndex } = useDropdown();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -122,7 +121,7 @@ export function DropdownMenu({ children, className = '' }: DropdownMenuProps) {
         case ' ':
           if (activeIndex >= 0) {
             event.preventDefault();
-            (items[activeIndex] as HTMLElement)?.click();
+            (items[activeIndex] as HTMLElement).click();
           }
           break;
       }
@@ -134,14 +133,14 @@ export function DropdownMenu({ children, className = '' }: DropdownMenuProps) {
   useEffect(() => {
     if (isOpen && activeIndex >= 0) {
       const items = menuRef.current?.querySelectorAll('[role="menuitem"]');
-      (items?.[activeIndex] as HTMLElement)?.focus();
+      ((items as NodeListOf<HTMLElement>)[activeIndex]).focus();
     }
   }, [isOpen, activeIndex]);
 
   // Click outside to close
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+  useEffect((): (() => void) => {
+    const handleClickOutside = (event: MouseEvent): void => {
+      if (menuRef.current != null && !menuRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -191,10 +190,10 @@ export function DropdownItem({
   onClick,
   disabled = false,
   className = '',
-}: DropdownItemProps) {
+}: DropdownItemProps): React.JSX.Element {
   const { setIsOpen } = useDropdown();
 
-  const handleClick = () => {
+  const handleClick = (): void => {
     if (disabled) return;
     onClick?.();
     setIsOpen(false);
@@ -225,7 +224,7 @@ interface DropdownSeparatorProps {
   className?: string;
 }
 
-export function DropdownSeparator({ className = '' }: DropdownSeparatorProps) {
+export function DropdownSeparator({ className = '' }: DropdownSeparatorProps): React.JSX.Element {
   return <div className={`h-px bg-dev-border my-1 ${className}`} />;
 }
 
@@ -234,7 +233,7 @@ interface DropdownLabelProps {
   className?: string;
 }
 
-export function DropdownLabel({ children, className = '' }: DropdownLabelProps) {
+export function DropdownLabel({ children, className = '' }: DropdownLabelProps): React.JSX.Element {
   return (
     <div className={`px-4 py-1.5 text-xs font-medium text-dev-text-muted ${className}`}>
       {children}

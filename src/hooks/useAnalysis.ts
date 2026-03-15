@@ -3,7 +3,7 @@ import { useAnalysisStore } from '@/stores/analysisStore';
 import { useTemplateStore } from '@/stores/templateStore';
 import { useTrendStore } from '@/stores/trendStore';
 import { runAnalysis } from '@/workers';
-import type { AnalysisOptions, UploadedFile, UploadedProject, AnalysisProgress } from '@/types';
+import type { AnalysisOptions, AnalysisProgress, UploadedFile, UploadedProject } from '@/types';
 
 interface UseAnalysisReturn {
   isAnalyzing: boolean;

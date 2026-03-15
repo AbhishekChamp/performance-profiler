@@ -1,7 +1,7 @@
 import { Treemap } from '../charts/Treemap';
 import { PieChart } from '../charts/PieChart';
 import type { BundleAnalysis } from '@/types';
-import { Package, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Package } from 'lucide-react';
 
 interface BundleSectionProps {
   bundle: BundleAnalysis;
@@ -15,7 +15,7 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }
 
-export function BundleSection({ bundle }: BundleSectionProps) {
+export function BundleSection({ bundle }: BundleSectionProps): React.ReactNode {
   const pieData = [
     { label: 'Vendor', value: bundle.vendorSize, color: '#58a6ff' },
     { label: 'Application', value: bundle.totalSize - bundle.vendorSize, color: '#3fb950' },

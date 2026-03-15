@@ -1,11 +1,11 @@
 import type { NetworkAnalysis } from '@/types';
-import { Globe, Zap, AlertTriangle, CheckCircle, Link2, Download, FileCode } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Download, FileCode, Globe, Link2, Zap } from 'lucide-react';
 
 interface NetworkSectionProps {
   network: NetworkAnalysis;
 }
 
-export function NetworkSection({ network }: NetworkSectionProps) {
+export function NetworkSection({ network }: NetworkSectionProps): React.ReactNode {
   const { hints, missingHints, renderBlocking, http2PushSuggestions, score } = network;
 
   return (
@@ -48,12 +48,12 @@ export function NetworkSection({ network }: NetworkSectionProps) {
                   `}>
                     {hint.type}
                   </span>
-                  {hint.as && (
+                  {hint.as != null && hint.as !== '' && (
                     <span className="ml-2 text-xs text-dev-text-subtle">as: {hint.as}</span>
                   )}
                   <p className="text-sm text-dev-text mt-1 truncate max-w-md">{hint.href}</p>
                 </div>
-                {hint.crossorigin && (
+                {hint.crossorigin != null && hint.crossorigin && (
                   <span className="text-xs text-dev-text-subtle">crossorigin</span>
                 )}
               </div>

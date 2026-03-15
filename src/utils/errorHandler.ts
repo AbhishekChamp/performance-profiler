@@ -66,7 +66,7 @@ export function logError(error: Error, context: ErrorContext = {}): void {
   // Log to console in development
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const isDev = (import.meta as any).env?.DEV;
-  if (isDev) {
+  if (isDev === true) {
     console.error('Error logged:', errorInfo);
   }
 
@@ -131,7 +131,7 @@ export function safeJsonParse<T>(json: string, fallback: T): T {
   } catch (error) {
     logError(error instanceof Error ? error : new Error('JSON parse failed'), {
       action: 'safeJsonParse',
-      metadata: { jsonLength: json.length },
+      metadata: { jsonLength: typeof json === 'string' ? json.length : 0 },
     });
     return fallback;
   }
@@ -143,7 +143,7 @@ export function safeJsonParse<T>(json: string, fallback: T): T {
 export function safeLocalStorage<T>(key: string, fallback: T): T {
   try {
     const item = localStorage.getItem(key);
-    return item ? safeJsonParse<T>(item, fallback) : fallback;
+    return item !== null ? safeJsonParse<T>(item, fallback) : fallback;
   } catch (error) {
     logError(error instanceof Error ? error : new Error('localStorage access failed'), {
       action: 'safeLocalStorage',

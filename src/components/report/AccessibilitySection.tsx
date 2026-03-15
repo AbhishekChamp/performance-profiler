@@ -1,11 +1,11 @@
-import type { AccessibilityAnalysis, A11yViolation } from '@/types';
+import type { A11yViolation, AccessibilityAnalysis } from '@/types';
 import { Accessibility, AlertCircle, CheckCircle, Info, Shield } from 'lucide-react';
 
 interface AccessibilitySectionProps {
   accessibility: AccessibilityAnalysis;
 }
 
-function getSeverityIcon(severity: A11yViolation['severity']) {
+function getSeverityIcon(severity: A11yViolation['severity']): React.ReactNode {
   switch (severity) {
     case 'critical':
       return <AlertCircle className="w-4 h-4 text-red-400" />;
@@ -31,7 +31,7 @@ function getSeverityClass(severity: A11yViolation['severity']): string {
   }
 }
 
-function getWCAGBadge(level: A11yViolation['wcagLevel']) {
+function getWCAGBadge(level: A11yViolation['wcagLevel']): React.ReactNode {
   const colors = {
     A: 'bg-green-500/20 text-green-400',
     AA: 'bg-blue-500/20 text-blue-400',
@@ -44,7 +44,7 @@ function getWCAGBadge(level: A11yViolation['wcagLevel']) {
   );
 }
 
-export function AccessibilitySection({ accessibility }: AccessibilitySectionProps) {
+export function AccessibilitySection({ accessibility }: AccessibilitySectionProps): React.ReactNode {
   const { score, violations, passed, wcagLevel, stats } = accessibility;
 
   const criticalViolations = violations.filter(v => v.severity === 'critical');

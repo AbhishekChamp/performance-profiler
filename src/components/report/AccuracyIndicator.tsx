@@ -1,7 +1,7 @@
 import { Tooltip } from '@/components/ui/Tooltip';
 import type { MetricConfidence } from '@/core/browser-analysis';
 import { getConfidenceDescription } from '@/core/browser-analysis';
-import { Activity, Wifi, Monitor, Brain } from 'lucide-react';
+import { Activity, Brain, Monitor, Wifi } from 'lucide-react';
 
 interface AccuracyIndicatorProps {
   confidence: MetricConfidence;
@@ -18,7 +18,7 @@ export function AccuracyIndicator({
   source, 
   showLabel = true,
   size = 'md' 
-}: AccuracyIndicatorProps): JSX.Element {
+}: AccuracyIndicatorProps): React.ReactNode {
   const config = {
     estimated: {
       icon: Brain,
@@ -103,7 +103,7 @@ export function MetricComparison({
   unit,
   difference,
   percentDifference
-}: MetricComparisonProps): JSX.Element {
+}: MetricComparisonProps): React.ReactNode {
   const isBetter = difference < 0; // Negative difference means real is better
   const accuracy = Math.abs(percentDifference) <= 10 ? 'high' : 
                    Math.abs(percentDifference) <= 25 ? 'medium' : 'low';
@@ -145,7 +145,7 @@ export function MetricComparison({
   );
 }
 
-function AccuracyBadge({ accuracy }: { accuracy: 'high' | 'medium' | 'low' }): JSX.Element {
+function AccuracyBadge({ accuracy }: { accuracy: 'high' | 'medium' | 'low' }): React.ReactNode {
   const config = {
     high: { color: 'bg-green-400/20 text-green-400', label: 'High Accuracy' },
     medium: { color: 'bg-yellow-400/20 text-yellow-400', label: 'Medium Accuracy' },

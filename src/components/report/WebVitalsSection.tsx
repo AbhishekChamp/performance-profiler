@@ -1,11 +1,11 @@
-import type { WebVitalsAnalysis, WebVitalMetric } from '@/types';
+import type { WebVitalMetric, WebVitalsAnalysis } from '@/types';
 import { Activity, AlertCircle, CheckCircle, Gauge, Info } from 'lucide-react';
 
 interface WebVitalsSectionProps {
   webVitals: WebVitalsAnalysis;
 }
 
-function getScoreBadge(score: WebVitalMetric['score']) {
+function getScoreBadge(score: WebVitalMetric['score']): React.ReactNode | null {
   switch (score) {
     case 'good':
       return (
@@ -31,7 +31,7 @@ function getScoreBadge(score: WebVitalMetric['score']) {
   }
 }
 
-function getMetricInfo(name: WebVitalMetric['name']) {
+function getMetricInfo(name: WebVitalMetric['name']): { title: string; description: string; thresholds: string } {
   switch (name) {
     case 'LCP':
       return {
@@ -72,7 +72,7 @@ function getMetricInfo(name: WebVitalMetric['name']) {
   }
 }
 
-export function WebVitalsSection({ webVitals }: WebVitalsSectionProps) {
+export function WebVitalsSection({ webVitals }: WebVitalsSectionProps): React.ReactNode {
   const { metrics, overallScore, criticalIssues, recommendations } = webVitals;
 
   return (

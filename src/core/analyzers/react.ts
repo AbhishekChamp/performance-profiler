@@ -1,6 +1,10 @@
-import { parse } from 'acorn';
-import type { ReactAnalysis, ReactComponent, ReactWarning, JSFileAnalysis } from '@/types';
-import type { Node, FunctionDeclaration, FunctionExpression, ArrowFunctionExpression, ClassDeclaration, ClassExpression, MethodDefinition } from 'acorn';
+import { Parser } from 'acorn';
+import jsx from 'acorn-jsx';
+import type { JSFileAnalysis, ReactAnalysis, ReactComponent, ReactWarning } from '@/types';
+import type { ArrowFunctionExpression, ClassDeclaration, ClassExpression, FunctionDeclaration, FunctionExpression, MethodDefinition, Node } from 'acorn';
+
+// Extend acorn with JSX support
+const JSXParser = Parser.extend(jsx());
 
 interface ComponentInfo {
   name: string;
@@ -46,14 +50,14 @@ function isReactComponent(node: FunctionNode): boolean {
 function extractInlineFunctions(node: Node): number {
   let count = 0;
   
-  function traverse(n: Node) {
-    if (!n || typeof n !== 'object') return;
+  function traverse(n: Node): void {
+    if (typeof n !== 'object') return;
     
     if (n.type === 'JSXAttribute') {
       const attr = n as unknown as { value?: { type: string; expression?: { type: string } } };
-      if (attr.value && attr.value.type === 'JSXExpressionContainer') {
+      if (attr.value?.type === 'JSXExpressionContainer') {
         const expr = attr.value.expression;
-        if (expr && (expr.type === 'ArrowFunctionExpression' || 
+        if (expr != null && (expr.type === 'ArrowFunctionExpression' || 
                      expr.type === 'FunctionExpression')) {
           count++;
         }
@@ -63,13 +67,13 @@ function extractInlineFunctions(node: Node): number {
     for (const key of Object.keys(n)) {
       if (key === 'type') continue;
       const value = n[key as keyof Node];
-      if (Array.isArray(value)) {
+      if (value !== undefined && Array.isArray(value)) {
         value.forEach((item) => {
-          if (item && typeof item === 'object') {
+          if (typeof item === 'object') {
             traverse(item as unknown as Node);
           }
         });
-      } else if (value && typeof value === 'object') {
+      } else if (value !== undefined && value !== null && typeof value === 'object') {
         traverse(value as unknown as Node);
       }
     }
@@ -82,13 +86,13 @@ function extractInlineFunctions(node: Node): number {
 function extractChildComponents(node: Node): string[] {
   const children: string[] = [];
   
-  function traverse(n: Node) {
-    if (!n || typeof n !== 'object') return;
+  function traverse(n: Node): void {
+    if (typeof n !== 'object') return;
     
     if (n.type === 'JSXElement') {
       const jsxEl = n as unknown as { openingElement?: { name?: { name?: string } } };
       const tagName = jsxEl.openingElement?.name?.name;
-      if (tagName && /^[A-Z]/.test(tagName)) {
+      if (tagName !== undefined && tagName !== '' && /^[A-Z]/.test(tagName)) {
         children.push(tagName);
       }
     }
@@ -96,13 +100,13 @@ function extractChildComponents(node: Node): string[] {
     for (const key of Object.keys(n)) {
       if (key === 'type') continue;
       const value = n[key as keyof Node];
-      if (Array.isArray(value)) {
+      if (value !== undefined && Array.isArray(value)) {
         value.forEach((item) => {
-          if (item && typeof item === 'object') {
+          if (typeof item === 'object') {
             traverse(item as unknown as Node);
           }
         });
-      } else if (value && typeof value === 'object') {
+      } else if (value !== undefined && value !== null && typeof value === 'object') {
         traverse(value as unknown as Node);
       }
     }
@@ -138,14 +142,14 @@ export function analyzeReact(jsAnalysis: JSFileAnalysis[]): ReactAnalysis | unde
     }
     
     try {
-      const ast = parse(file.content || '', {
+      const ast = JSXParser.parse(file.content || '', {
         ecmaVersion: 'latest',
         sourceType: 'module',
         locations: true,
       }) as unknown as Node;
       
-      function traverse(node: Node) {
-        if (!node || typeof node !== 'object') return;
+      function traverse(node: Node): void {
+        if (typeof node !== 'object') return;
         
         if ((node.type === 'FunctionDeclaration' || 
              node.type === 'FunctionExpression' || 
@@ -153,10 +157,10 @@ export function analyzeReact(jsAnalysis: JSFileAnalysis[]): ReactAnalysis | unde
             isReactComponent(node as FunctionNode)) {
           
           const funcNode = node as FunctionDeclaration | FunctionExpression | ArrowFunctionExpression;
-          const name = funcNode.id?.name || 
+          const name = funcNode.id?.name ?? 
                        (node.type === 'ArrowFunctionExpression' ? 'Anonymous' : 'Anonymous');
           
-          const lines = funcNode.loc 
+          const lines = funcNode.loc
             ? funcNode.loc.end.line - funcNode.loc.start.line + 1
             : 0;
           
@@ -164,11 +168,10 @@ export function analyzeReact(jsAnalysis: JSFileAnalysis[]): ReactAnalysis | unde
           const inlineFunctions = extractInlineFunctions(node);
           const children = new Set(extractChildComponents(node));
           
-          if (funcNode.params && funcNode.params[0] && 
-              funcNode.params[0].type === 'ObjectPattern') {
+          if (funcNode.params[0]?.type === 'ObjectPattern') {
             const objPattern = funcNode.params[0] as unknown as { properties?: Array<{ key?: { name?: string } }> };
-            for (const prop of objPattern.properties || []) {
-              if (prop.key?.name) {
+            for (const prop of objPattern.properties ?? []) {
+              if (prop.key?.name !== undefined) {
                 props.add(prop.key.name);
               }
             }
@@ -177,7 +180,7 @@ export function analyzeReact(jsAnalysis: JSFileAnalysis[]): ReactAnalysis | unde
           components.push({
             name,
             file: file.path,
-            line: funcNode.loc?.start.line || 0,
+            line: funcNode.loc?.start.line ?? 0,
             lines,
             props,
             inlineFunctions,
@@ -188,40 +191,40 @@ export function analyzeReact(jsAnalysis: JSFileAnalysis[]): ReactAnalysis | unde
         
         if (node.type === 'ClassDeclaration' || node.type === 'ClassExpression') {
           const classNode = node as ClassDeclaration | ClassExpression;
-          const superClassName = classNode.superClass && 'name' in classNode.superClass 
+          const superClassName = classNode.superClass != null && 'name' in classNode.superClass 
             ? classNode.superClass.name 
             : undefined;
-          const superClassProperty = classNode.superClass && 'property' in classNode.superClass 
-            ? (classNode.superClass.property as { name?: string })?.name 
+          const superClassProperty = classNode.superClass != null && 'property' in classNode.superClass 
+            ? (classNode.superClass.property as { name?: string }).name 
             : undefined;
           
           if (superClassName === 'Component' || superClassName === 'PureComponent' ||
               superClassProperty === 'Component') {
             
-            const name = classNode.id?.name || 'Anonymous';
-            const lines = classNode.loc 
+            const name = classNode.id?.name ?? 'Anonymous';
+            const lines = classNode.loc
               ? classNode.loc.end.line - classNode.loc.start.line + 1
               : 0;
             
             let renderMethod: MethodDefinition | null = null;
             const classBody = (classNode.body as unknown as { body?: MethodDefinition[] }).body;
-            if (classBody) {
+            if (classBody !== undefined) {
               for (const member of classBody) {
-                if (member.type === 'MethodDefinition' && 
-                    (member.key as { name?: string })?.name === 'render') {
+                const memberName = (member.key as { name?: string }).name;
+                if (memberName === 'render') {
                   renderMethod = member;
                   break;
                 }
               }
             }
             
-            const inlineFunctions = renderMethod ? extractInlineFunctions(renderMethod) : 0;
-            const children = renderMethod ? new Set(extractChildComponents(renderMethod)) : new Set<string>();
+            const inlineFunctions = renderMethod !== null ? extractInlineFunctions(renderMethod) : 0;
+            const children = renderMethod !== null ? new Set(extractChildComponents(renderMethod)) : new Set<string>();
             
             components.push({
               name,
               file: file.path,
-              line: classNode.loc?.start.line || 0,
+              line: classNode.loc?.start.line ?? 0,
               lines,
               props: new Set(),
               inlineFunctions,
@@ -234,13 +237,13 @@ export function analyzeReact(jsAnalysis: JSFileAnalysis[]): ReactAnalysis | unde
         for (const key of Object.keys(node)) {
           if (key === 'type') continue;
           const value = node[key as keyof Node];
-          if (Array.isArray(value)) {
+          if (value !== undefined && Array.isArray(value)) {
             value.forEach((item) => {
               if (item && typeof item === 'object') {
                 traverse(item as unknown as Node);
               }
             });
-          } else if (value && typeof value === 'object') {
+          } else if (value !== undefined && value !== null && typeof value === 'object') {
             traverse(value as unknown as Node);
           }
         }

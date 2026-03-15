@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FolderPlus, FileText } from 'lucide-react';
+import { FileText, FolderPlus } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 
 interface CreateProjectDialogProps {
@@ -8,12 +8,12 @@ interface CreateProjectDialogProps {
   onCreate: (name: string, description?: string) => void;
 }
 
-export function CreateProjectDialog({ isOpen, onClose, onCreate }: CreateProjectDialogProps) {
+export function CreateProjectDialog({ isOpen, onClose, onCreate }: CreateProjectDialogProps): React.ReactNode {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     
     if (!name.trim()) {
@@ -28,7 +28,7 @@ export function CreateProjectDialog({ isOpen, onClose, onCreate }: CreateProject
     onClose();
   };
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     setName('');
     setDescription('');
     setError('');

@@ -1,17 +1,17 @@
-import { useState, useRef, useEffect } from 'react';
-import { Keyboard, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronDown, ChevronUp, Keyboard, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
-  useKeyboardShortcuts,
-  useFocusTrap,
-  formatShortcut,
   KEYBOARD_SHORTCUTS,
   SHORTCUT_CATEGORIES,
   type ShortcutCategory,
+  formatShortcut,
+  useFocusTrap,
+  useKeyboardShortcuts,
 } from '@/hooks/useKeyboardShortcuts';
 
 // Group shortcuts by category
-const groupShortcutsByCategory = () => {
+const groupShortcutsByCategory = (): Record<ShortcutCategory, typeof KEYBOARD_SHORTCUTS> => {
   const groups: Record<ShortcutCategory, typeof KEYBOARD_SHORTCUTS> = {
     navigation: [],
     analysis: [],
@@ -21,7 +21,7 @@ const groupShortcutsByCategory = () => {
   };
 
   KEYBOARD_SHORTCUTS.forEach((shortcut) => {
-    if (!shortcut.hidden) {
+    if (shortcut.hidden !== true) {
       groups[shortcut.category].push(shortcut);
     }
   });
@@ -29,7 +29,7 @@ const groupShortcutsByCategory = () => {
   return groups;
 };
 
-export function KeyboardShortcutsHelp() {
+export function KeyboardShortcutsHelp(): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<ShortcutCategory>>(
     () => new Set(Object.keys(SHORTCUT_CATEGORIES) as ShortcutCategory[])
@@ -48,7 +48,7 @@ export function KeyboardShortcutsHelp() {
 
   // Close on escape
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
+    const handleEscape = (e: KeyboardEvent): void => {
       if (e.key === 'Escape' && isOpen) {
         setIsOpen(false);
       }
@@ -57,7 +57,7 @@ export function KeyboardShortcutsHelp() {
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen]);
 
-  const toggleCategory = (category: ShortcutCategory) => {
+  const toggleCategory = (category: ShortcutCategory): void => {
     setExpandedCategories((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(category)) {

@@ -1,11 +1,11 @@
 import type { TypeScriptAnalysis } from '@/types';
-import { FileCode, AlertTriangle, CheckCircle, Settings, Shield, Code } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Code, FileCode, Settings, Shield } from 'lucide-react';
 
 interface TypeScriptSectionProps {
   typescript: TypeScriptAnalysis;
 }
 
-export function TypeScriptSection({ typescript }: TypeScriptSectionProps) {
+export function TypeScriptSection({ typescript }: TypeScriptSectionProps): React.ReactNode {
   const { score, strictMode, anyCount, typeCoverage, issues, tsConfigChecks, recommendations } = typescript;
 
   return (

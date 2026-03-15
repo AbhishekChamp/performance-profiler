@@ -39,7 +39,7 @@ interface ScoreCelebrationProps {
 /**
  * Wrapper component that triggers confetti when score meets threshold
  */
-export function ScoreCelebration({ children, score }: ScoreCelebrationProps): JSX.Element {
+export function ScoreCelebration({ children, score }: ScoreCelebrationProps): React.ReactNode {
   return (
     <>
       <ConfettiTrigger score={score} />

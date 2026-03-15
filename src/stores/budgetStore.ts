@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import type { PerformanceBudget, BudgetAlert, BudgetStatus } from '@/types';
-import { set, get } from 'idb-keyval';
+import type { BudgetAlert, BudgetStatus, PerformanceBudget } from '@/types';
+import { get, set } from 'idb-keyval';
 import { logError } from '@/utils/errorHandler';
 
 interface BudgetState {
@@ -60,7 +60,7 @@ export const useBudgetStore = create<BudgetState>()(
           });
         },
 
-        exportBudget: () => {
+        exportBudget: (): string => {
           const { budget } = getState();
           return JSON.stringify({
             version: '1.0',
@@ -69,10 +69,10 @@ export const useBudgetStore = create<BudgetState>()(
           }, null, 2);
         },
 
-        importBudget: (json) => {
+        importBudget: (json): void => {
           try {
-            const data = JSON.parse(json);
-            if (data.budget) {
+            const data = JSON.parse(json) as { budget?: Partial<PerformanceBudget> };
+            if (data.budget != null) {
               setState({ budget: { ...defaultBudget, ...data.budget } });
             }
           } catch (error) {
@@ -94,7 +94,7 @@ export const useBudgetStore = create<BudgetState>()(
 );
 
 // Selectors
-export const selectBudget = (state: BudgetState) => state.budget;
+export const selectBudget = (state: BudgetState): PerformanceBudget => state.budget;
 
 // Pure function to check budget against metrics - returns statuses and alerts without modifying state
 export function checkBudget(
@@ -127,12 +127,12 @@ export function checkBudget(
   for (const check of checks) {
     if (check.value === undefined) continue;
 
-    const percentage = check.inverse
+    const percentage = check.inverse === true
       ? (check.value / check.limit) * 100
       : (check.value / check.limit) * 100;
 
     let status: BudgetStatus['status'];
-    if (check.inverse) {
+    if (check.inverse === true) {
       status = percentage >= 100 ? 'pass' : percentage >= 80 ? 'warning' : 'fail';
     } else {
       status = percentage <= 100 ? 'pass' : percentage <= 120 ? 'warning' : 'fail';

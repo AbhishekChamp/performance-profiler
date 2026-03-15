@@ -118,8 +118,8 @@ export const usePWAStore = create<PWAState>()(
 );
 
 // Selectors
-export const selectCanInstall = (state: PWAState) => state.canInstall;
-export const selectIsInstalled = (state: PWAState) => state.isInstalled;
-export const selectIsOnline = (state: PWAState) => state.isOnline;
-export const selectWasOffline = (state: PWAState) => state.wasOffline;
-export const selectHasUpdate = (state: PWAState) => state.hasUpdate;
+export const selectCanInstall = (state: PWAState): boolean => state.canInstall;
+export const selectIsInstalled = (state: PWAState): boolean => state.isInstalled;
+export const selectIsOnline = (state: PWAState): boolean => state.isOnline;
+export const selectWasOffline = (state: PWAState): boolean => state.wasOffline;
+export const selectHasUpdate = (state: PWAState): boolean => state.hasUpdate;

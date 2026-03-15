@@ -1,17 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { 
+  AlertCircle, 
   ArrowLeft, 
-  Upload, 
-  FileCode, 
-  Trash2, 
-  Play,
-  BarChart3,
-  Folder,
+  BarChart3, 
+  CheckCircle2, 
   Clock,
+  FileCode,
+  Folder,
   MoreVertical,
-  X,
-  CheckCircle2,
-  AlertCircle
+  Play,
+  Trash2,
+  Upload,
+  X
 } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAnalysis } from '@/hooks/useAnalysis';
@@ -28,7 +28,7 @@ interface ProjectDetailProps {
   onViewReport: (reportId: string) => void;
 }
 
-export function ProjectDetail({ projectId, onBack, onViewReport }: ProjectDetailProps) {
+export function ProjectDetail({ projectId, onBack, onViewReport }: ProjectDetailProps): React.ReactNode {
   const { 
     currentProject, 
     loadProject, 
@@ -44,7 +44,7 @@ export function ProjectDetail({ projectId, onBack, onViewReport }: ProjectDetail
 
   // Load project on mount
   useEffect(() => {
-    const load = async () => {
+    const load = async (): Promise<void> => {
       setIsLoading(true);
       await loadProject(projectId);
       setIsLoading(false);
@@ -57,17 +57,17 @@ export function ProjectDetail({ projectId, onBack, onViewReport }: ProjectDetail
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
-  const handleFilesUploaded = useCallback(async (files: UploadedFile[]) => {
+  const handleFilesUploaded = useCallback(async (files: UploadedFile[]): Promise<void> => {
     await addFilesToProject(projectId, files);
     setShowUpload(false);
   }, [projectId, addFilesToProject]);
 
-  const handleDeleteFile = async (fileId: string) => {
+  const handleDeleteFile = async (fileId: string): Promise<void> => {
     await removeFileFromProject(projectId, fileId);
     setMenuOpen(null);
   };
 
-  const handleRunAnalysis = async () => {
+  const handleRunAnalysis = async (): Promise<void> => {
     if (!currentProject || currentProject.files.length === 0) return;
     
     try {
@@ -87,7 +87,7 @@ export function ProjectDetail({ projectId, onBack, onViewReport }: ProjectDetail
     }
   };
 
-  const toggleFileSelection = (fileId: string) => {
+  const toggleFileSelection = (fileId: string): void => {
     setSelectedFiles(prev => {
       const next = new Set(prev);
       if (next.has(fileId)) {
@@ -99,13 +99,13 @@ export function ProjectDetail({ projectId, onBack, onViewReport }: ProjectDetail
     });
   };
 
-  const selectAll = () => {
+  const selectAll = (): void => {
     if (currentProject) {
       setSelectedFiles(new Set(currentProject.files.map(f => f.id)));
     }
   };
 
-  const deselectAll = () => {
+  const deselectAll = (): void => {
     setSelectedFiles(new Set());
   };
 
@@ -146,7 +146,7 @@ export function ProjectDetail({ projectId, onBack, onViewReport }: ProjectDetail
               <Folder className="w-5 h-5 text-dev-accent" />
               {currentProject.name}
             </h1>
-            {currentProject.description && (
+            {currentProject.description !== undefined && currentProject.description !== '' && (
               <p className="text-sm text-dev-text-muted mt-0.5">
                 {currentProject.description}
               </p>
@@ -181,7 +181,7 @@ export function ProjectDetail({ projectId, onBack, onViewReport }: ProjectDetail
       </div>
 
       {/* Error */}
-      {error && (
+      {error !== null && error !== '' && (
         <div className="mx-6 mt-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
