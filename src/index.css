@@ -30,6 +30,32 @@
   --chart-text-muted: #8b949e;
   --chart-grid: #30363d;
   --chart-bg: #161b22;
+  
+  /* Treemap colors - Dark theme */
+  --treemap-vendor: #58a6ff;
+  --treemap-vendor-light: #79c0ff;
+  --treemap-entry: #3fb950;
+  --treemap-entry-light: #56d364;
+  --treemap-chunk: #a371f7;
+  --treemap-chunk-light: #bc8cff;
+  --treemap-asset: #d29922;
+  --treemap-asset-light: #e3b341;
+  --treemap-stroke: rgba(13, 17, 23, 0.8);
+  --treemap-text: #f0f6fc;
+  --treemap-text-muted: #8b949e;
+  
+  /* Graph colors - Dark theme */
+  --graph-bg: #161b22;
+  --graph-node-entry: #58a6ff;
+  --graph-node-source: #3fb950;
+  --graph-node-vendor: #f0883e;
+  --graph-node-asset: #a371f7;
+  --graph-node-dynamic: #d29922;
+  --graph-node-default: #8b949e;
+  --graph-edge-default: #58a6ff;
+  --graph-edge-circular: #f85149;
+  --graph-grid: #30363d;
+  --graph-minimap-mask: rgba(13, 17, 23, 0.7);
 }
 
 /* Light theme */
@@ -57,6 +83,32 @@
   --chart-text-muted: #57606a;
   --chart-grid: #d0d7de;
   --chart-bg: #f6f8fa;
+  
+  /* Treemap colors - Light theme */
+  --treemap-vendor: #0969da;
+  --treemap-vendor-light: #4493f8;
+  --treemap-entry: #1a7f37;
+  --treemap-entry-light: #2da44e;
+  --treemap-chunk: #8250df;
+  --treemap-chunk-light: #a475f9;
+  --treemap-asset: #9a6700;
+  --treemap-asset-light: #bf8700;
+  --treemap-stroke: rgba(255, 255, 255, 0.9);
+  --treemap-text: #1f2328;
+  --treemap-text-muted: #57606a;
+  
+  /* Graph colors - Light theme */
+  --graph-bg: #f6f8fa;
+  --graph-node-entry: #0969da;
+  --graph-node-source: #1a7f37;
+  --graph-node-vendor: #bc4c00;
+  --graph-node-asset: #8250df;
+  --graph-node-dynamic: #9a6700;
+  --graph-node-default: #6e7781;
+  --graph-edge-default: #0969da;
+  --graph-edge-circular: #cf222e;
+  --graph-grid: #d0d7de;
+  --graph-minimap-mask: rgba(255, 255, 255, 0.7);
 }
 
 /* Smooth theme transitions */
@@ -217,9 +269,18 @@ code, pre, .font-mono {
 .metric-card {
   background-color: var(--dev-surface);
   border: 1px solid var(--dev-border);
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   padding: 1rem;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition: all 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.metric-card:hover {
+  border-color: var(--dev-border-subtle);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.light .metric-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .metric-value {
@@ -231,11 +292,12 @@ code, pre, .font-mono {
 }
 
 .metric-label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--dev-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   transition: color 0.3s ease;
+  font-weight: 500;
 }
 
 .section-header {

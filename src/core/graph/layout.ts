@@ -292,17 +292,21 @@ export function calculateNodeSize(
 
 /**
  * Get color for module type
+ * @param type - Module type
+ * @param isDark - Whether dark theme is active (defaults to true for backward compatibility)
+ * @returns Color hex string
  */
-export function getModuleColor(type: string): string {
-  const colors: Record<string, string> = {
-    entry: '#58a6ff',    // Blue
-    source: '#3fb950',   // Green
-    vendor: '#f0883e',   // Orange
-    asset: '#a371f7',    // Purple
-    dynamic: '#d29922',  // Yellow
+export function getModuleColor(type: string, isDark: boolean = true): string {
+  const colors: Record<string, { dark: string; light: string }> = {
+    entry: { dark: '#58a6ff', light: '#0969da' },    // Blue
+    source: { dark: '#3fb950', light: '#1a7f37' },   // Green
+    vendor: { dark: '#f0883e', light: '#bc4c00' },   // Orange
+    asset: { dark: '#a371f7', light: '#8250df' },    // Purple
+    dynamic: { dark: '#d29922', light: '#9a6700' },  // Yellow
   };
   
-  return colors[type] ?? '#8b949e';
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  return colors[type][isDark ? 'dark' : 'light'] ?? (isDark ? '#8b949e' : '#6e7781');
 }
 
 /**

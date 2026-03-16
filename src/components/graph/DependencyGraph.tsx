@@ -17,9 +17,14 @@ import '@xyflow/react/dist/style.css';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertTriangle,
+  Filter,
   GitCommit,
   Layers,
+  LayoutGrid,
+  Maximize2,
+  Minimize2,
   Package,
+  RotateCcw,
   Search,
   X,
 } from 'lucide-react';
@@ -45,90 +50,152 @@ const edgeTypes: EdgeTypes = {
   circularEdge: CircularEdge as unknown as EdgeTypes[string],
 };
 
+// Module type configuration with theme-aware colors
+const MODULE_TYPES = [
+  { id: 'entry', label: 'Entry', icon: '●' },
+  { id: 'source', label: 'Source', icon: '●' },
+  { id: 'vendor', label: 'Vendor', icon: '●' },
+  { id: 'dynamic', label: 'Dynamic', icon: '●' },
+  { id: 'asset', label: 'Asset', icon: '●' },
+] as const;
+
+// Helper function for module colors with theme support
+function getModuleColor(type: string, isDark: boolean): string {
+  const colors: Record<string, { dark: string; light: string }> = {
+    entry: { dark: '#58a6ff', light: '#0969da' },
+    source: { dark: '#3fb950', light: '#1a7f37' },
+    vendor: { dark: '#f0883e', light: '#bc4c00' },
+    asset: { dark: '#a371f7', light: '#8250df' },
+    dynamic: { dark: '#d29922', light: '#9a6700' },
+  };
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  return colors[type]?.[isDark ? 'dark' : 'light'] ?? (isDark ? '#8b949e' : '#6e7781');
+}
+
 // Module detail panel
 function ModuleDetailPanel({ 
   node, 
   onClose,
   graph,
+  isDark,
 }: { 
   node: GraphNode; 
   onClose: () => void;
   graph: ReturnType<typeof buildDependencyGraph>;
+  isDark: boolean;
 }): React.ReactNode {
+  const color = getModuleColor(node.type, isDark);
+  
   return (
     <motion.div
-      initial={{ x: 300, opacity: 0 }}
+      initial={{ x: 320, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      exit={{ x: 300, opacity: 0 }}
-      className="absolute right-4 top-4 bottom-4 w-80 glass-panel rounded-xl overflow-hidden flex flex-col z-10"
+      exit={{ x: 320, opacity: 0 }}
+      transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+      className="absolute right-4 top-4 bottom-4 w-80 bg-[#1c2128] border border-[#30363d] rounded-2xl shadow-2xl overflow-hidden flex flex-col z-20"
     >
-      <div className="p-4 border-b border-dev-border flex items-center justify-between">
-        <h3 className="font-semibold text-dev-text truncate">{node.label}</h3>
-        <button onClick={onClose} className="p-1 hover:bg-dev-surface-hover rounded">
-          <X size={18} className="text-dev-text-muted" />
+      {/* Header */}
+      <div className="p-4 border-b border-[#30363d] flex items-center justify-between bg-[#21262d]">
+        <div className="flex items-center gap-3 min-w-0">
+          <div 
+            className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+            style={{ backgroundColor: `${color}25` }}
+          >
+            <Package size={22} style={{ color }} />
+          </div>
+          <div className="min-w-0">
+            <h3 className="font-bold text-[#f0f6fc] truncate text-sm">{node.label}</h3>
+            <p className="text-xs text-[#8b949e] font-mono">{((node.size || 0) / 1024).toFixed(1)} KB</p>
+          </div>
+        </div>
+        <button 
+          onClick={onClose} 
+          className="p-2 hover:bg-[#30363d] rounded-xl transition-colors shrink-0"
+        >
+          <X size={20} className="text-[#8b949e]" />
         </button>
       </div>
       
+      {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Type & Size */}
+        {/* Type Badge */}
         <div className="flex items-center gap-2">
           <span 
-            className="px-2 py-1 rounded text-xs font-medium capitalize"
+            className="px-4 py-2 rounded-full text-xs font-bold capitalize"
             style={{ 
-              backgroundColor: `${getModuleColor(node.type)}20`,
-              color: getModuleColor(node.type),
+              backgroundColor: `${color}20`,
+              color,
+              border: `1px solid ${color}50`,
             }}
           >
             {node.type}
           </span>
-          <span className="text-sm text-dev-text-muted">
-            {(node.size / 1024).toFixed(2)} KB
-          </span>
         </div>
         
         {/* Path */}
-        <div>
-          <label className="text-xs text-dev-text-muted uppercase tracking-wide">Path</label>
-          <p className="text-sm text-dev-text break-all">{node.path}</p>
+        <div className="p-4 bg-[#0d1117] rounded-xl border border-[#30363d]">
+          <label className="text-xs font-bold text-[#8b949e] uppercase tracking-wider">Path</label>
+          <p className="text-xs text-[#f0f6fc] mt-2 break-all font-mono leading-relaxed">{node.path}</p>
         </div>
         
         {/* Warnings */}
         {((node.isDuplicate ?? false) || (node.isUnused ?? false) || (node.isTreeShakable ?? false)) && (
-          <div className="space-y-2">
-            <label className="text-xs text-dev-text-muted uppercase tracking-wide">Warnings</label>
-            {node.isDuplicate === true && (
-              <div className="flex items-center gap-2 text-sm text-dev-warning">
-                <AlertTriangle size={14} />
-                <span>Duplicate module detected</span>
-              </div>
-            )}
-            {node.isUnused === true && (
-              <div className="flex items-center gap-2 text-sm text-dev-warning">
-                <AlertTriangle size={14} />
-                <span>Unused exports</span>
-              </div>
-            )}
-            {node.isTreeShakable === true && (
-              <div className="flex items-center gap-2 text-sm text-dev-success">
-                <GitCommit size={14} />
-                <span>Tree-shaking candidate</span>
-              </div>
-            )}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-[#8b949e] uppercase tracking-wider">Status</label>
+            <div className="space-y-2">
+              {node.isDuplicate === true && (
+                <div className="flex items-center gap-3 text-sm text-[#f85149] bg-[#f85149]/10 p-4 rounded-xl border border-[#f85149]/30">
+                  <div className="w-10 h-10 rounded-xl bg-[#f85149]/20 flex items-center justify-center shrink-0">
+                    <AlertTriangle size={20} />
+                  </div>
+                  <div>
+                    <p className="font-bold">Duplicate Module</p>
+                    <p className="text-xs text-[#8b949e] mt-0.5">Multiple versions detected</p>
+                  </div>
+                </div>
+              )}
+              {node.isUnused === true && (
+                <div className="flex items-center gap-3 text-sm text-[#d29922] bg-[#d29922]/10 p-4 rounded-xl border border-[#d29922]/30">
+                  <div className="w-10 h-10 rounded-xl bg-[#d29922]/20 flex items-center justify-center shrink-0">
+                    <AlertTriangle size={20} />
+                  </div>
+                  <div>
+                    <p className="font-bold">Unused Exports</p>
+                    <p className="text-xs text-[#8b949e] mt-0.5">Consider removing</p>
+                  </div>
+                </div>
+              )}
+              {node.isTreeShakable === true && (
+                <div className="flex items-center gap-3 text-sm text-[#3fb950] bg-[#3fb950]/10 p-4 rounded-xl border border-[#3fb950]/30">
+                  <div className="w-10 h-10 rounded-xl bg-[#3fb950]/20 flex items-center justify-center shrink-0">
+                    <GitCommit size={20} />
+                  </div>
+                  <div>
+                    <p className="font-bold">Tree-shakeable</p>
+                    <p className="text-xs text-[#8b949e] mt-0.5">Optimization candidate</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
         
         {/* Dependencies */}
         {node.dependencies.length > 0 && (
           <div>
-            <label className="text-xs text-dev-text-muted uppercase tracking-wide">
-              Dependencies ({node.dependencies.length})
+            <label className="text-xs font-bold text-[#8b949e] uppercase tracking-wider flex items-center gap-2">
+              Dependencies
+              <span className="px-2.5 py-1 bg-[#30363d] rounded-full text-[#f0f6fc] text-xs font-bold">
+                {node.dependencies.length}
+              </span>
             </label>
-            <ul className="mt-1 space-y-1 max-h-32 overflow-y-auto">
+            <ul className="mt-3 space-y-1 max-h-32 overflow-y-auto bg-[#0d1117] rounded-xl border border-[#30363d] p-3">
               {node.dependencies.map(depId => {
                 const dep = graph.nodes.find(n => n.id === depId);
                 return dep ? (
-                  <li key={depId} className="text-sm text-dev-text truncate">
-                    → {dep.label}
+                  <li key={depId} className="text-sm text-[#f0f6fc] flex items-center gap-2 py-1.5 px-2 hover:bg-[#21262d] rounded-lg transition-colors">
+                    <span className="text-[#58a6ff]">→</span>
+                    <span className="truncate font-mono">{dep.label}</span>
                   </li>
                 ) : null;
               })}
@@ -139,15 +206,19 @@ function ModuleDetailPanel({
         {/* Dependents */}
         {node.dependents.length > 0 && (
           <div>
-            <label className="text-xs text-dev-text-muted uppercase tracking-wide">
-              Dependents ({node.dependents.length})
+            <label className="text-xs font-bold text-[#8b949e] uppercase tracking-wider flex items-center gap-2">
+              Dependents
+              <span className="px-2.5 py-1 bg-[#30363d] rounded-full text-[#f0f6fc] text-xs font-bold">
+                {node.dependents.length}
+              </span>
             </label>
-            <ul className="mt-1 space-y-1 max-h-32 overflow-y-auto">
+            <ul className="mt-3 space-y-1 max-h-32 overflow-y-auto bg-[#0d1117] rounded-xl border border-[#30363d] p-3">
               {node.dependents.map(depId => {
                 const dep = graph.nodes.find(n => n.id === depId);
                 return dep ? (
-                  <li key={depId} className="text-sm text-dev-text truncate">
-                    ← {dep.label}
+                  <li key={depId} className="text-sm text-[#f0f6fc] flex items-center gap-2 py-1.5 px-2 hover:bg-[#21262d] rounded-lg transition-colors">
+                    <span className="text-[#3fb950]">←</span>
+                    <span className="truncate font-mono">{dep.label}</span>
                   </li>
                 ) : null;
               })}
@@ -158,12 +229,15 @@ function ModuleDetailPanel({
         {/* Exports */}
         {node.exports.length > 0 && (
           <div>
-            <label className="text-xs text-dev-text-muted uppercase tracking-wide">
-              Exports ({node.exports.length})
+            <label className="text-xs font-bold text-[#8b949e] uppercase tracking-wider flex items-center gap-2">
+              Exports
+              <span className="px-2.5 py-1 bg-[#30363d] rounded-full text-[#f0f6fc] text-xs font-bold">
+                {node.exports.length}
+              </span>
             </label>
-            <ul className="mt-1 space-y-1 max-h-32 overflow-y-auto">
+            <ul className="mt-3 space-y-1 max-h-32 overflow-y-auto bg-[#0d1117] rounded-xl border border-[#30363d] p-3">
               {node.exports.map(exp => (
-                <li key={exp} className="text-sm text-dev-text font-mono">
+                <li key={exp} className="text-sm text-[#f0f6fc] font-mono py-1.5 px-2">
                   {exp}
                 </li>
               ))}
@@ -175,18 +249,6 @@ function ModuleDetailPanel({
   );
 }
 
-// Helper function for colors
-function getModuleColor(type: string): string {
-  const colors: Record<string, string> = {
-    entry: '#58a6ff',
-    source: '#3fb950',
-    vendor: '#f0883e',
-    asset: '#a371f7',
-    dynamic: '#d29922',
-  };
-  return colors[type] || '#8b949e';
-}
-
 // Graph controls panel
 function GraphControls({
   filter,
@@ -195,6 +257,7 @@ function GraphControls({
   setOptions,
   onSearch,
   stats,
+  isDark,
 }: {
   filter: GraphFilter;
   setFilter: (f: GraphFilter) => void;
@@ -202,8 +265,10 @@ function GraphControls({
   setOptions: (o: GraphOptions) => void;
   onSearch: (query: string) => void;
   stats: ReturnType<typeof calculateGraphStats>;
+  isDark: boolean;
 }): React.ReactNode {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isExpanded, setIsExpanded] = useState(true);
   
   const handleSearch = (): void => {
     onSearch(searchQuery);
@@ -217,117 +282,228 @@ function GraphControls({
     setFilter({ ...filter, types });
   };
   
+  const clearFilters = (): void => {
+    setFilter({ ...filter, types: [], searchQuery: '' });
+    setSearchQuery('');
+  };
+  
+  const activeFiltersCount = filter.types.length + (filter.searchQuery ? 1 : 0);
+  
   return (
-    <div className="glass-panel rounded-xl p-4 space-y-4">
-      {/* Search */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-dev-text-muted" size={16} />
-          <input
-            type="text"
-            placeholder="Search modules..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            className="w-full pl-9 pr-3 py-2 bg-dev-bg border border-dev-border rounded-lg
-                       text-sm text-dev-text placeholder-dev-text-subtle
-                       focus:outline-none focus:ring-2 focus:ring-dev-accent/50"
-          />
+    <div className="bg-[#1c2128] border border-[#30363d] rounded-2xl shadow-2xl overflow-hidden w-80">
+      {/* Header */}
+      <div 
+        className="flex items-center justify-between p-4 border-b border-[#30363d] cursor-pointer hover:bg-[#21262d] transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-[#58a6ff]/15 rounded-xl">
+            <Filter size={16} className="text-[#58a6ff]" />
+          </div>
+          <span className="text-sm font-bold text-[#f0f6fc]">Controls</span>
+          {activeFiltersCount > 0 && (
+            <span className="px-2.5 py-1 bg-[#58a6ff] text-white text-xs rounded-full font-bold">
+              {activeFiltersCount}
+            </span>
+          )}
         </div>
-        <Button variant="secondary" size="sm" onClick={handleSearch}>
-          Find
-        </Button>
+        <button className="p-2 hover:bg-[#30363d] rounded-xl transition-colors">
+          {isExpanded ? <Minimize2 size={16} className="text-[#8b949e]" /> : <Maximize2 size={16} className="text-[#8b949e]" />}
+        </button>
       </div>
       
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <div className="bg-dev-surface rounded p-2">
-          <span className="text-dev-text-muted">Modules:</span>
-          <span className="ml-1 text-dev-text font-semibold">{stats.totalModules}</span>
-        </div>
-        <div className="bg-dev-surface rounded p-2">
-          <span className="text-dev-text-muted">Dependencies:</span>
-          <span className="ml-1 text-dev-text font-semibold">{stats.totalDependencies}</span>
-        </div>
-        <div className="bg-dev-surface rounded p-2">
-          <span className="text-dev-text-muted">Circular:</span>
-          <span className={`ml-1 font-semibold ${stats.circularDependencyCount > 0 ? 'text-dev-danger' : 'text-dev-text'}`}>
-            {stats.circularDependencyCount}
-          </span>
-        </div>
-        <div className="bg-dev-surface rounded p-2">
-          <span className="text-dev-text-muted">Duplicates:</span>
-          <span className={`ml-1 font-semibold ${stats.duplicateModuleCount > 0 ? 'text-dev-warning' : 'text-dev-text'}`}>
-            {stats.duplicateModuleCount}
-          </span>
-        </div>
-      </div>
-      
-      {/* Type filters */}
-      <div>
-        <label className="text-xs text-dev-text-muted uppercase tracking-wide mb-2 block">
-          Filter by Type
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {(['entry', 'source', 'vendor', 'dynamic'] as const).map(type => (
-            <button
-              key={type}
-              onClick={() => toggleType(type)}
-              className={`
-                px-2 py-1 rounded text-xs font-medium capitalize transition-colors
-                ${filter.types.includes(type)
-                  ? 'text-white'
-                  : 'bg-dev-surface text-dev-text-muted hover:text-dev-text'
-                }
-              `}
-              style={{
-                backgroundColor: filter.types.includes(type) ? getModuleColor(type) : undefined,
-              }}
+      {isExpanded && (
+        <div className="p-4 space-y-5">
+          {/* Search */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-[#8b949e] uppercase tracking-wider">Search</label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6e7681]" size={16} />
+                <input
+                  type="text"
+                  placeholder="Find modules..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  className="w-full pl-10 pr-3 py-2.5 bg-[#0d1117] border border-[#30363d] rounded-xl
+                             text-sm text-[#f0f6fc] placeholder-[#6e7681]
+                             focus:outline-none focus:ring-2 focus:ring-[#58a6ff]/40 focus:border-[#58a6ff] transition-all"
+                />
+              </div>
+              <Button variant="secondary" size="sm" onClick={handleSearch} className="px-4 py-2.5">
+                Find
+              </Button>
+            </div>
+          </div>
+          
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-[#0d1117] rounded-xl p-3 border border-[#30363d]">
+              <span className="text-[#8b949e] text-xs font-medium block mb-1">Modules</span>
+              <span className="text-[#f0f6fc] font-bold text-xl">{stats.totalModules}</span>
+            </div>
+            <div className="bg-[#0d1117] rounded-xl p-3 border border-[#30363d]">
+              <span className="text-[#8b949e] text-xs font-medium block mb-1">Dependencies</span>
+              <span className="text-[#f0f6fc] font-bold text-xl">{stats.totalDependencies}</span>
+            </div>
+            <div className="bg-[#0d1117] rounded-xl p-3 border border-[#30363d]">
+              <span className="text-[#8b949e] text-xs font-medium block mb-1">Circular</span>
+              <span className={`font-bold text-xl ${stats.circularDependencyCount > 0 ? 'text-[#f85149]' : 'text-[#3fb950]'}`}>
+                {stats.circularDependencyCount}
+              </span>
+            </div>
+            <div className="bg-[#0d1117] rounded-xl p-3 border border-[#30363d]">
+              <span className="text-[#8b949e] text-xs font-medium block mb-1">Duplicates</span>
+              <span className={`font-bold text-xl ${stats.duplicateModuleCount > 0 ? 'text-[#d29922]' : 'text-[#3fb950]'}`}>
+                {stats.duplicateModuleCount}
+              </span>
+            </div>
+          </div>
+          
+          {/* Type filters */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-[#8b949e] uppercase tracking-wider flex items-center gap-2">
+              <LayoutGrid size={14} />
+              Filter by Type
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {(['entry', 'source', 'vendor', 'dynamic'] as const).map(type => {
+                const isActive = filter.types.includes(type);
+                const color = getModuleColor(type, isDark);
+                return (
+                  <button
+                    key={type}
+                    onClick={() => toggleType(type)}
+                    className={`
+                      px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all
+                      ${isActive
+                        ? 'text-white shadow-lg'
+                        : 'bg-[#0d1117] text-[#8b949e] hover:text-[#f0f6fc] border border-[#30363d] hover:border-[#8b949e]'
+                      }
+                    `}
+                    style={{
+                      backgroundColor: isActive ? color : undefined,
+                      borderColor: isActive ? color : undefined,
+                    }}
+                  >
+                    {type}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          
+          {/* Layout options */}
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-[#8b949e] uppercase tracking-wider flex items-center gap-2">
+              <RotateCcw size={14} />
+              Layout Algorithm
+            </label>
+            <select
+              value={options.layout}
+              onChange={(e) => setOptions({ ...options, layout: e.target.value as LayoutAlgorithm })}
+              className="w-full px-4 py-2.5 bg-[#0d1117] border border-[#30363d] rounded-xl
+                         text-sm text-[#f0f6fc] focus:outline-none focus:ring-2 focus:ring-[#58a6ff]/40 
+                         focus:border-[#58a6ff] transition-all cursor-pointer"
             >
-              {type}
+              <option value="force">Force-Directed</option>
+              <option value="hierarchical">Hierarchical</option>
+              <option value="circular">Circular</option>
+              <option value="grid">Grid</option>
+            </select>
+          </div>
+          
+          {/* Toggle options */}
+          <div className="space-y-2 pt-2 border-t border-dev-border">
+            <label className="flex items-center gap-3 text-sm text-dev-text cursor-pointer group">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={options.highlightCircular}
+                  onChange={(e) => setOptions({ ...options, highlightCircular: e.target.checked })}
+                  className="peer sr-only"
+                />
+                <div className="w-9 h-5 bg-dev-border rounded-full peer-checked:bg-dev-accent transition-colors" />
+                <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
+              </div>
+              <span className="group-hover:text-dev-accent transition-colors">Highlight circular deps</span>
+            </label>
+            <label className="flex items-center gap-3 text-sm text-dev-text cursor-pointer group">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={options.highlightDuplicates}
+                  onChange={(e) => setOptions({ ...options, highlightDuplicates: e.target.checked })}
+                  className="peer sr-only"
+                />
+                <div className="w-9 h-5 bg-dev-border rounded-full peer-checked:bg-dev-accent transition-colors" />
+                <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform peer-checked:translate-x-4" />
+              </div>
+              <span className="group-hover:text-dev-accent transition-colors">Highlight duplicates</span>
+            </label>
+          </div>
+          
+          {/* Clear filters */}
+          {activeFiltersCount > 0 && (
+            <button
+              onClick={clearFilters}
+              className="w-full py-2.5 text-xs text-[#8b949e] hover:text-[#f85149] transition-colors
+                         border border-dashed border-[#30363d] hover:border-[#f85149]/50 rounded-xl font-medium"
+            >
+              Clear all filters
             </button>
-          ))}
+          )}
         </div>
+      )}
+    </div>
+  );
+}
+
+// Legend component
+function GraphLegend({ isDark }: { isDark: boolean }): React.ReactNode {
+  return (
+    <div className="bg-[#1c2128] border border-[#30363d] rounded-2xl shadow-2xl p-4 space-y-4">
+      <div className="text-xs font-bold text-[#8b949e] uppercase tracking-wider">
+        Module Types
       </div>
-      
-      {/* Layout options */}
-      <div>
-        <label className="text-xs text-dev-text-muted uppercase tracking-wide mb-2 block">
-          Layout
-        </label>
-        <select
-          value={options.layout}
-          onChange={(e) => setOptions({ ...options, layout: e.target.value as LayoutAlgorithm })}
-          className="w-full px-3 py-2 bg-dev-bg border border-dev-border rounded-lg
-                     text-sm text-dev-text focus:outline-none focus:ring-2 focus:ring-dev-accent/50"
-        >
-          <option value="force">Force-Directed</option>
-          <option value="hierarchical">Hierarchical</option>
-          <option value="circular">Circular</option>
-          <option value="grid">Grid</option>
-        </select>
-      </div>
-      
-      {/* Toggle options */}
       <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm text-dev-text">
-          <input
-            type="checkbox"
-            checked={options.highlightCircular}
-            onChange={(e) => setOptions({ ...options, highlightCircular: e.target.checked })}
-            className="rounded border-dev-border bg-dev-bg text-dev-accent"
-          />
-          Highlight circular deps
-        </label>
-        <label className="flex items-center gap-2 text-sm text-dev-text">
-          <input
-            type="checkbox"
-            checked={options.highlightDuplicates}
-            onChange={(e) => setOptions({ ...options, highlightDuplicates: e.target.checked })}
-            className="rounded border-dev-border bg-dev-bg text-dev-accent"
-          />
-          Highlight duplicates
-        </label>
+        {MODULE_TYPES.map(type => (
+          <div key={type.id} className="flex items-center gap-3">
+            <div
+              className="w-3.5 h-3.5 rounded-full"
+              style={{ 
+                backgroundColor: getModuleColor(type.id, isDark),
+                boxShadow: `0 0 8px ${getModuleColor(type.id, isDark)}66`,
+              }}
+            />
+            <span className="text-sm text-[#f0f6fc] capitalize font-medium">{type.label}</span>
+          </div>
+        ))}
+      </div>
+      
+      <div className="pt-3 border-t border-[#30363d] space-y-2">
+        <div className="text-xs font-bold text-[#8b949e] uppercase tracking-wider">
+          Indicators
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 rounded-full bg-[#f85149] flex items-center justify-center shadow-lg">
+            <span className="text-[10px] text-white font-bold">D</span>
+          </div>
+          <span className="text-sm text-[#f0f6fc]">Duplicate</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 rounded-full bg-[#d29922] flex items-center justify-center shadow-lg">
+            <span className="text-[10px] text-white font-bold">U</span>
+          </div>
+          <span className="text-sm text-[#f0f6fc]">Unused</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 rounded-full bg-[#3fb950] flex items-center justify-center shadow-lg">
+            <span className="text-[10px] text-white font-bold">T</span>
+          </div>
+          <span className="text-sm text-[#f0f6fc]">Tree-shakeable</span>
+        </div>
       </div>
     </div>
   );
@@ -339,6 +515,7 @@ export function DependencyGraph(): React.ReactNode {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [highlightedNodes, setHighlightedNodes] = useState<Set<string>>(new Set());
+  const [isDark, setIsDark] = useState(true);
   const [filter, setFilter] = useState<GraphFilter>({
     types: [],
     searchQuery: '',
@@ -357,6 +534,21 @@ export function DependencyGraph(): React.ReactNode {
   });
   
   const reactFlow = useReactFlow();
+  
+  // Theme detection
+  useEffect(() => {
+    const updateTheme = (): void => {
+      const dark = document.documentElement.classList.contains('dark');
+      setIsDark(dark);
+    };
+    
+    updateTheme();
+    
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    
+    return () => observer.disconnect();
+  }, []);
   
   // Build graph from current report
   const graph = useMemo(() => {
@@ -494,9 +686,11 @@ export function DependencyGraph(): React.ReactNode {
   if (!currentReport) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
-        <Layers className="w-16 h-16 mb-4 text-dev-text-subtle" />
-        <h3 className="text-lg font-medium text-dev-text">No Report Available</h3>
-        <p className="text-sm text-dev-text-muted mt-2">
+        <div className="w-20 h-20 rounded-2xl bg-dev-surface border border-dev-border flex items-center justify-center mb-4">
+          <Layers className="w-10 h-10 text-dev-text-subtle" />
+        </div>
+        <h3 className="text-lg font-semibold text-dev-text">No Report Available</h3>
+        <p className="text-sm text-dev-text-muted mt-2 max-w-sm">
           Upload and analyze files to view the dependency graph
         </p>
       </div>
@@ -506,17 +700,27 @@ export function DependencyGraph(): React.ReactNode {
   if (!graph || graph.nodes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-8">
-        <Package className="w-16 h-16 mb-4 text-dev-text-subtle" />
-        <h3 className="text-lg font-medium text-dev-text">No Dependencies Found</h3>
-        <p className="text-sm text-dev-text-muted mt-2">
+        <div className="w-20 h-20 rounded-2xl bg-dev-surface border border-dev-border flex items-center justify-center mb-4">
+          <Package className="w-10 h-10 text-dev-text-subtle" />
+        </div>
+        <h3 className="text-lg font-semibold text-dev-text">No Dependencies Found</h3>
+        <p className="text-sm text-dev-text-muted mt-2 max-w-sm">
           No import relationships detected in the analyzed files
         </p>
       </div>
     );
   }
   
+  // Theme-aware colors for ReactFlow
+  const gridColor = isDark ? '#21262d' : '#e1e4e8';
+  const bgColor = isDark ? '#0d1117' : '#ffffff';
+  const minimapMask = isDark ? 'rgba(13, 17, 23, 0.85)' : 'rgba(255, 255, 255, 0.85)';
+  
   return (
-    <div className="relative w-full h-full">
+    <div 
+      className="relative w-full h-full rounded-2xl overflow-hidden border border-[#30363d]"
+      style={{ backgroundColor: bgColor }}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -530,18 +734,35 @@ export function DependencyGraph(): React.ReactNode {
         attributionPosition="bottom-left"
         minZoom={0.1}
         maxZoom={2}
+        className="!bg-transparent"
       >
-        <Background color="#30363d" gap={20} size={1} />
-        <Controls className="!bg-dev-surface !border-dev-border" />
+        <Background 
+          color={gridColor} 
+          gap={24} 
+          size={1}
+          style={{ backgroundColor: bgColor }}
+        />
+        <Controls 
+          className="!bg-dev-surface !border-dev-border !shadow-xl !rounded-xl"
+          showInteractive={false}
+        />
         <MiniMap
-          className="!bg-dev-surface !border-dev-border"
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          nodeColor={(node): string => getModuleColor((node.data.type as string) ?? 'source')}
-          maskColor="rgba(13, 17, 23, 0.7)"
+          className="!bg-dev-surface !border-dev-border !shadow-xl !rounded-xl !overflow-hidden"
+          nodeColor={(node): string => {
+            const nodeData = node.data as { type?: string } | undefined;
+            const type = nodeData?.type ?? 'source';
+            return getModuleColor(type, isDark);
+          }}
+          maskColor={minimapMask}
+          maskStrokeColor={isDark ? '#30363d' : '#d0d7de'}
+          maskStrokeWidth={2}
+          style={{
+            backgroundColor: isDark ? '#161b22' : '#f6f8fa',
+          }}
         />
         
         {/* Controls Panel */}
-        <Panel position="top-left" className="m-4">
+        <Panel position="top-left" className="!m-4">
           <GraphControls
             filter={filter}
             setFilter={setFilter}
@@ -549,49 +770,25 @@ export function DependencyGraph(): React.ReactNode {
             setOptions={setOptions}
             onSearch={handleSearch}
             stats={stats}
+            isDark={isDark}
           />
         </Panel>
         
         {/* Legend */}
-        <Panel position="bottom-right" className="m-4">
-          <div className="glass-panel rounded-lg p-3 space-y-2">
-            <div className="text-xs text-dev-text-muted uppercase tracking-wide mb-2">
-              Module Types
-            </div>
-            {(['entry', 'source', 'vendor', 'dynamic', 'asset'] as const).map(type => (
-              <div key={type} className="flex items-center gap-2">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: getModuleColor(type) }}
-                />
-                <span className="text-xs text-dev-text capitalize">{type}</span>
-              </div>
-            ))}
-            <div className="mt-2 pt-2 border-t border-dev-border space-y-1">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-dev-danger flex items-center justify-center">
-                  <span className="text-[8px] text-white font-bold">D</span>
-                </div>
-                <span className="text-xs text-dev-text">Duplicate</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-dev-warning flex items-center justify-center">
-                  <span className="text-[8px] text-white font-bold">U</span>
-                </div>
-                <span className="text-xs text-dev-text">Unused</span>
-              </div>
-            </div>
-          </div>
+        <Panel position="bottom-right" className="!m-4">
+          <GraphLegend isDark={isDark} />
         </Panel>
       </ReactFlow>
       
       {/* Module Detail Panel */}
       <AnimatePresence>
-        {selectedNode !== null && (
+        {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
+        {selectedNode !== null && graph !== null && (
           <ModuleDetailPanel
             node={selectedNode}
             onClose={() => setSelectedNode(null)}
             graph={graph}
+            isDark={isDark}
           />
         )}
       </AnimatePresence>

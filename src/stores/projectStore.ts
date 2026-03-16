@@ -10,7 +10,7 @@ interface ProjectState {
   currentProject: Project | null;
   
   // Actions
-  createProject: (name: string, description?: string) => string;
+  createProject: (name: string, description?: string) => Promise<string>;
   updateProject: (id: string, updates: Partial<Pick<Project, 'name' | 'description'>>) => void;
   deleteProject: (id: string) => void;
   loadProject: (id: string) => Promise<Project | null>;
@@ -90,7 +90,7 @@ export const useProjectStore = create<ProjectState>()(
         currentProject: null,
 
         // Actions
-        createProject: (name, description) => {
+        createProject: async (name, description) => {
           const id = `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
           const now = Date.now();
           
@@ -104,8 +104,8 @@ export const useProjectStore = create<ProjectState>()(
             reports: [],
           };
           
-          // Save full project data
-          saveProjectData(newProject);
+          // Save full project data - await to ensure it's saved before navigation
+          await saveProjectData(newProject);
           
           // Add to summaries
           const summary: ProjectSummary = {

@@ -5,7 +5,7 @@ import { Modal } from '@/components/ui/Modal';
 interface CreateProjectDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (name: string, description?: string) => void;
+  onCreate: (name: string, description?: string) => void | Promise<void>;
 }
 
 export function CreateProjectDialog({ isOpen, onClose, onCreate }: CreateProjectDialogProps): React.ReactNode {

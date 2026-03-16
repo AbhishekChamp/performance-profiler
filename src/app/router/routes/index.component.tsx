@@ -441,8 +441,8 @@ export function IndexComponent(): React.ReactNode {
     }
   }, [error]);
 
-  const handleCreateProject = (name: string, description?: string): void => {
-    const id = createProject(name, description);
+  const handleCreateProject = async (name: string, description?: string): Promise<void> => {
+    const id = await createProject(name, description);
     setViewState({ type: 'project', projectId: id });
   };
 
