@@ -1,274 +1,185 @@
-import { Check, Monitor, Moon, Sun } from 'lucide-react';
-import { useThemeStore } from '@/stores/themeStore';
-import toast from 'react-hot-toast';
-import { useCallback, useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Moon, Sun } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-interface ThemeToggleProps {
+interface ThemeToggleBaseProps {
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
-  className?: string;
 }
 
-type ThemeOption = {
-  mode: 'dark' | 'light' | 'system';
-  label: string;
-  icon: typeof Sun;
-  description: string;
+const sizeClasses = {
+  sm: { button: 'w-10 h-6', icon: 'w-3.5 h-3.5' },
+  md: { button: 'w-14 h-8', icon: 'w-5 h-5' },
+  lg: { button: 'w-16 h-9', icon: 'w-6 h-6' },
 };
 
-const themeOptions: ThemeOption[] = [
-  { mode: 'light', label: 'Light', icon: Sun, description: 'Always use light theme' },
-  { mode: 'dark', label: 'Dark', icon: Moon, description: 'Always use dark theme' },
-  { mode: 'system', label: 'System', icon: Monitor, description: 'Follow system preference' },
-];
+export function ThemeToggleSimple({ size = 'md', showLabel = false }: ThemeToggleBaseProps): React.ReactNode {
+  const [isDark, setIsDark] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
-export function ThemeToggle({ size = 'md', showLabel = false, className = '' }: ThemeToggleProps): React.JSX.Element {
-  const { mode, resolvedMode, setMode } = useThemeStore();
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleModeChange = useCallback((newMode: 'dark' | 'light' | 'system') => {
-    setMode(newMode);
-    setIsOpen(false);
-    
-    const messages = {
-      dark: 'Dark theme enabled 🌙',
-      light: 'Light theme enabled ☀️',
-      system: 'Using system theme preference 🖥️',
-    };
-    
-    try {
-      toast.success(messages[newMode], { duration: 2000 });
-    } catch (e) {
-      console.error('Failed to show toast:', e);
-    }
-  }, [setMode]);
-
-  // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent): void => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.theme-toggle-dropdown')) {
-        setIsOpen(false);
-      }
-    };
+    setMounted(true);
+    const isLight = document.documentElement.classList.contains('light');
+    setIsDark(!isLight);
+  }, []);
 
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+  const toggleTheme = (): void => {
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    if (newIsDark) {
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
     }
-  }, [isOpen]);
-
-  const currentOption = themeOptions.find(opt => opt.mode === mode) ?? themeOptions[1];
-  const CurrentIcon = currentOption.icon;
-
-  const iconSizes = { sm: 14, md: 18, lg: 22 };
-  const buttonSizes = { 
-    sm: 'h-8 text-xs', 
-    md: 'h-9 text-sm', 
-    lg: 'h-10 text-base' 
   };
-  const iconSize = iconSizes[size];
-  const buttonSize = buttonSizes[size];
 
-  return (
-    <div className={`theme-toggle-dropdown relative inline-block ${className}`}>
-      {/* Main Toggle Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`
-          ${buttonSize}
-          flex items-center gap-2 px-3 rounded-lg
-          border border-dev-border bg-dev-surface
-          text-dev-text-muted hover:text-dev-text
-          hover:bg-dev-surface-hover
-          transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-dev-accent/30
-          ${isOpen ? 'ring-2 ring-dev-accent/30' : ''}
-        `}
-        aria-label="Change theme"
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-      >
-        <CurrentIcon size={iconSize} />
-        {showLabel && (
-          <span className="font-medium">
-            {currentOption.label}
-            {mode === 'system' && (
-              <span className="ml-1.5 text-xs opacity-60">
-                ({resolvedMode})
-              </span>
-            )}
-          </span>
-        )}
-      </button>
+  if (!mounted) return <div className={`${sizeClasses[size].button} rounded-full bg-[var(--dev-surface-hover)]`} />;
 
-      {/* Dropdown Menu */}
-      {isOpen && (
-        <div
-          className="
-            absolute right-0 top-full mt-2 z-50
-            w-56 rounded-xl
-            border border-dev-border bg-dev-surface
-            shadow-xl shadow-black/20
-            animate-fade-in
-          "
-          role="listbox"
-          aria-label="Select theme"
-        >
-          <div className="p-2 space-y-1">
-            {themeOptions.map((option) => {
-              const Icon = option.icon;
-              const isActive = mode === option.mode;
-              
-              return (
-                <button
-                  key={option.mode}
-                  onClick={() => handleModeChange(option.mode)}
-                  className={`
-                    w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-                    transition-all duration-200
-                    ${isActive 
-                      ? 'bg-dev-accent/10 text-dev-accent' 
-                      : 'text-dev-text-muted hover:bg-dev-surface-hover hover:text-dev-text'
-                    }
-                  `}
-                  role="option"
-                  aria-selected={isActive}
-                >
-                  <Icon size={18} />
-                  <div className="flex-1 text-left">
-                    <div className="font-medium text-sm">{option.label}</div>
-                    <div className={`text-xs ${isActive ? 'text-dev-accent/70' : 'text-dev-text-subtle'}`}>
-                      {option.description}
-                    </div>
-                  </div>
-                  {isActive && (
-                    <Check size={16} className="text-dev-accent" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          
-          {/* Keyboard hint */}
-          <div className="px-3 py-2 border-t border-dev-border text-xs text-dev-text-subtle">
-            <kbd className="px-1.5 py-0.5 bg-dev-border rounded text-dev-text-muted">
-              {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}
-            </kbd>
-            {' + '}
-            <kbd className="px-1.5 py-0.5 bg-dev-border rounded text-dev-text-muted">
-              Shift
-            </kbd>
-            {' + '}
-            <kbd className="px-1.5 py-0.5 bg-dev-border rounded text-dev-text-muted">
-              L
-            </kbd>
-            {' to toggle'}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* 
- * Simple toggle for compact spaces (cycles through modes)
- * Use this in headers or constrained spaces
- */
-export function ThemeToggleSimple({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg'; className?: string }): React.JSX.Element {
-  const { resolvedMode, toggleMode } = useThemeStore();
-  const isDark = resolvedMode === 'dark';
-
-  const iconSizes = { sm: 16, md: 20, lg: 24 };
-  const buttonSizes = { sm: 'w-8 h-8', md: 'w-10 h-10', lg: 'w-12 h-12' };
-  const iconSize = iconSizes[size];
-  const buttonSize = buttonSizes[size];
+  const s = sizeClasses[size];
 
   return (
     <button
-      onClick={toggleMode}
+      onClick={toggleTheme}
       className={`
-        ${buttonSize}
-        flex items-center justify-center
-        rounded-lg border border-dev-border
-        bg-dev-surface text-dev-text-muted
-        hover:bg-dev-surface-hover hover:text-dev-text
-        transition-all duration-200
-        focus:outline-none focus:ring-2 focus:ring-dev-accent/30
-        ${className}
+        ${s.button} rounded-full p-1 flex items-center gap-2
+        bg-[var(--dev-surface-hover)] hover:bg-[var(--dev-surface)]
+        transition-colors
       `}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
-      {isDark ? <Moon size={iconSize} /> : <Sun size={iconSize} />}
+      {isDark ? (
+        <Sun className={`${s.icon} text-[var(--dev-warning)]`} />
+      ) : (
+        <Moon className={`${s.icon} text-[var(--dev-accent)]`} />
+      )}
+      {showLabel && (
+        <span className="text-sm text-[var(--dev-text-muted)] pr-2">
+          {isDark ? 'Light' : 'Dark'}
+        </span>
+      )}
     </button>
   );
 }
 
-/*
- * Segmented control variant for settings panels
- * Shows all three options side by side
- */
-export function ThemeToggleSegmented({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg'; className?: string }): React.JSX.Element {
-  const { mode, resolvedMode, setMode } = useThemeStore();
+export function ThemeToggleSegmented(): React.ReactNode {
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
-  const iconSizes = { sm: 14, md: 16, lg: 18 };
-  const containerSizes = { 
-    sm: 'p-0.5 rounded-lg', 
-    md: 'p-1 rounded-xl', 
-    lg: 'p-1.5 rounded-xl' 
+  useEffect(() => {
+    const isLight = document.documentElement.classList.contains('light');
+    setTheme(isLight ? 'light' : 'dark');
+  }, []);
+
+  const setDark = (): void => {
+    setTheme('dark');
+    document.documentElement.classList.remove('light');
   };
-  const buttonSizes = { 
-    sm: 'px-2 py-1.5 rounded text-xs', 
-    md: 'px-3 py-2 rounded-lg text-sm', 
-    lg: 'px-4 py-2.5 rounded-lg text-base' 
+
+  const setLight = (): void => {
+    setTheme('light');
+    document.documentElement.classList.add('light');
   };
-  
-  const iconSize = iconSizes[size];
-  const containerSize = containerSizes[size];
-  const buttonSize = buttonSizes[size];
 
   return (
-    <div 
-      className={`
-        inline-flex items-center gap-1
-        bg-dev-surface border border-dev-border
-        ${containerSize}
-        ${className}
-      `}
-      role="radiogroup"
-      aria-label="Theme selection"
-    >
-      {themeOptions.map((option) => {
-        const Icon = option.icon;
-        const isActive = mode === option.mode;
-        
-        return (
-          <button
-            key={option.mode}
-            onClick={() => setMode(option.mode)}
-            className={`
-              ${buttonSize}
-              flex items-center gap-2
-              font-medium transition-all duration-200
-              ${isActive 
-                ? 'bg-dev-accent text-white shadow-sm' 
-                : 'text-dev-text-muted hover:text-dev-text hover:bg-dev-surface-hover'
-              }
-            `}
-            role="radio"
-            aria-checked={isActive}
-          >
-            <Icon size={iconSize} />
-            <span>{option.label}</span>
-            {option.mode === 'system' && mode === 'system' && (
-              <span className="text-xs opacity-70">
-                ({resolvedMode === 'dark' ? 'Dark' : 'Light'})
-              </span>
-            )}
-          </button>
-        );
-      })}
+    <div className="flex bg-[var(--dev-surface-hover)] rounded-lg p-1">
+      <button
+        onClick={setDark}
+        className={`px-3 py-1 rounded text-sm transition-colors ${
+          theme === 'dark' ? 'bg-[var(--dev-accent)] text-white' : 'text-[var(--dev-text-muted)]'
+        }`}
+      >
+        <Moon className="w-4 h-4" />
+      </button>
+      <button
+        onClick={setLight}
+        className={`px-3 py-1 rounded text-sm transition-colors ${
+          theme === 'light' ? 'bg-[var(--dev-accent)] text-white' : 'text-[var(--dev-text-muted)]'
+        }`}
+      >
+        <Sun className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
+interface ThemeToggleProps {
+  size?: 'sm' | 'md' | 'lg';
+  showLabel?: boolean;
+}
+
+export function ThemeToggle({ size = 'md', showLabel = false }: ThemeToggleProps): React.ReactNode {
+  const [isDark, setIsDark] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const isLight = document.documentElement.classList.contains('light');
+    setIsDark(!isLight);
+  }, []);
+
+  const toggleTheme = (): void => {
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    
+    if (newIsDark) {
+      document.documentElement.classList.remove('light');
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    }
+  };
+
+  if (!mounted) {
+    return (
+      <div className={`${sizeClasses[size].button} rounded-full bg-[var(--dev-surface-hover)]`} />
+    );
+  }
+
+  const s = sizeClasses[size];
+  const knobSize = size === 'sm' ? 'w-4 h-4' : size === 'md' ? 'w-6 h-6' : 'w-7 h-7';
+  const knobIconSize = size === 'sm' ? 'w-2.5 h-2.5' : 'w-3.5 h-3.5';
+
+  return (
+    <div className="flex items-center gap-3">
+      <motion.button
+        onClick={toggleTheme}
+        className={`
+          relative ${s.button} rounded-full p-1
+          ${isDark ? 'bg-[var(--dev-surface-hover)]' : 'bg-[var(--dev-accent)]'}
+          transition-colors duration-300
+        `}
+        whileTap={{ scale: 0.95 }}
+        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        <motion.div
+          className={`
+            relative ${knobSize} rounded-full shadow-lg
+            flex items-center justify-center
+            ${isDark ? 'bg-[var(--dev-surface)]' : 'bg-white'}
+          `}
+          animate={{
+            x: isDark ? 0 : size === 'sm' ? 16 : size === 'md' ? 24 : 28,
+            rotate: isDark ? 0 : 360,
+          }}
+          transition={{
+            type: 'spring',
+            stiffness: 500,
+            damping: 30,
+          }}
+        >
+          {isDark ? (
+            <Moon className={`${knobIconSize} text-[var(--dev-accent)]`} />
+          ) : (
+            <Sun className={`${knobIconSize} text-[var(--dev-warning)]`} />
+          )}
+        </motion.div>
+      </motion.button>
+
+      {showLabel && (
+        <span className="text-sm text-[var(--dev-text-muted)]">
+          {isDark ? 'Dark Mode' : 'Light Mode'}
+        </span>
+      )}
     </div>
   );
 }

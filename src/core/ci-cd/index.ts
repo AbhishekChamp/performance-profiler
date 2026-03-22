@@ -1,6 +1,7 @@
 import type { 
   BudgetCheckScript, 
   BudgetConfig, 
+  BudgetPreset,
   CIPlatform, 
   GeneratedConfig,
   PerformanceBudget,
@@ -892,4 +893,107 @@ export function validateBudget(budget: PerformanceBudget): string[] {
   }
   
   return errors;
+}
+
+/**
+ * Budget presets for quick configuration
+ */
+export const BUDGET_PRESETS: BudgetPreset[] = [
+  {
+    id: 'strict',
+    name: 'Strict',
+    description: 'Aggressive budgets for maximum performance',
+    icon: 'shield',
+    color: '#da3633',
+    budgets: {
+      bundleSize: 200,
+      jsSize: 100,
+      cssSize: 50,
+      imageSize: 100,
+      fontSize: 50,
+      lighthousePerformance: 95,
+      lighthouseAccessibility: 100,
+      lighthouseBestPractices: 95,
+      lighthouseSEO: 95,
+    },
+  },
+  {
+    id: 'balanced',
+    name: 'Balanced',
+    description: 'Recommended defaults for most projects',
+    icon: 'scale',
+    color: '#58a6ff',
+    budgets: {
+      bundleSize: 500,
+      jsSize: 300,
+      cssSize: 100,
+      imageSize: 200,
+      fontSize: 100,
+      lighthousePerformance: 90,
+      lighthouseAccessibility: 90,
+      lighthouseBestPractices: 90,
+      lighthouseSEO: 90,
+    },
+  },
+  {
+    id: 'relaxed',
+    name: 'Relaxed',
+    description: 'Lenient budgets for legacy or large apps',
+    icon: 'coffee',
+    color: '#d29922',
+    budgets: {
+      bundleSize: 1000,
+      jsSize: 600,
+      cssSize: 200,
+      imageSize: 500,
+      fontSize: 200,
+      lighthousePerformance: 70,
+      lighthouseAccessibility: 80,
+      lighthouseBestPractices: 80,
+      lighthouseSEO: 80,
+    },
+  },
+  {
+    id: 'mobile',
+    name: 'Mobile First',
+    description: 'Optimized for mobile performance',
+    icon: 'smartphone',
+    color: '#238636',
+    budgets: {
+      bundleSize: 300,
+      jsSize: 150,
+      cssSize: 75,
+      imageSize: 150,
+      fontSize: 75,
+      lighthousePerformance: 95,
+      lighthouseAccessibility: 95,
+      lighthouseBestPractices: 95,
+      lighthouseSEO: 90,
+    },
+  },
+  {
+    id: 'desktop',
+    name: 'Desktop',
+    description: 'Higher budgets for desktop-only apps',
+    icon: 'monitor',
+    color: '#8957e5',
+    budgets: {
+      bundleSize: 800,
+      jsSize: 500,
+      cssSize: 200,
+      imageSize: 400,
+      fontSize: 150,
+      lighthousePerformance: 85,
+      lighthouseAccessibility: 90,
+      lighthouseBestPractices: 85,
+      lighthouseSEO: 90,
+    },
+  },
+];
+
+/**
+ * Get budget preset by ID
+ */
+export function getBudgetPreset(id: string): BudgetPreset | undefined {
+  return BUDGET_PRESETS.find(p => p.id === id);
 }

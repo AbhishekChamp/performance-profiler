@@ -18,7 +18,7 @@ import { WebVitalsSection } from '@/components/report/WebVitalsSection';
 import { NetworkSection } from '@/components/report/NetworkSection';
 import { ImagesSection } from '@/components/report/ImagesSection';
 import { FontsSection } from '@/components/report/FontsSection';
-import { AccessibilitySection } from '@/components/report/AccessibilitySection';
+import { AccessibilitySection as A11ySection } from '@/components/report/AccessibilitySection';
 import { SEOSection } from '@/components/report/SEOSection';
 import { TypeScriptSection } from '@/components/report/TypeScriptSection';
 import { SecuritySection } from '@/components/report/SecuritySection';
@@ -566,79 +566,79 @@ export function IndexComponent(): React.ReactNode {
                 return <OverviewSection report={report} />;
               case 'bundle':
                 return report.bundle ? (
-                  <BundleSection bundle={report.bundle} />
+                  <BundleSection analysis={report.bundle} />
                 ) : (
                   <NoData section="Bundle" />
                 );
               case 'dom':
                 return report.dom ? (
-                  <DOMSection dom={report.dom} />
+                  <DOMSection analysis={report.dom} />
                 ) : (
                   <NoData section="DOM" />
                 );
               case 'css':
                 return report.css ? (
-                  <CSSSection css={report.css} />
+                  <CSSSection analysis={report.css} />
                 ) : (
                   <NoData section="CSS" />
                 );
               case 'images':
                 return report.images ? (
-                  <ImagesSection images={report.images} />
+                  <ImagesSection analysis={report.images} />
                 ) : (
                   <NoData section="Images" />
                 );
               case 'fonts':
                 return report.fonts ? (
-                  <FontsSection fonts={report.fonts} />
+                  <FontsSection analysis={report.fonts} />
                 ) : (
                   <NoData section="Fonts" />
                 );
               case 'assets':
                 return report.assets ? (
-                  <AssetsSection assets={report.assets} />
+                  <AssetsSection analysis={report.assets} />
                 ) : (
                   <NoData section="Assets" />
                 );
               case 'javascript':
                 return report.javascript && report.javascript.length > 0 ? (
-                  <JavaScriptSection js={report.javascript} />
+                  <JavaScriptSection files={report.javascript} />
                 ) : (
                   <NoData section="JavaScript" />
                 );
               case 'webvitals':
                 return report.webVitals ? (
-                  <WebVitalsSection webVitals={report.webVitals} />
+                  <WebVitalsSection analysis={report.webVitals} />
                 ) : (
                   <NoData section="Web Vitals" />
                 );
               case 'network':
                 return report.network ? (
-                  <NetworkSection network={report.network} />
+                  <NetworkSection analysis={report.network} />
                 ) : (
                   <NoData section="Network" />
                 );
               case 'accessibility':
                 return report.accessibility ? (
-                  <AccessibilitySection accessibility={report.accessibility} />
+                  <A11ySection analysis={report.accessibility} />
                 ) : (
                   <NoData section="Accessibility" />
                 );
               case 'seo':
                 return report.seo ? (
-                  <SEOSection seo={report.seo} />
+                  <SEOSection analysis={report.seo} />
                 ) : (
                   <NoData section="SEO" />
                 );
               case 'typescript':
                 return report.typescript ? (
-                  <TypeScriptSection typescript={report.typescript} />
+                  <TypeScriptSection analysis={report.typescript} />
                 ) : (
                   <NoData section="TypeScript" />
                 );
               case 'security':
                 return report.security ? (
-                  <SecuritySection security={report.security} />
+                  <SecuritySection analysis={report.security} />
                 ) : (
                   <NoData section="Security" />
                 );
@@ -663,13 +663,10 @@ export function IndexComponent(): React.ReactNode {
               case 'graph':
                 return <GraphSection />;
               case 'timeline':
-                return <TimelineSection timeline={report.timeline} />;
+                return <TimelineSection report={report} />;
               case 'risks':
                 return (
-                  <RisksSection
-                    risk={report.renderRisk}
-                    optimizations={report.summary.optimizations}
-                  />
+                  <RisksSection report={report} />
                 );
               case 'budget':
                 return <BudgetSettings report={report} />;

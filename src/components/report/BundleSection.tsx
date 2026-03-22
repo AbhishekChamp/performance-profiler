@@ -1,176 +1,296 @@
-import { Treemap } from '../charts/Treemap';
-import { PieChart } from '../charts/PieChart';
+import { motion } from 'framer-motion';
+import { 
+  AlertTriangle, 
+  Copy, 
+  FileCode, 
+  Layers,
+  Package,
+  TrendingUp
+} from 'lucide-react';
+import { CardHeader, ModernCard } from '@/components/ui/ModernCard';
+import { AnimatedBadge } from '@/components/ui/AnimatedBadge';
+import { fadeUpVariants, staggerContainerVariants } from '@/utils/animations';
 import type { BundleAnalysis } from '@/types';
-import { AlertTriangle, FileCode, HardDrive, Layers, Package, Puzzle } from 'lucide-react';
 
 interface BundleSectionProps {
-  bundle: BundleAnalysis;
+  analysis?: BundleAnalysis;
 }
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB'];
+  const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }
 
-export function BundleSection({ bundle }: BundleSectionProps): React.ReactNode {
-  const pieData = [
-    { label: 'Vendor', value: bundle.vendorSize, color: '#58a6ff' },
-    { label: 'Application', value: bundle.totalSize - bundle.vendorSize, color: '#3fb950' },
-  ];
+function formatPercentage(value: number): string {
+  return `${value.toFixed(1)}%`;
+}
+
+export function BundleSection({ analysis }: BundleSectionProps): React.ReactNode {
+  if (analysis === undefined) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-center py-12 text-[var(--dev-text-muted)]"
+      >
+        <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+        <p>No bundle analysis data available</p>
+      </motion.div>
+    );
+  }
+
+  const { 
+    totalSize, 
+    gzippedSize, 
+    moduleCount, 
+    largestModules,
+    duplicateLibraries,
+    vendorSize,
+    vendorPercentage,
+    modules 
+  } = analysis;
+
+  const thirdPartyModules = modules.filter(m => m.type === 'vendor');
+  const thirdPartySize = thirdPartyModules.reduce((acc, m) => acc + m.size, 0);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3 pb-4 border-b border-dev-border">
-        <div className="p-2 rounded-lg bg-dev-accent/10">
-          <Package className="w-5 h-5 text-dev-accent" />
-        </div>
-        <div>
-          <h2 className="text-lg font-semibold text-dev-text">Bundle Analysis</h2>
-          <p className="text-sm text-dev-text-muted">
-            {bundle.moduleCount} modules • {formatBytes(bundle.totalSize)} total
-          </p>
-        </div>
-      </div>
+    <motion.section 
+      className="space-y-6"
+      variants={staggerContainerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div 
+        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+        variants={staggerContainerVariants}
+      >
+        {[
+          { 
+            label: 'Total Size', 
+            value: formatBytes(totalSize), 
+            subtext: `${formatBytes(gzippedSize)} gzipped`,
+            icon: Package,
+            color: 'text-[var(--dev-accent)]'
+          },
+          { 
+            label: 'Modules', 
+            value: moduleCount.toString(), 
+            subtext: `${thirdPartyModules.length} vendor`,
+            icon: FileCode,
+            color: 'text-[var(--dev-info)]'
+          },
+          { 
+            label: 'Vendor', 
+            value: formatBytes(vendorSize), 
+            subtext: formatPercentage(vendorPercentage),
+            icon: Layers,
+            color: vendorPercentage > 60 ? 'text-[var(--dev-warning)]' : 'text-[var(--dev-success)]'
+          },
+          { 
+            label: 'Duplicate Libs', 
+            value: duplicateLibraries.length.toString(), 
+            subtext: duplicateLibraries.length > 0 ? 'Action needed' : 'Clean',
+            icon: TrendingUp,
+            color: duplicateLibraries.length > 0 ? 'text-[var(--dev-warning)]' : 'text-[var(--dev-success)]'
+          },
+        ].map((stat, index) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+          >
+            <ModernCard className="text-center p-4">
+              <stat.icon className={`w-8 h-8 mx-auto mb-2 ${stat.color}`} />
+              <p className="text-2xl font-bold text-[var(--dev-text)]">{stat.value}</p>
+              <p className="text-xs text-[var(--dev-text-muted)]">{stat.label}</p>
+              <p className="text-xs text-[var(--dev-text-subtle)] mt-1">{stat.subtext}</p>
+            </ModernCard>
+          </motion.div>
+        ))}
+      </motion.div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="metric-card hover-lift">
-          <div className="flex items-center gap-2 mb-2">
-            <HardDrive className="w-4 h-4 text-dev-text-subtle" />
-            <span className="metric-label">Total Size</span>
-          </div>
-          <span className="metric-value text-dev-text">{formatBytes(bundle.totalSize)}</span>
-        </div>
-        <div className="metric-card hover-lift">
-          <div className="flex items-center gap-2 mb-2">
-            <Layers className="w-4 h-4 text-dev-text-subtle" />
-            <span className="metric-label">Gzipped</span>
-          </div>
-          <span className="metric-value text-dev-text">{formatBytes(bundle.gzippedSize)}</span>
-        </div>
-        <div className="metric-card hover-lift">
-          <div className="flex items-center gap-2 mb-2">
-            <Puzzle className="w-4 h-4 text-dev-text-subtle" />
-            <span className="metric-label">Modules</span>
-          </div>
-          <span className="metric-value text-dev-text">{bundle.moduleCount}</span>
-        </div>
-        <div className="metric-card hover-lift">
-          <div className="flex items-center gap-2 mb-2">
-            <FileCode className="w-4 h-4 text-dev-text-subtle" />
-            <span className="metric-label">Vendor %</span>
-          </div>
-          <span className={`metric-value ${
-            bundle.vendorPercentage > 70 ? 'text-dev-warning' : 
-            bundle.vendorPercentage > 50 ? 'text-dev-warning-bright' : 'text-dev-success-bright'
-          }`}>
-            {bundle.vendorPercentage.toFixed(1)}%
-          </span>
-        </div>
-      </div>
-
-      {/* Duplicates Warning */}
-      {bundle.duplicateLibraries.length > 0 && (
-        <div className="dev-panel p-4 border-l-4 border-l-dev-warning border-dev-warning/30 rounded-r-lg">
-          <div className="flex items-start gap-3">
-            <div className="p-1.5 rounded-md bg-dev-warning/10">
-              <AlertTriangle className="w-5 h-5 text-dev-warning" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-semibold text-dev-warning-bright mb-2">
-                Duplicate Libraries Detected
-              </h3>
-              <div className="space-y-2">
-                {bundle.duplicateLibraries.map((lib, i) => (
-                  <div 
-                    key={i} 
-                    className="flex items-center justify-between p-3 bg-dev-surface-hover rounded-lg border border-dev-border-subtle"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-dev-text truncate">{lib.name}</p>
-                      <p className="text-xs text-dev-text-muted mt-0.5">
-                        {lib.instances} instances: <span className="font-mono">{lib.versions.join(', ')}</span>
+      {duplicateLibraries.length > 0 && (
+        <motion.div variants={fadeUpVariants}>
+          <ModernCard
+            className="border-l-4 border-l-[var(--dev-warning)]"
+            header={
+              <CardHeader
+                title="Duplicate Libraries"
+                subtitle={`${duplicateLibraries.length} duplicates found - consider deduplication`}
+                icon={<Copy className="w-5 h-5 text-[var(--dev-warning)]" />}
+              />
+            }
+          >
+            <div className="space-y-3">
+              {duplicateLibraries.map((lib, index) => (
+                <motion.div
+                  key={lib.name}
+                  className="flex items-center justify-between p-4 rounded-lg bg-[var(--dev-warning)]/5"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[var(--dev-warning)]/10 flex items-center justify-center">
+                      <Copy className="w-5 h-5 text-[var(--dev-warning)]" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-[var(--dev-text)]">{lib.name}</p>
+                      <p className="text-xs text-[var(--dev-text-muted)]">
+                        {lib.instances} instances • {formatBytes(lib.totalSize)}
                       </p>
                     </div>
-                    <span className="text-xs font-mono px-2 py-1 bg-dev-surface rounded text-dev-text-subtle ml-3">
-                      {formatBytes(lib.totalSize)}
-                    </span>
                   </div>
-                ))}
-              </div>
+                  <div className="text-right">
+                    <div className="flex gap-1">
+                      {lib.versions.map(v => (
+                        <AnimatedBadge key={v} variant="warning" size="sm">{v}</AnimatedBadge>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
             </div>
-          </div>
-        </div>
+          </ModernCard>
+        </motion.div>
       )}
 
-      {/* Visualizations */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Treemap */}
-        <div className="dev-panel p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-dev-text">Module Size Treemap</h3>
-            <span className="text-xs text-dev-text-subtle">Top 100 modules</span>
-          </div>
-          <Treemap modules={bundle.modules} />
-        </div>
+      <motion.div variants={fadeUpVariants}>
+        <ModernCard
+          header={
+            <CardHeader
+              title="Largest Modules"
+              subtitle={`Top ${Math.min(10, largestModules.length)} largest modules by size`}
+              icon={<FileCode className="w-5 h-5 text-[var(--dev-accent)]" />}
+            />
+          }
+        >
+          <div className="space-y-2">
+            {largestModules.slice(0, 10).map((module, index) => {
+              const percentage = (module.size / totalSize) * 100;
+              const isVendor = module.type === 'vendor';
+              return (
+                <motion.div
+                  key={module.name}
+                  className="group"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--dev-surface-hover)] transition-colors">
+                    <div className="relative w-24 h-8 bg-[var(--dev-bg)] rounded-lg overflow-hidden">
+                      <motion.div
+                        className={`absolute inset-y-0 left-0 ${
+                          isVendor ? 'bg-[var(--dev-warning)]' : 'bg-[var(--dev-accent)]'
+                        }`}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(percentage * 2, 100)}%` }}
+                        transition={{ duration: 0.5, delay: index * 0.05 }}
+                      />
+                      <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-[var(--dev-text)]">
+                        {formatPercentage(percentage)}
+                      </span>
+                    </div>
 
-        {/* Pie Chart */}
-        <div className="dev-panel p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-dev-text">Vendor vs Application</h3>
-            <span className="text-xs text-dev-text-subtle">Size distribution</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-[var(--dev-text)] truncate">{module.name}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-[var(--dev-text-muted)]">{formatBytes(module.size)}</span>
+                        {isVendor && (
+                          <AnimatedBadge variant="warning" size="sm">Vendor</AnimatedBadge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
-          <PieChart data={pieData} width={280} height={280} />
-        </div>
-      </div>
+        </ModernCard>
+      </motion.div>
 
-      {/* Largest Modules */}
-      <div className="dev-panel overflow-hidden">
-        <div className="px-5 py-4 border-b border-dev-border bg-dev-surface-hover/50">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-dev-text">Largest Modules</h3>
-            <span className="text-xs text-dev-text-subtle">
-              Top {bundle.largestModules.length} by size
-            </span>
-          </div>
-        </div>
-        <div className="divide-y divide-dev-border-subtle">
-          {bundle.largestModules.map((module, i) => (
-            <div 
-              key={module.id} 
-              className="px-5 py-3.5 flex items-center justify-between hover:bg-dev-surface-hover transition-colors group"
-            >
-              <div className="flex items-center gap-4 min-w-0 flex-1">
-                <span className="flex items-center justify-center w-6 h-6 text-xs font-medium text-dev-text-subtle bg-dev-surface-hover rounded group-hover:bg-dev-surface transition-colors">
-                  {i + 1}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-dev-text truncate">{module.name}</p>
-                  <p className="text-xs text-dev-text-muted truncate mt-0.5">{module.path}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <motion.div variants={fadeUpVariants}>
+          <ModernCard
+            header={
+              <CardHeader
+                title="Code Distribution"
+                subtitle="Vendor vs Application code"
+                icon={<Layers className="w-5 h-5 text-[var(--dev-accent)]" />}
+              />
+            }
+          >
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-[var(--dev-text)]">Vendor Code</span>
+                  <span className="text-[var(--dev-text-muted)]">{formatBytes(vendorSize)}</span>
                 </div>
+                <div className="h-4 bg-[var(--dev-bg)] rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-[var(--dev-warning)] rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${vendorPercentage}%` }}
+                    transition={{ duration: 0.8 }}
+                  />
+                </div>
+                <p className="text-xs text-[var(--dev-text-muted)] mt-1">{formatPercentage(vendorPercentage)} of total bundle</p>
               </div>
-              <div className="text-right ml-4">
-                <p className="text-sm font-mono text-dev-text">{formatBytes(module.size)}</p>
-                <span className={`inline-flex items-center mt-1 text-[10px] px-2 py-0.5 rounded-full font-medium uppercase tracking-wide ${
-                  module.type === 'vendor' 
-                    ? 'bg-dev-accent/10 text-dev-accent' 
-                    : module.type === 'chunk'
-                      ? 'bg-purple-500/10 text-purple-500'
-                      : module.type === 'asset'
-                        ? 'bg-dev-warning/10 text-dev-warning'
-                        : 'bg-dev-success/10 text-dev-success-bright'
-                }`}>
-                  {module.type}
-                </span>
+
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-[var(--dev-text)]">Application Code</span>
+                  <span className="text-[var(--dev-text-muted)]">{formatBytes(totalSize - vendorSize)}</span>
+                </div>
+                <div className="h-4 bg-[var(--dev-bg)] rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-[var(--dev-accent)] rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${100 - vendorPercentage}%` }}
+                    transition={{ duration: 0.8, delay: 0.1 }}
+                  />
+                </div>
+                <p className="text-xs text-[var(--dev-text-muted)] mt-1">{formatPercentage(100 - vendorPercentage)} of total bundle</p>
               </div>
             </div>
-          ))}
-        </div>
+          </ModernCard>
+        </motion.div>
+
+        <motion.div variants={fadeUpVariants}>
+          <ModernCard
+            header={
+              <CardHeader
+                title="Vendor Dependencies"
+                subtitle={`${thirdPartyModules.length} external dependencies`}
+                icon={<AlertTriangle className="w-5 h-5 text-[var(--dev-warning)]" />}
+              />
+            }
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-[var(--dev-surface-hover)]">
+                <span className="text-[var(--dev-text-muted)]">Total Vendor Size</span>
+                <span className="text-[var(--dev-text)]">{formatBytes(thirdPartySize)}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-[var(--dev-surface-hover)]">
+                <span className="text-[var(--dev-text-muted)]">Percentage</span>
+                <span className={thirdPartySize / totalSize > 0.5 ? 'text-[var(--dev-warning)]' : 'text-[var(--dev-success)]'}>
+                  {formatPercentage((thirdPartySize / totalSize) * 100)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-[var(--dev-surface-hover)]">
+                <span className="text-[var(--dev-text-muted)]">Duplicates</span>
+                <AnimatedBadge variant={duplicateLibraries.length > 0 ? 'warning' : 'success'}>
+                  {duplicateLibraries.length > 0 ? `${duplicateLibraries.length} found` : 'None'}
+                </AnimatedBadge>
+              </div>
+            </div>
+          </ModernCard>
+        </motion.div>
       </div>
-    </div>
+    </motion.section>
   );
 }

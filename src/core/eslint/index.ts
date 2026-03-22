@@ -209,35 +209,110 @@ function formatAsJS(config: ESLintConfig): string {
 }
 
 function formatAsFlat(config: ESLintConfig): string {
-  const lines = [
-    "import js from '@eslint/js';",
-    "import tseslint from 'typescript-eslint';",
-  ];
-
-  if ((config.plugins?.includes('react')) ?? false) {
+  const lines: string[] = [];
+  const plugins = config.plugins ?? [];
+  
+  // Imports
+  lines.push("import js from '@eslint/js';");
+  lines.push("import tseslint from 'typescript-eslint';");
+  
+  // Plugin imports based on what's needed
+  if (plugins.includes('react')) {
     lines.push("import react from 'eslint-plugin-react';");
+  }
+  if (plugins.includes('react-hooks')) {
     lines.push("import reactHooks from 'eslint-plugin-react-hooks';");
+  }
+  if (plugins.includes('import')) {
+    lines.push("import importPlugin from 'eslint-plugin-import';");
+  }
+  if (plugins.includes('jsx-a11y')) {
+    lines.push("import jsxA11y from 'eslint-plugin-jsx-a11y';");
+  }
+  if (plugins.includes('security')) {
+    lines.push("import security from 'eslint-plugin-security';");
+  }
+  
+  // Add parser import if needed
+  if (config.parser !== undefined) {
+    lines.push(`import parser from '${config.parser}';`);
   }
 
   lines.push('');
   lines.push('export default [');
+  
+  // Base configs
   lines.push("  js.configs.recommended,");
   lines.push("  ...tseslint.configs.recommended,");
-
-  if ((config.plugins?.includes('react')) ?? false) {
+  
+  // Plugin configs
+  if (plugins.includes('react')) {
     lines.push("  react.configs.flat.recommended,");
+  }
+  if (plugins.includes('react-hooks')) {
     lines.push("  reactHooks.configs['recommended-latest'],");
   }
+  if (plugins.includes('import')) {
+    lines.push("  importPlugin.flatConfigs.recommended,");
+  }
+  if (plugins.includes('jsx-a11y')) {
+    lines.push("  jsxA11y.flatConfigs.recommended,");
+  }
+  if (plugins.includes('security')) {
+    lines.push("  security.configs.recommended,");
+  }
 
+  // Custom configuration block
   lines.push('  {');
-  lines.push("    files: ['**/*.{ts,tsx}'],");
+  lines.push("    files: ['**/*.{js,jsx,ts,tsx}'],");
   
+  // Language options
+  if (config.parserOptions) {
+    lines.push('    languageOptions: {');
+    if (config.parser !== undefined) {
+      lines.push('      parser,');
+    }
+    if (config.parserOptions.ecmaVersion !== undefined) {
+      lines.push(`      ecmaVersion: ${config.parserOptions.ecmaVersion},`);
+    }
+    if (config.parserOptions.sourceType !== undefined) {
+      lines.push(`      sourceType: '${config.parserOptions.sourceType}',`);
+    }
+    lines.push('    },');
+  }
+  
+  // Plugins registration for rules
+  const pluginRules = Object.keys(config.rules ?? {}).filter(r => r.includes('/'));
+  if (pluginRules.length > 0) {
+    const usedPlugins = new Set<string>();
+    pluginRules.forEach(rule => {
+      const pluginName = rule.split('/')[0];
+      if (!pluginName.startsWith('@')) {
+        usedPlugins.add(pluginName);
+      }
+    });
+    
+    if (usedPlugins.size > 0) {
+      lines.push('    plugins: {');
+      usedPlugins.forEach(name => {
+        lines.push(`      ${name},`);
+      });
+      lines.push('    },');
+    }
+  }
+  
+  // Rules
   if (config.rules !== undefined && Object.keys(config.rules).length > 0) {
     lines.push('    rules: {');
     Object.entries(config.rules).forEach(([key, value]): void => {
       lines.push(`      '${key}': ${JSON.stringify(value)},`);
     });
     lines.push('    },');
+  }
+  
+  // Settings
+  if (config.settings) {
+    lines.push(`    settings: ${  JSON.stringify(config.settings, null, 6).replace(/\n/g, '\n    ')  },`);
   }
 
   lines.push('  },');
@@ -306,4 +381,5 @@ export function validateConfig(config: ESLintConfig): { valid: boolean; errors: 
 }
 
 export { issueToRuleMapping, getRulesForIssues, calculateEstimatedImpact, presets, combinePresets };
-export type { ESLintRule };
+export type { ESLintRule, PresetType };
+export type { Preset } from './presets';

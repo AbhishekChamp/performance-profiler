@@ -1,5 +1,5 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import * as d3 from 'd3';
+import { motion } from 'framer-motion';
+import { useMemo, useState } from 'react';
 
 interface PieData {
   label: string;
@@ -9,192 +9,127 @@ interface PieData {
 
 interface PieChartProps {
   data: PieData[];
-  width?: number;
-  height?: number;
-  innerRadius?: number;
+  size?: number;
+  donut?: boolean;
+  donutWidth?: number;
 }
 
-function PieChartComponent({ 
+interface PieSlice {
+  label: string;
+  value: number;
+  color: string;
+  pathData: string;
+  percentage: number;
+  endAngle: number;
+}
+
+export function PieChart({ 
   data, 
-  width = 280, 
-  height = 280,
-  innerRadius = 0.6 
-}: PieChartProps): React.JSX.Element {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [hoveredSlice, setHoveredSlice] = useState<PieData | null>(null);
-  const [isDark, setIsDark] = useState(true);
+  size = 200, 
+  donut = false,
+  donutWidth = 40 
+}: PieChartProps): React.ReactNode {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const total = data.reduce((acc, item) => acc + item.value, 0);
+  
+  const center = size / 2;
+  const radius = size / 2 - 10;
 
-  // Update theme detection
-  useEffect(() => {
-    const updateTheme = (): void => {
-      const dark = document.documentElement.classList.contains('dark');
-      setIsDark(dark);
-    };
-    
-    updateTheme();
-    
-    // Watch for theme changes
-    const observer = new MutationObserver(updateTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    
-    return () => observer.disconnect();
-  }, []);
+  // Calculate slices using useMemo with reduce to avoid reassignment
+  const slices = useMemo((): PieSlice[] => {
+    return data.reduce<PieSlice[]>((acc, item, index) => {
+      const previousAngle = index === 0 ? 0 : acc[index - 1].endAngle;
+      const percentage = item.value / total;
+      const angle = percentage * 360;
+      const startAngle = previousAngle;
+      const endAngle = previousAngle + angle;
 
-  const getThemeColor = useCallback((baseColor: string): string => {
-    // Map provided colors to theme-aware colors
-    const colorMap: Record<string, { dark: string; light: string }> = {
-      '#58a6ff': { dark: '#58a6ff', light: '#0969da' },
-      '#3fb950': { dark: '#3fb950', light: '#1a7f37' },
-      '#a371f7': { dark: '#a371f7', light: '#8250df' },
-      '#d29922': { dark: '#d29922', light: '#9a6700' },
-      '#da3633': { dark: '#da3633', light: '#cf222e' },
-      '#f778ba': { dark: '#f778ba', light: '#bf3989' },
-    };
-    
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    return colorMap[baseColor]?.[isDark ? 'dark' : 'light'] || baseColor;
-  }, [isDark]);
+      const startRad = (startAngle * Math.PI) / 180;
+      const endRad = (endAngle * Math.PI) / 180;
 
-  useEffect(() => {
-    if (!svgRef.current || data.length === 0) return;
+      const x1 = center + radius * Math.cos(startRad);
+      const y1 = center + radius * Math.sin(startRad);
+      const x2 = center + radius * Math.cos(endRad);
+      const y2 = center + radius * Math.sin(endRad);
 
-    const svg = d3.select(svgRef.current);
-    svg.selectAll('*').remove();
+      const largeArcFlag = angle > 180 ? 1 : 0;
 
-    const radius = Math.min(width, height) / 2 - 24;
-    const innerR = radius * innerRadius;
+      const pathData = donut
+        ? `M ${center + (radius - donutWidth) * Math.cos(startRad)} ${center + (radius - donutWidth) * Math.sin(startRad)} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} L ${center + (radius - donutWidth) * Math.cos(endRad)} ${center + (radius - donutWidth) * Math.sin(endRad)} A ${radius - donutWidth} ${radius - donutWidth} 0 ${largeArcFlag} 0 ${center + (radius - donutWidth) * Math.cos(startRad)} ${center + (radius - donutWidth) * Math.sin(startRad)}`
+        : `M ${center} ${center} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
 
-    const g = svg.append('g')
-      .attr('transform', `translate(${width / 2},${height / 2})`);
-
-    // Theme-aware stroke color
-    const strokeColor = isDark ? '#161b22' : '#f6f8fa';
-
-    // Create pie generator
-    const pie = d3.pie<PieData>()
-      .value(d => d.value)
-      .sort(null)
-      .padAngle(0.02);
-
-    // Create arc generators
-    const arc = d3.arc<d3.PieArcDatum<PieData>>()
-      .innerRadius(innerR)
-      .outerRadius(radius)
-      .cornerRadius(4);
-
-    const arcHover = d3.arc<d3.PieArcDatum<PieData>>()
-      .innerRadius(innerR)
-      .outerRadius(radius + 6)
-      .cornerRadius(4);
-
-    // Draw slices
-    const slices = g.selectAll<SVGPathElement, d3.PieArcDatum<PieData>>('path')
-      .data(pie(data))
-      .join('path')
-      .attr('fill', d => getThemeColor(d.data.color))
-      .attr('stroke', strokeColor)
-      .attr('stroke-width', 3)
-      .style('cursor', 'pointer')
-      .style('transition', 'all 0.2s ease');
-
-    // Animate on load
-    slices
-      .attr('d', arc as unknown as string)
-      .transition()
-      .duration(800)
-      .attrTween('d', function(d: d3.PieArcDatum<PieData>) {
-        const i = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
-        return function(t: number): string {
-          return arc(i(t) as unknown as d3.PieArcDatum<PieData>) ?? '';
-        };
+      acc.push({
+        label: item.label,
+        value: item.value,
+        color: item.color,
+        pathData,
+        percentage: percentage * 100,
+        endAngle,
       });
-
-    // Hover effects
-    slices
-      .on('mouseover', function(_event: MouseEvent, d: d3.PieArcDatum<PieData>) {
-        d3.select(this)
-          .transition()
-          .duration(150)
-          .attr('d', arcHover as unknown as string);
-        setHoveredSlice(d.data);
-      })
-      .on('mouseout', function() {
-        d3.select(this)
-          .transition()
-          .duration(150)
-          .attr('d', arc as unknown as string);
-        setHoveredSlice(null);
-      });
-
-    // Add center circle for cleaner look
-    g.append('circle')
-      .attr('r', innerR - 4)
-      .attr('fill', strokeColor)
-      .style('opacity', 0.5);
-
-  }, [data, width, height, innerRadius, isDark, getThemeColor]);
-
-  const total = data.reduce((sum, d) => sum + d.value, 0);
+      return acc;
+    }, []);
+  }, [data, total, center, radius, donut, donutWidth]);
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative">
-        <svg ref={svgRef} width={width} height={height} className="overflow-visible" />
-        
-        {/* Center text */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          {hoveredSlice ? (
-            <>
-              <span className="text-3xl font-bold text-dev-text tracking-tight">
-                {((hoveredSlice.value / total) * 100).toFixed(0)}%
-              </span>
-              <span className="text-xs text-dev-text-muted mt-0.5">{hoveredSlice.label}</span>
-            </>
-          ) : (
-            <>
-              <span className="text-3xl font-bold text-dev-text tracking-tight">
-                {(total / 1024 / 1024).toFixed(1)}
-              </span>
-              <span className="text-xs text-dev-text-muted mt-0.5">MB Total</span>
-            </>
-          )}
-        </div>
-      </div>
+    <div className="relative inline-flex">
+      <svg width={size} height={size}>
+        {slices.map((slice, index) => {
+          const isHovered = hoveredIndex === index;
 
-      {/* Legend */}
-      <div className="flex flex-wrap justify-center gap-4 mt-5">
-        {data.map((d, i) => {
-          const percentage = ((d.value / total) * 100).toFixed(0);
-          const isHovered = hoveredSlice?.label === d.label;
-          
           return (
-            <div 
-              key={i} 
-              className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-all duration-200 cursor-pointer ${
-                isHovered ? 'bg-dev-surface-hover' : 'hover:bg-dev-surface-hover/50'
-              }`}
-              onMouseEnter={() => setHoveredSlice(d)}
-              onMouseLeave={() => setHoveredSlice(null)}
-            >
-              <div 
-                className="w-3 h-3 rounded-sm shadow-sm"
-                style={{ 
-                  backgroundColor: getThemeColor(d.color),
-                  opacity: isHovered ? 1 : 0.85
-                }}
-              />
-              <span className={`text-xs transition-colors ${
-                isHovered ? 'text-dev-text font-medium' : 'text-dev-text-muted'
-              }`}>
-                {d.label}
-                <span className="ml-1.5 font-mono text-dev-text-subtle">{percentage}%</span>
-              </span>
-            </div>
+            <motion.path
+              key={index}
+              d={slice.pathData}
+              fill={slice.color}
+              stroke="var(--dev-bg)"
+              strokeWidth={2}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ 
+                opacity: 1, 
+                scale: isHovered ? 1.05 : 1,
+              }}
+              transition={{ duration: 0.3, delay: index * 0.05 }}
+              onMouseEnter={() => setHoveredIndex(index)}
+              onMouseLeave={() => setHoveredIndex(null)}
+              style={{
+                filter: isHovered ? `drop-shadow(0 0 10px ${slice.color}80)` : 'none',
+                cursor: 'pointer',
+                transformOrigin: 'center',
+              }}
+            />
           );
         })}
+      </svg>
+
+      {/* Legend */}
+      <div className="ml-4 flex flex-col justify-center gap-2">
+        {slices.map((slice, index) => (
+          <div
+            key={index}
+            className="flex items-center gap-2 cursor-pointer"
+            onMouseEnter={() => setHoveredIndex(index)}
+            onMouseLeave={() => setHoveredIndex(null)}
+          >
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: slice.color }}
+            />
+            <span className="text-sm text-[var(--dev-text)]">
+              {slice.label} ({slice.percentage.toFixed(1)}%)
+            </span>
+          </div>
+        ))}
       </div>
+
+      {/* Center text for donut */}
+      {donut && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-center">
+            <span className="text-2xl font-bold text-[var(--dev-text)]">{total}</span>
+            <span className="text-xs text-[var(--dev-text-muted)] block">Total</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-export const PieChart = memo(PieChartComponent);

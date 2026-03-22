@@ -1,217 +1,144 @@
+import { motion } from 'framer-motion';
+import { AlertTriangle, CheckCircle, FileType, Settings } from 'lucide-react';
+import { CardHeader, ModernCard } from '@/components/ui/ModernCard';
+import { AnimatedBadge } from '@/components/ui/AnimatedBadge';
+import { ScoreDisplay } from '@/components/ui/ScoreDisplay';
+import { fadeUpVariants, staggerContainerVariants } from '@/utils/animations';
 import type { TypeScriptAnalysis } from '@/types';
-import { AlertTriangle, CheckCircle, Code, FileCode, Settings, Shield } from 'lucide-react';
 
 interface TypeScriptSectionProps {
-  typescript: TypeScriptAnalysis;
+  analysis?: TypeScriptAnalysis;
 }
 
-export function TypeScriptSection({ typescript }: TypeScriptSectionProps): React.ReactNode {
-  const { score, strictMode, anyCount, typeCoverage, issues, tsConfigChecks, recommendations } = typescript;
+export function TypeScriptSection({ analysis }: TypeScriptSectionProps): React.ReactNode {
+  if (!analysis) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-center py-12 text-[var(--dev-text-muted)]"
+      >
+        <FileType className="w-12 h-12 mx-auto mb-4 opacity-50" />
+        <p>No TypeScript analysis data available</p>
+      </motion.div>
+    );
+  }
+
+  const { score, strictMode, anyCount, typeCoverage, issues, tsConfigChecks, recommendations } = analysis;
+
+  const warnings = issues.filter(i => i.severity === 'warning');
+  const info = issues.filter(i => i.severity === 'info');
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <FileCode className="w-5 h-5 text-dev-accent" />
-          <h2 className="text-lg font-semibold text-dev-text">TypeScript Quality</h2>
-        </div>
-        <div className={`
-          px-3 py-1 rounded-full text-sm font-medium
-          ${score >= 90 ? 'bg-green-500/20 text-green-400' :
-            score >= 70 ? 'bg-yellow-500/20 text-yellow-400' :
-            'bg-red-500/20 text-red-400'}
-        `}>
-          Score: {score}
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="metric-card">
-          <span className="metric-label">Strict Mode</span>
-          <span className={strictMode ? 'metric-value text-green-400' : 'metric-value text-red-400'}>
-            {strictMode ? 'Enabled' : 'Disabled'}
-          </span>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">Type Coverage</span>
-          <span className={typeCoverage >= 80 ? 'metric-value text-green-400' : 'metric-value text-dev-warning'}>
-            {typeCoverage}%
-          </span>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">any Usage</span>
-          <span className={anyCount === 0 ? 'metric-value text-green-400' : 'metric-value text-dev-warning'}>
-            {anyCount}
-          </span>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">Issues</span>
-          <span className="metric-value">{issues.length}</span>
-        </div>
-      </div>
-
-      {/* Strict Mode Warning */}
-      {!strictMode && (
-        <div className="dev-panel border-red-500/30">
-          <div className="flex items-start gap-3 p-4">
-            <Shield className="w-5 h-5 text-red-400 shrink-0" />
-            <div>
-              <h3 className="text-sm font-semibold text-red-400">Strict Mode Disabled</h3>
-              <p className="text-sm text-dev-text-muted mt-1">
-                TypeScript strict mode is not enabled. This reduces type safety and may hide potential bugs.
-              </p>
-              <code className="block mt-2 text-xs bg-dev-surface-hover p-2 rounded">
-                {'{'}<br/>
-                &nbsp;&nbsp;"compilerOptions": {'{'}<br/>
-                &nbsp;&nbsp;&nbsp;&nbsp;"strict": true<br/>
-                &nbsp;&nbsp;{'}'}<br/>
-                {'}'}
-              </code>
+    <motion.section 
+      className="space-y-6"
+      variants={staggerContainerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Score Card */}
+      <motion.div variants={fadeUpVariants}>
+        <ModernCard className="flex flex-col md:flex-row items-center gap-8 p-6">
+          <ScoreDisplay score={score} size="lg" label="TypeScript Score" animate />
+          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+            <div className="text-center p-4 rounded-xl bg-[var(--dev-surface-hover)]">
+              <p className="text-2xl font-bold text-[var(--dev-text)]">{strictMode ? '✓' : '✗'}</p>
+              <p className="text-xs text-[var(--dev-text-muted)]">Strict Mode</p>
+            </div>
+            <div className="text-center p-4 rounded-xl bg-[var(--dev-warning)]/10">
+              <p className="text-2xl font-bold text-[var(--dev-warning)]">{anyCount}</p>
+              <p className="text-xs text-[var(--dev-text-muted)]">any Types</p>
+            </div>
+            <div className="text-center p-4 rounded-xl bg-[var(--dev-success)]/10">
+              <p className="text-2xl font-bold text-[var(--dev-success)]">{typeCoverage.toFixed(0)}%</p>
+              <p className="text-xs text-[var(--dev-text-muted)]">Type Coverage</p>
+            </div>
+            <div className="text-center p-4 rounded-xl bg-[var(--dev-info)]/10">
+              <p className="text-2xl font-bold text-[var(--dev-info)]">{issues.length}</p>
+              <p className="text-xs text-[var(--dev-text-muted)]">Issues</p>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Type Coverage Progress */}
-      <div className="dev-panel p-4">
-        <h3 className="text-sm font-semibold text-dev-text mb-3">Type Coverage</h3>
-        <div className="h-4 bg-dev-surface-hover rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${
-              typeCoverage >= 80 ? 'bg-green-400' :
-              typeCoverage >= 50 ? 'bg-yellow-400' :
-              'bg-red-400'
-            }`}
-            style={{ width: `${typeCoverage}%` }}
-          />
-        </div>
-        <div className="flex justify-between mt-2 text-xs text-dev-text-muted">
-          <span>0%</span>
-          <span className={typeCoverage >= 80 ? 'text-green-400' : ''}>{typeCoverage}% typed</span>
-          <span>100%</span>
-        </div>
-      </div>
+        </ModernCard>
+      </motion.div>
 
       {/* tsconfig.json Checks */}
-      {tsConfigChecks.length > 0 && (
-        <div className="dev-panel">
-          <div className="px-4 py-3 border-b border-dev-border">
-            <h3 className="text-sm font-semibold text-dev-text flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              tsconfig.json Checks
-            </h3>
-          </div>
-          <div className="divide-y divide-dev-border-subtle">
-            {tsConfigChecks.map((check, i) => (
-              <div key={i} className="px-4 py-3 flex items-center justify-between">
+      <motion.div variants={fadeUpVariants}>
+        <ModernCard
+          header={
+            <CardHeader
+              title="TSConfig Checks"
+              subtitle="Compiler configuration validation"
+              icon={<Settings className="w-5 h-5 text-[var(--dev-accent)]" />}
+            />
+          }
+        >
+          <div className="space-y-2">
+            {tsConfigChecks.map((check, index) => (
+              <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-[var(--dev-surface-hover)]">
+                <span className="text-sm text-[var(--dev-text)]">{check.option}</span>
                 <div className="flex items-center gap-2">
-                  {check.enabled ? (
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                  ) : (
-                    <AlertTriangle className={`w-4 h-4 ${
-                      check.severity === 'error' ? 'text-red-400' : 'text-yellow-400'
-                    }`} />
+                  <AnimatedBadge variant={check.enabled ? 'success' : check.severity === 'error' ? 'danger' : 'warning'} size="sm">
+                    {check.enabled ? 'Enabled' : 'Disabled'}
+                  </AnimatedBadge>
+                  {!check.enabled && check.recommended && (
+                    <span className="text-xs text-[var(--dev-warning)]">(recommended)</span>
                   )}
-                  <span className="text-sm text-dev-text">{check.option}</span>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded ${
-                  check.enabled ? 'bg-green-500/20 text-green-400' :
-                  check.severity === 'error' ? 'bg-red-500/20 text-red-400' :
-                  'bg-yellow-500/20 text-yellow-400'
-                }`}>
-                  {check.enabled ? 'Enabled' : 'Disabled'}
-                </span>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        </ModernCard>
+      </motion.div>
 
-      {/* Issues List */}
+      {/* Issues */}
       {issues.length > 0 && (
-        <div className="dev-panel">
-          <div className="px-4 py-3 border-b border-dev-border">
-            <h3 className="text-sm font-semibold text-dev-text flex items-center gap-2">
-              <Code className="w-4 h-4" />
-              Type Issues ({issues.length})
-            </h3>
-          </div>
-          <div className="max-h-96 overflow-y-auto divide-y divide-dev-border-subtle">
-            {issues.map((issue, i) => (
-              <div key={i} className="px-4 py-3 hover:bg-dev-surface-hover">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-dev-text">{issue.type}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded ${
-                    issue.severity === 'warning' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-blue-500/20 text-blue-400'
-                  }`}>
+        <motion.div variants={fadeUpVariants}>
+          <ModernCard
+            header={
+              <CardHeader
+                title="Type Issues"
+                subtitle={`${warnings.length} warnings, ${info.length} info`}
+                icon={<AlertTriangle className="w-5 h-5 text-[var(--dev-warning)]" />}
+              />
+            }
+          >
+            <div className="space-y-2">
+              {issues.map((issue, index) => (
+                <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-[var(--dev-surface-hover)]">
+                  <span className="text-sm text-[var(--dev-text)]">{issue.message}</span>
+                  <AnimatedBadge variant={issue.severity === 'warning' ? 'warning' : 'info'} size="sm">
                     {issue.severity}
-                  </span>
+                  </AnimatedBadge>
                 </div>
-                <p className="text-xs text-dev-text-muted">{issue.message}</p>
-                <p className="text-xs text-dev-text-subtle mt-1">
-                  {issue.file}:{issue.line}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
+          </ModernCard>
+        </motion.div>
       )}
 
       {/* Recommendations */}
       {recommendations.length > 0 && (
-        <div className="dev-panel">
-          <div className="px-4 py-3 border-b border-dev-border">
-            <h3 className="text-sm font-semibold text-dev-text">Recommendations</h3>
-          </div>
-          <div className="divide-y divide-dev-border-subtle">
-            {recommendations.map((rec, i) => (
-              <div key={i} className="px-4 py-3 flex items-start gap-3">
-                <CheckCircle className="w-4 h-4 text-dev-accent shrink-0 mt-0.5" />
-                <span className="text-sm text-dev-text">{rec}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <motion.div variants={fadeUpVariants}>
+          <ModernCard
+            header={
+              <CardHeader
+                title="Recommendations"
+                subtitle="TypeScript best practices"
+                icon={<CheckCircle className="w-5 h-5 text-[var(--dev-success)]" />}
+              />
+            }
+          >
+            <div className="space-y-2">
+              {recommendations.map((rec, index) => (
+                <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--dev-surface-hover)]">
+                  <CheckCircle className="w-5 h-5 text-[var(--dev-success)]" />
+                  <span className="text-sm text-[var(--dev-text)]">{rec}</span>
+                </div>
+              ))}
+            </div>
+          </ModernCard>
+        </motion.div>
       )}
-
-      {/* Best Practices */}
-      <div className="dev-panel">
-        <div className="px-4 py-3 border-b border-dev-border">
-          <h3 className="text-sm font-semibold text-dev-text">TypeScript Best Practices</h3>
-        </div>
-        <div className="p-4 space-y-3">
-          <div className="flex items-start gap-3">
-            <CheckCircle className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm text-dev-text">Enable strict mode</p>
-              <p className="text-xs text-dev-text-muted">Catches more errors at compile time</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <CheckCircle className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm text-dev-text">Avoid using `any`</p>
-              <p className="text-xs text-dev-text-muted">Use `unknown` for truly unknown types</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <CheckCircle className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm text-dev-text">Add explicit return types</p>
-              <p className="text-xs text-dev-text-muted">Especially for exported functions</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <CheckCircle className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm text-dev-text">Use interface over type for objects</p>
-              <p className="text-xs text-dev-text-muted">Better error messages and extensibility</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </motion.section>
   );
 }

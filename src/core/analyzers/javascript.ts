@@ -11,8 +11,6 @@ function isLoopStatement(node: Node): node is ForStatement | WhileStatement | Do
 }
 
 function countNestedLoops(node: Node, depth = 0): number {
-  if (typeof node !== 'object') return 0;
-  
   let maxDepth = depth;
   
   if (isLoopStatement(node)) {
@@ -24,7 +22,8 @@ function countNestedLoops(node: Node, depth = 0): number {
     const value = node[key as keyof Node];
     if (value !== undefined && Array.isArray(value)) {
       for (const item of value) {
-        if (typeof item === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (item !== null && item !== undefined && typeof item === 'object') {
           maxDepth = Math.max(maxDepth, countNestedLoops(item as unknown as Node, maxDepth));
         }
       }
@@ -43,8 +42,6 @@ function isComplexityNode(node: Node): node is IfStatement | ConditionalExpressi
 }
 
 function calculateCyclomaticComplexity(node: Node): number {
-  if (typeof node !== 'object') return 0;
-  
   let complexity = 1;
   
   if (isComplexityNode(node)) {
@@ -56,7 +53,8 @@ function calculateCyclomaticComplexity(node: Node): number {
     const value = node[key as keyof Node];
     if (value !== undefined && Array.isArray(value)) {
       for (const item of value) {
-        if (typeof item === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (item !== null && item !== undefined && typeof item === 'object') {
           complexity += calculateCyclomaticComplexity(item as unknown as Node);
         }
       }
@@ -72,7 +70,6 @@ function extractFunctions(ast: Node): JSFunction[] {
   const functions: JSFunction[] = [];
   
   function traverse(node: Node): void {
-    if (typeof node !== 'object') return;
     
     if (node.type === 'FunctionDeclaration' || 
         node.type === 'FunctionExpression' || 
@@ -128,11 +125,12 @@ function extractFunctions(ast: Node): JSFunction[] {
       if (key === 'type') continue;
       const value = node[key as keyof Node];
       if (value !== undefined && Array.isArray(value)) {
-        value.forEach((item) => {
-          if (typeof item === 'object') {
+        for (const item of value) {
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          if (item !== null && item !== undefined && typeof item === 'object') {
             traverse(item as unknown as Node);
           }
-        });
+        }
       } else if (value !== undefined && value !== null && typeof value === 'object') {
         traverse(value as unknown as Node);
       }

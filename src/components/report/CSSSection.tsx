@@ -1,119 +1,108 @@
-import { BarChart } from '../charts/BarChart';
-import type { CSSAnalysis } from '@/types';
+import { motion } from 'framer-motion';
 import { AlertTriangle, Palette } from 'lucide-react';
+import { CardHeader, ModernCard } from '@/components/ui/ModernCard';
+import { fadeUpVariants, staggerContainerVariants } from '@/utils/animations';
+import type { CSSAnalysis } from '@/types';
 
 interface CSSSectionProps {
-  css: CSSAnalysis;
+  analysis?: CSSAnalysis;
 }
 
-export function CSSSection({ css }: CSSSectionProps): React.ReactNode {
-  const fileData = css.largeFiles.map(f => ({
-    label: f.path.split('/').pop() ?? f.path,
-    value: f.size,
-    color: f.size > 200 * 1024 ? '#f85149' : f.size > 100 * 1024 ? '#d29922' : '#58a6ff',
-  }));
+export function CSSSection({ analysis }: CSSSectionProps): React.ReactNode {
+  if (analysis === undefined) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-center py-12 text-[var(--dev-text-muted)]"
+      >
+        <Palette className="w-12 h-12 mx-auto mb-4 opacity-50" />
+        <p>No CSS analysis data available</p>
+      </motion.div>
+    );
+  }
 
-  const unusedPercentage = css.totalRules > 0 ? (css.unusedRules / css.totalRules) * 100 : 0;
+  const { totalRules, unusedRules, inlineStyles, importantCount, unusedSelectors, warnings } = analysis;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Palette className="w-5 h-5 text-dev-accent" />
-        <h2 className="text-lg font-semibold text-dev-text">CSS Analysis</h2>
-      </div>
+    <motion.section 
+      className="space-y-6"
+      variants={staggerContainerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div variants={fadeUpVariants}>
+        <ModernCard className="grid grid-cols-2 md:grid-cols-5 gap-4 p-6">
+          <div className="text-center p-4 rounded-xl bg-[var(--dev-surface-hover)]">
+            <p className="text-2xl font-bold text-[var(--dev-text)]">{totalRules.toLocaleString()}</p>
+            <p className="text-xs text-[var(--dev-text-muted)]">Total Rules</p>
+          </div>
+          <div className="text-center p-4 rounded-xl bg-[var(--dev-warning)]/10">
+            <p className="text-2xl font-bold text-[var(--dev-warning)]">{unusedRules}</p>
+            <p className="text-xs text-[var(--dev-text-muted)]">Unused Rules</p>
+          </div>
+          <div className="text-center p-4 rounded-xl bg-[var(--dev-info)]/10">
+            <p className="text-2xl font-bold text-[var(--dev-info)]">{inlineStyles}</p>
+            <p className="text-xs text-[var(--dev-text-muted)]">Inline Styles</p>
+          </div>
+          <div className="text-center p-4 rounded-xl bg-[var(--dev-danger)]/10">
+            <p className="text-2xl font-bold text-[var(--dev-danger)]">{importantCount}</p>
+            <p className="text-xs text-[var(--dev-text-muted)]">!important</p>
+          </div>
+          <div className="text-center p-4 rounded-xl bg-[var(--dev-surface-hover)]">
+            <p className="text-2xl font-bold text-[var(--dev-text)]">{unusedSelectors.length}</p>
+            <p className="text-xs text-[var(--dev-text-muted)]">Unused Selectors</p>
+          </div>
+        </ModernCard>
+      </motion.div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="metric-card">
-          <span className="metric-label">Total Rules</span>
-          <span className="metric-value">{css.totalRules.toLocaleString()}</span>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">Unused Rules</span>
-          <span className={`metric-value ${unusedPercentage > 30 ? 'text-dev-danger-bright' : 'text-dev-warning-bright'}`}>
-            {css.unusedRules.toLocaleString()}
-          </span>
-          <span className="text-xs text-dev-text-muted">{unusedPercentage.toFixed(1)}%</span>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">Inline Styles</span>
-          <span className={`metric-value ${css.inlineStyles > 10 ? 'text-dev-warning-bright' : 'text-dev-text'}`}>
-            {css.inlineStyles}
-          </span>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">!important</span>
-          <span className={`metric-value ${css.importantCount > 20 ? 'text-dev-danger-bright' : 'text-dev-text'}`}>
-            {css.importantCount}
-          </span>
-        </div>
-      </div>
+      {unusedSelectors.length > 0 && (
+        <motion.div variants={fadeUpVariants}>
+          <ModernCard
+            header={
+              <CardHeader
+                title="Unused Selectors"
+                subtitle={`${unusedSelectors.length} selectors not found in DOM`}
+                icon={<Palette className="w-5 h-5 text-[var(--dev-warning)]" />}
+              />
+            }
+          >
+            <div className="flex flex-wrap gap-2">
+              {unusedSelectors.slice(0, 20).map((selector, index) => (
+                <code key={index} className="px-2 py-1 rounded bg-[var(--dev-bg)] text-sm text-[var(--dev-text)]">
+                  {selector}
+                </code>
+              ))}
+              {unusedSelectors.length > 20 && (
+                <span className="text-sm text-[var(--dev-text-muted)]">+{unusedSelectors.length - 20} more</span>
+              )}
+            </div>
+          </ModernCard>
+        </motion.div>
+      )}
 
-      {/* Warnings */}
-      {css.warnings.length > 0 && (
-        <div className="dev-panel p-4">
-          <h3 className="text-sm font-semibold text-dev-text mb-3">Warnings</h3>
-          <div className="space-y-2">
-            {css.warnings.map((warning, i) => (
-              <div 
-                key={i} 
-                className={`flex items-start gap-3 p-3 rounded ${
-                  warning.severity === 'error' ? 'bg-dev-danger/10 border border-dev-danger/30' :
-                  warning.severity === 'warning' ? 'bg-dev-warning/10 border border-dev-warning/30' :
-                  'bg-dev-accent/10 border border-dev-accent/30'
-                }`}
-              >
-                <AlertTriangle className={`w-5 h-5 shrink-0 mt-0.5 ${
-                  warning.severity === 'error' ? 'text-dev-danger-bright' :
-                  warning.severity === 'warning' ? 'text-dev-warning-bright' :
-                  'text-dev-accent'
-                }`} />
-                <div>
-                  <p className="text-sm text-dev-text">{warning.message}</p>
-                  {warning.selector != null && warning.selector !== '' && (
-                    <code className="text-xs text-dev-text-muted mt-1 block">{warning.selector}</code>
-                  )}
+      {warnings.length > 0 && (
+        <motion.div variants={fadeUpVariants}>
+          <ModernCard
+            header={
+              <CardHeader
+                title="CSS Warnings"
+                subtitle={`${warnings.length} potential issues`}
+                icon={<AlertTriangle className="w-5 h-5 text-[var(--dev-warning)]" />}
+              />
+            }
+          >
+            <div className="space-y-2">
+              {warnings.map((warning, index) => (
+                <div key={index} className="p-3 rounded-lg bg-[var(--dev-warning)]/5">
+                  <p className="text-sm text-[var(--dev-text)]">{warning.message}</p>
+                  <p className="text-xs text-[var(--dev-text-muted)]">{warning.selector ?? 'unknown'}</p>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
+          </ModernCard>
+        </motion.div>
       )}
-
-      {/* Large Files */}
-      {fileData.length > 0 && (
-        <div className="dev-panel p-4">
-          <h3 className="text-sm font-semibold text-dev-text mb-4">Large CSS Files</h3>
-          <BarChart 
-            data={fileData} 
-            height={200}
-            formatValue={(v) => `${(v / 1024).toFixed(1)} KB`}
-          />
-        </div>
-      )}
-
-      {/* Unused Selectors */}
-      {css.unusedSelectors.length > 0 && (
-        <div className="dev-panel">
-          <div className="px-4 py-3 border-b border-dev-border flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-dev-text">Unused Selectors</h3>
-            <span className="text-xs text-dev-text-muted">
-              Showing first {Math.min(20, css.unusedSelectors.length)} of {css.unusedSelectors.length}
-            </span>
-          </div>
-          <div className="max-h-64 overflow-y-auto">
-            {css.unusedSelectors.map((selector, i) => (
-              <div 
-                key={i} 
-                className="px-4 py-2 border-b border-dev-border-subtle last:border-0 hover:bg-dev-surface-hover"
-              >
-                <code className="text-sm text-dev-text">{selector}</code>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+    </motion.section>
   );
 }

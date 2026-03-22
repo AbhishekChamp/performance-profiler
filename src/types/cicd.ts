@@ -63,3 +63,15 @@ export interface BudgetCheckScript {
   script: string;
   language: 'javascript' | 'bash' | 'python';
 }
+
+// Preset budget configurations
+export interface BudgetPreset {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  budgets: PerformanceBudget;
+}
+
+export type BudgetPresetId = 'strict' | 'balanced' | 'relaxed' | 'mobile' | 'desktop';

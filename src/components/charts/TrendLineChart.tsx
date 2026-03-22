@@ -1,272 +1,275 @@
-import { useEffect, useRef, useState } from 'react';
-import * as d3 from 'd3';
+import { motion } from 'framer-motion';
+import { useMemo, useState } from 'react';
 import type { RegressionPoint, TrendSeries } from '@/types';
-import { useThemeStore } from '@/stores/themeStore';
+
+interface TrendPoint {
+  x: number;
+  y: number;
+  label?: string;
+}
 
 interface TrendLineChartProps {
-  series: TrendSeries[];
-  regressions?: RegressionPoint[];
+  data?: TrendPoint[];
   width?: number;
   height?: number;
-  showLegend?: boolean;
+  color?: string;
+  showArea?: boolean;
+  series?: TrendSeries[];
+  regressions?: RegressionPoint[];
   enableZoom?: boolean;
 }
 
-export function TrendLineChart({
+export function TrendLineChart({ 
+  data,
+  width = 600, 
+  height = 200,
+  color = 'var(--dev-accent)',
+  showArea = true,
   series,
-  regressions = [],
-  width = 800,
-  height = 400,
-  showLegend = true,
-  enableZoom = true,
-}: TrendLineChartProps): React.JSX.Element {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [hoveredPoint, setHoveredPoint] = useState<{ x: number; y: number; data: { series: string; value: number; date: Date } } | null>(null);
-  const { resolvedMode } = useThemeStore();
-  const isDark = resolvedMode === 'dark';
+}: TrendLineChartProps): React.ReactNode {
+  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!svgRef.current || series.length === 0) return;
+  if (series !== undefined && series.length > 0) {
+    return (
+      <SeriesTrendLineChart
+        series={series}
+        width={width}
+        height={height}
+      />
+    );
+  }
 
-    const svg = d3.select(svgRef.current);
-    svg.selectAll('*').remove();
+  if (data === undefined || data.length === 0) {
+    return <div className="text-center py-8 text-[var(--dev-text-muted)]">No data</div>;
+  }
 
-    // Theme-aware colors
-    const gridColor = isDark ? '#30363d' : '#d0d7de';
-    const textColor = isDark ? '#8b949e' : '#57606a';
-    const axisColor = isDark ? '#30363d' : '#d0d7de';
+  const padding = 40;
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
 
-    const margin = { top: 20, right: 80, bottom: 50, left: 60 };
-    const chartWidth = width - margin.left - margin.right;
-    const chartHeight = height - margin.top - margin.bottom;
+  const maxX = Math.max(...data.map(d => d.x));
+  const maxY = Math.max(...data.map(d => d.y));
+  const minY = Math.min(...data.map(d => d.y));
+  const yRange = maxY - minY || 1;
 
-    // Find data ranges
-    const allData = series.flatMap(s => s.data);
-    const xExtent = d3.extent(allData, d => d.x) as [number, number];
-    const yExtent = d3.extent(allData, d => d.y) as [number, number];
-    
-    // Add padding to y extent
-    const yPadding = (yExtent[1] - yExtent[0]) * 0.1;
-    yExtent[0] = Math.max(0, yExtent[0] - yPadding);
-    yExtent[1] = yExtent[1] + yPadding;
+  const getX = (x: number): number => padding + (x / maxX) * chartWidth;
+  const getY = (y: number): number => padding + chartHeight - ((y - minY) / yRange) * chartHeight;
 
-    const g = svg.append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
+  const pathData = data.map((point, index) => {
+    const x = getX(point.x);
+    const y = getY(point.y);
+    return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
+  }).join(' ');
 
-    // Create scales
-    const xScale = d3.scaleTime()
-      .domain(xExtent)
-      .range([0, chartWidth]);
-
-    const yScale = d3.scaleLinear()
-      .domain(yExtent)
-      .range([chartHeight, 0]);
-
-    // Add grid lines
-    const yAxisGrid = d3.axisLeft(yScale)
-      .tickSize(-chartWidth)
-      .tickFormat(() => '')
-      .ticks(5);
-
-    g.append('g')
-      .attr('class', 'grid')
-      .call(yAxisGrid)
-      .selectAll('line')
-      .attr('stroke', gridColor)
-      .attr('stroke-dasharray', '3,3')
-      .attr('opacity', 0.5);
-
-    g.select('.grid').select('.domain').remove();
-
-    // Add X axis
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const xAxis = d3.axisBottom(xScale as any)
-      .ticks(5)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .tickFormat(d3.timeFormat('%b %d') as any);
-
-    g.append('g')
-      .attr('class', 'x-axis')
-      .attr('transform', `translate(0,${chartHeight})`)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .call(xAxis as any)
-      .selectAll('text')
-      .style('fill', textColor)
-      .style('font-size', '11px');
-
-    g.select('.domain').attr('stroke', axisColor);
-    g.selectAll('.tick line').attr('stroke', axisColor);
-
-    // Add Y axis
-    const yAxis = d3.axisLeft(yScale).ticks(5);
-    g.append('g')
-      .call(yAxis)
-      .selectAll('text')
-      .style('fill', textColor)
-      .style('font-size', '11px');
-
-    // Create line generator
-    const line = d3.line<{ x: number; y: number }>()
-      .x(d => xScale(d.x))
-      .y(d => yScale(d.y))
-      .curve(d3.curveMonotoneX);
-
-    // Draw lines for each series
-    series.forEach(s => {
-      if (s.data.length < 2) return;
-
-      // Draw line
-      g.append('path')
-        .datum(s.data)
-        .attr('fill', 'none')
-        .attr('stroke', s.color)
-        .attr('stroke-width', 2)
-        .attr('d', line)
-        .attr('opacity', 0)
-        .transition()
-        .duration(750)
-        .attr('opacity', 1);
-
-      // Draw dots
-      g.selectAll(`.dot-${s.metric}`)
-        .data(s.data)
-        .join('circle')
-        .attr('class', `dot-${s.metric}`)
-        .attr('cx', d => xScale(d.x))
-        .attr('cy', d => yScale(d.y))
-        .attr('r', 4)
-        .attr('fill', s.color)
-        .attr('stroke', isDark ? '#161b22' : '#ffffff')
-        .attr('stroke-width', 2)
-        .attr('opacity', 0)
-        .on('mouseover', function(event, d) {
-          d3.select(this).attr('r', 6);
-          setHoveredPoint({
-            x: event.pageX,
-            y: event.pageY,
-            data: {
-              series: s.label,
-              value: d.y,
-              date: new Date(d.x),
-            },
-          });
-        })
-        .on('mouseout', function() {
-          d3.select(this).attr('r', 4);
-          setHoveredPoint(null);
-        })
-        .transition()
-        .duration(750)
-        .delay((d, i) => i * 30)
-        .attr('opacity', 1);
-    });
-
-    // Draw regression markers
-    regressions.forEach(reg => {
-      const x = xScale(reg.timestamp);
-      const color = reg.severity === 'critical' ? '#f85149' : '#d29922';
-      
-      // Draw vertical line
-      g.append('line')
-        .attr('x1', x)
-        .attr('x2', x)
-        .attr('y1', 0)
-        .attr('y2', chartHeight)
-        .attr('stroke', color)
-        .attr('stroke-width', 2)
-        .attr('stroke-dasharray', '5,5')
-        .attr('opacity', 0.5);
-      
-      // Draw warning icon
-      g.append('circle')
-        .attr('cx', x)
-        .attr('cy', 10)
-        .attr('r', 8)
-        .attr('fill', color)
-        .attr('stroke', isDark ? '#161b22' : '#ffffff')
-        .attr('stroke-width', 2);
-      
-      g.append('text')
-        .attr('x', x)
-        .attr('y', 14)
-        .attr('text-anchor', 'middle')
-        .attr('fill', 'white')
-        .attr('font-size', '10px')
-        .attr('font-weight', 'bold')
-        .text('!');
-    });
-
-    // Add legend
-    if (showLegend) {
-      const legend = g.append('g')
-        .attr('transform', `translate(${chartWidth + 10}, 0)`);
-
-      series.forEach((s, i) => {
-        const legendItem = legend.append('g')
-          .attr('transform', `translate(0, ${i * 20})`);
-
-        legendItem.append('line')
-          .attr('x1', 0)
-          .attr('x2', 15)
-          .attr('y1', 5)
-          .attr('y2', 5)
-          .attr('stroke', s.color)
-          .attr('stroke-width', 2);
-
-        legendItem.append('text')
-          .attr('x', 20)
-          .attr('y', 9)
-          .text(s.label)
-          .style('fill', textColor)
-          .style('font-size', '11px');
-      });
-    }
-
-    // Add zoom behavior if enabled
-    if (enableZoom) {
-      const zoom = d3.zoom<SVGSVGElement, unknown>()
-        .scaleExtent([0.5, 5])
-        .on('zoom', (event) => {
-          const newXScale = event.transform.rescaleX(xScale);
-          
-          // Update axes
-          g.select<SVGGElement>('.x-axis').call(d3.axisBottom(newXScale));
-          
-          // Update lines
-          g.selectAll('path.line')
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .attr('d', line.x((d: any) => newXScale(d.x)) as any);
-          
-          // Update dots
-          g.selectAll('[class^="dot-"]')
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .attr('cx', (d: any) => newXScale(d.x));
-        });
-
-      svg.call(zoom);
-    }
-
-  }, [series, regressions, width, height, isDark, enableZoom, showLegend]);
+  const areaData = showArea 
+    ? `${pathData} L ${getX(data[data.length - 1].x)} ${height - padding} L ${padding} ${height - padding} Z` 
+    : '';
 
   return (
     <div className="relative">
-      <svg ref={svgRef} width={width} height={height} />
-      
-      {/* Tooltip */}
-      {hoveredPoint && (
-        <div
-          className="fixed z-50 px-3 py-2 bg-dev-surface border border-dev-border rounded-lg shadow-lg pointer-events-none"
-          style={{ left: hoveredPoint.x + 10, top: hoveredPoint.y - 10 }}
-        >
-          <p className="text-sm font-medium text-dev-text">{hoveredPoint.data.series}</p>
-          <p className="text-xs text-dev-text-muted">
-            {hoveredPoint.data.date.toLocaleDateString()}
-          </p>
-          <p className="text-lg font-semibold text-dev-accent">
-            {Math.round(hoveredPoint.data.value)}
-          </p>
-        </div>
-      )}
+      <svg width={width} height={height}>
+        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+          <line
+            key={i}
+            x1={padding}
+            y1={padding + chartHeight * ratio}
+            x2={width - padding}
+            y2={padding + chartHeight * ratio}
+            stroke="var(--dev-surface-hover)"
+            strokeWidth={1}
+            strokeDasharray="4"
+          />
+        ))}
+
+        {showArea && (
+          <motion.path
+            d={areaData}
+            fill={color}
+            opacity={0.2}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.2 }}
+            transition={{ duration: 0.5 }}
+          />
+        )}
+
+        <motion.path
+          d={pathData}
+          fill="none"
+          stroke={color}
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+        />
+
+        {data.map((point, index) => {
+          const isHovered = hoveredPoint === index;
+          const x = getX(point.x);
+          const y = getY(point.y);
+
+          return (
+            <g key={index}>
+              <motion.circle
+                cx={x}
+                cy={y}
+                r={isHovered ? 8 : 5}
+                fill={color}
+                stroke="var(--dev-bg)"
+                strokeWidth={2}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: index * 0.05 }}
+                onMouseEnter={() => setHoveredPoint(index)}
+                onMouseLeave={() => setHoveredPoint(null)}
+                style={{ cursor: 'pointer' }}
+              />
+              {isHovered && point.label !== undefined && point.label !== '' && (
+                <g>
+                  <rect
+                    x={x - 40}
+                    y={y - 35}
+                    width={80}
+                    height={25}
+                    fill="var(--dev-surface)"
+                    stroke="var(--dev-border)"
+                    rx={4}
+                  />
+                  <text
+                    x={x}
+                    y={y - 18}
+                    textAnchor="middle"
+                    fill="var(--dev-text)"
+                    fontSize={12}
+                  >
+                    {point.label}
+                  </text>
+                </g>
+              )}
+            </g>
+          );
+        })}
+
+        <line
+          x1={padding}
+          y1={height - padding}
+          x2={width - padding}
+          y2={height - padding}
+          stroke="var(--dev-text-muted)"
+          strokeWidth={1}
+        />
+        <line
+          x1={padding}
+          y1={padding}
+          x2={padding}
+          y2={height - padding}
+          stroke="var(--dev-text-muted)"
+          strokeWidth={1}
+        />
+      </svg>
+    </div>
+  );
+}
+
+interface SeriesTrendLineChartProps {
+  series: TrendSeries[];
+  width: number;
+  height: number;
+}
+
+interface Point {
+  x: number;
+  y: number;
+}
+
+function SeriesTrendLineChart({
+  series,
+  width,
+  height,
+}: SeriesTrendLineChartProps): React.ReactNode {
+  const padding = 40;
+  const chartWidth = width - padding * 2;
+  const chartHeight = height - padding * 2;
+
+  const allPoints: Point[] = useMemo(() => 
+    series.flatMap(s => s.data),
+    [series]
+  );
+  
+  const maxX = Math.max(...allPoints.map(p => p.x));
+  const minX = Math.min(...allPoints.map(p => p.x));
+  const maxY = Math.max(...allPoints.map(p => p.y));
+  const minY = Math.min(...allPoints.map(p => p.y));
+
+  const getX = (x: number): number => {
+    return padding + ((x - minX) / (maxX - minX || 1)) * chartWidth;
+  };
+
+  const getY = (y: number): number => {
+    return padding + chartHeight - ((y - minY) / (maxY - minY || 1)) * chartHeight;
+  };
+
+  return (
+    <div className="relative">
+      <svg width={width} height={height}>
+        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+          <line
+            key={i}
+            x1={padding}
+            y1={padding + chartHeight * ratio}
+            x2={width - padding}
+            y2={padding + chartHeight * ratio}
+            stroke="var(--dev-surface-hover)"
+            strokeWidth={1}
+            strokeDasharray="4"
+          />
+        ))}
+
+        {series.map((s, seriesIndex) => {
+          const pathData = s.data.map((point, i) => {
+            const x = getX(point.x);
+            const y = getY(point.y);
+            return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+          }).join(' ');
+
+          const lineColor = s.color;
+
+          return (
+            <motion.path
+              key={s.metric}
+              d={pathData}
+              fill="none"
+              stroke={lineColor}
+              strokeWidth={2}
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 1, delay: seriesIndex * 0.1 }}
+            />
+          );
+        })}
+
+        <g transform={`translate(${padding}, 20)`}>
+          {series.map((s, i) => (
+            <g key={s.metric} transform={`translate(${i * 100}, 0)`}>
+              <circle
+                cx={0}
+                cy={0}
+                r={4}
+                fill={s.color}
+              />
+              <text
+                x={10}
+                y={4}
+                fontSize={12}
+                fill="var(--dev-text)"
+              >
+                {s.label}
+              </text>
+            </g>
+          ))}
+        </g>
+      </svg>
     </div>
   );
 }

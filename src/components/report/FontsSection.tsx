@@ -1,8 +1,12 @@
+import { motion } from 'framer-motion';
+import { AlertTriangle, CheckCircle, Type } from 'lucide-react';
+import { CardHeader, ModernCard } from '@/components/ui/ModernCard';
+import { AnimatedBadge } from '@/components/ui/AnimatedBadge';
+import { fadeUpVariants, staggerContainerVariants } from '@/utils/animations';
 import type { FontAnalysis } from '@/types';
-import { AlertTriangle, Download, Monitor, Type, Zap } from 'lucide-react';
 
 interface FontsSectionProps {
-  fonts: FontAnalysis;
+  analysis?: FontAnalysis;
 }
 
 function formatBytes(bytes: number): string {
@@ -13,200 +17,107 @@ function formatBytes(bytes: number): string {
   return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 }
 
-function getDisplayLabel(display: string): { text: string; color: string } {
-  switch (display) {
-    case 'swap':
-      return { text: 'swap', color: 'bg-green-500/20 text-green-400' };
-    case 'optional':
-      return { text: 'optional', color: 'bg-blue-500/20 text-blue-400' };
-    case 'fallback':
-      return { text: 'fallback', color: 'bg-yellow-500/20 text-yellow-400' };
-    case 'block':
-      return { text: 'block', color: 'bg-red-500/20 text-red-400' };
-    default:
-      return { text: display, color: 'bg-gray-500/20 text-gray-400' };
+export function FontsSection({ analysis }: FontsSectionProps): React.ReactNode {
+  if (!analysis) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-center py-12 text-[var(--dev-text-muted)]"
+      >
+        <Type className="w-12 h-12 mx-auto mb-4 opacity-50" />
+        <p>No font analysis data available</p>
+      </motion.div>
+    );
   }
-}
 
-export function FontsSection({ fonts }: FontsSectionProps): React.ReactNode {
-  const {
-    fonts: fontList,
-    totalFontSize,
-    fontsWithoutDisplay,
-    missingPreloads,
-    systemFontFallbacks,
-    variableFontOpportunities,
-    recommendations,
-    score,
-  } = fonts;
+  const { fonts, totalFontSize, fontsWithoutDisplay, missingPreloads, recommendations, score } = analysis;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Type className="w-5 h-5 text-dev-accent" />
-          <h2 className="text-lg font-semibold text-dev-text">Font Loading</h2>
-        </div>
-        <div className={`
-          px-3 py-1 rounded-full text-sm font-medium
-          ${score >= 80 ? 'bg-green-500/20 text-green-400' :
-            score >= 60 ? 'bg-yellow-500/20 text-yellow-400' :
-            'bg-red-500/20 text-red-400'}
-        `}>
-          Score: {score}
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="metric-card">
-          <span className="metric-label">Total Fonts</span>
-          <span className="metric-value">{fontList.length}</span>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">Total Size</span>
-          <span className="metric-value">{formatBytes(totalFontSize)}</span>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">Missing font-display</span>
-          <span className={fontsWithoutDisplay === 0 ? 'metric-value text-green-400' : 'metric-value text-dev-warning'}>
-            {fontsWithoutDisplay}
-          </span>
-        </div>
-        <div className="metric-card">
-          <span className="metric-label">System Fallbacks</span>
-          <span className={systemFontFallbacks ? 'metric-value text-green-400' : 'metric-value text-dev-warning'}>
-            {systemFontFallbacks ? 'Yes' : 'No'}
-          </span>
-        </div>
-      </div>
-
-      {/* Alerts */}
-      {fontsWithoutDisplay > 0 && (
-        <div className="dev-panel border-dev-warning/30">
-          <div className="flex items-start gap-3 p-4">
-            <AlertTriangle className="w-5 h-5 text-dev-warning shrink-0" />
-            <div>
-              <h3 className="text-sm font-semibold text-dev-warning">Missing font-display</h3>
-              <p className="text-sm text-dev-text-muted mt-1">
-                {fontsWithoutDisplay} font faces are missing the font-display property. This can cause invisible text (FOIT) during loading.
-              </p>
-              <code className="block mt-2 text-xs bg-dev-surface-hover p-2 rounded">
-                font-display: swap;
-              </code>
+    <motion.section 
+      className="space-y-6"
+      variants={staggerContainerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Score Card */}
+      <motion.div variants={fadeUpVariants}>
+        <ModernCard className="flex flex-col md:flex-row items-center gap-8 p-6">
+          <div className="text-center">
+            <p className="text-4xl font-bold text-[var(--dev-text)]">{score}</p>
+            <p className="text-xs text-[var(--dev-text-muted)]">Score</p>
+          </div>
+          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+            <div className="text-center p-4 rounded-xl bg-[var(--dev-surface-hover)]">
+              <p className="text-2xl font-bold text-[var(--dev-text)]">{fonts.length}</p>
+              <p className="text-xs text-[var(--dev-text-muted)]">Total Fonts</p>
+            </div>
+            <div className="text-center p-4 rounded-xl bg-[var(--dev-surface-hover)]">
+              <p className="text-2xl font-bold text-[var(--dev-text)]">{formatBytes(totalFontSize)}</p>
+              <p className="text-xs text-[var(--dev-text-muted)]">Total Size</p>
+            </div>
+            <div className="text-center p-4 rounded-xl bg-[var(--dev-warning)]/10">
+              <p className="text-2xl font-bold text-[var(--dev-warning)]">{fontsWithoutDisplay}</p>
+              <p className="text-xs text-[var(--dev-text-muted)]">No font-display</p>
+            </div>
+            <div className="text-center p-4 rounded-xl bg-[var(--dev-info)]/10">
+              <p className="text-2xl font-bold text-[var(--dev-info)]">{missingPreloads.length}</p>
+              <p className="text-xs text-[var(--dev-text-muted)]">Missing Preloads</p>
             </div>
           </div>
-        </div>
-      )}
-
-      {missingPreloads.length > 0 && (
-        <div className="dev-panel">
-          <div className="px-4 py-3 border-b border-dev-border">
-            <h3 className="text-sm font-semibold text-dev-text flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Missing Preloads ({missingPreloads.length})
-            </h3>
-          </div>
-          <div className="p-4 space-y-2">
-            {missingPreloads.map((preload, i) => (
-              <div key={i} className="text-sm text-dev-text-muted flex items-start gap-2">
-                <Zap className="w-4 h-4 text-dev-accent shrink-0" />
-                <code className="text-xs">{preload}</code>
-              </div>
-            ))}
-            <p className="text-xs text-dev-text-subtle mt-2">
-              Preload critical fonts to improve initial render performance.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {variableFontOpportunities.length > 0 && (
-        <div className="dev-panel border-dev-accent/30">
-          <div className="px-4 py-3 border-b border-dev-accent/30 bg-dev-accent/5">
-            <h3 className="text-sm font-semibold text-dev-accent flex items-center gap-2">
-              <Monitor className="w-4 h-4" />
-              Variable Font Opportunities
-            </h3>
-          </div>
-          <div className="p-4 space-y-2">
-            {variableFontOpportunities.map((opportunity, i) => (
-              <div key={i} className="text-sm text-dev-text flex items-start gap-2">
-                <Zap className="w-4 h-4 text-dev-accent shrink-0" />
-                {opportunity}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+        </ModernCard>
+      </motion.div>
 
       {/* Font List */}
-      {fontList.length > 0 && (
-        <div className="dev-panel">
-          <div className="px-4 py-3 border-b border-dev-border">
-            <h3 className="text-sm font-semibold text-dev-text">Font Faces ({fontList.length})</h3>
-          </div>
-          <div className="divide-y divide-dev-border-subtle">
-            {fontList.map((font, i) => {
-              const displayInfo = getDisplayLabel(font.display);
-              return (
-                <div key={i} className="px-4 py-3 hover:bg-dev-surface-hover">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-dev-text">{font.family}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded ${displayInfo.color}`}>
-                      {displayInfo.text}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-dev-text-muted">
-                    <span className="uppercase">{font.format}</span>
-                    <span>{formatBytes(font.estimatedSize)}</span>
-                    {font.unicodeRange != null && font.unicodeRange !== '' && (
-                      <span className="truncate max-w-xs">{font.unicodeRange}</span>
-                    )}
-                  </div>
-                  {!font.isPreloaded && (
-                    <p className="text-xs text-dev-warning mt-1">
-                      Consider preloading this font
-                    </p>
-                  )}
+      <motion.div variants={fadeUpVariants}>
+        <ModernCard
+          header={
+            <CardHeader
+              title="Fonts"
+              subtitle={`${fonts.length} web fonts loaded`}
+              icon={<Type className="w-5 h-5 text-[var(--dev-accent)]" />}
+            />
+          }
+        >
+          <div className="space-y-2">
+            {fonts.map((font, index) => (
+              <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-[var(--dev-surface-hover)]">
+                <div>
+                  <p className="text-sm font-medium text-[var(--dev-text)]">{font.family}</p>
+                  <p className="text-xs text-[var(--dev-text-muted)]">{font.format} • {font.display}</p>
                 </div>
-              );
-            })}
+                {font.display === 'auto' && (
+                  <AnimatedBadge variant="warning" size="sm">No swap</AnimatedBadge>
+                )}
+              </div>
+            ))}
           </div>
-        </div>
-      )}
+        </ModernCard>
+      </motion.div>
 
       {/* Recommendations */}
       {recommendations.length > 0 && (
-        <div className="dev-panel">
-          <div className="px-4 py-3 border-b border-dev-border">
-            <h3 className="text-sm font-semibold text-dev-text">Recommendations</h3>
-          </div>
-          <div className="divide-y divide-dev-border-subtle">
-            {recommendations.map((rec, i) => (
-              <div key={i} className="px-4 py-3 flex items-start gap-3">
-                <Zap className="w-4 h-4 text-dev-accent shrink-0 mt-0.5" />
-                <span className="text-sm text-dev-text">{rec}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <motion.div variants={fadeUpVariants}>
+          <ModernCard
+            header={
+              <CardHeader
+                title="Recommendations"
+                subtitle="Font optimization suggestions"
+                icon={<AlertTriangle className="w-5 h-5 text-[var(--dev-warning)]" />}
+              />
+            }
+          >
+            <div className="space-y-2">
+              {recommendations.map((rec, index) => (
+                <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--dev-surface-hover)]">
+                  <CheckCircle className="w-5 h-5 text-[var(--dev-success)]" />
+                  <span className="text-sm text-[var(--dev-text)]">{rec}</span>
+                </div>
+              ))}
+            </div>
+          </ModernCard>
+        </motion.div>
       )}
-
-      {!systemFontFallbacks && (
-        <div className="dev-panel">
-          <div className="p-4">
-            <h3 className="text-sm font-semibold text-dev-text mb-2">System Font Fallbacks</h3>
-            <p className="text-sm text-dev-text-muted mb-3">
-              Add system font fallbacks for faster initial render and reduced layout shift.
-            </p>
-            <code className="block text-xs bg-dev-surface-hover p-3 rounded">
-              font-family: 'Your Font', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            </code>
-          </div>
-        </div>
-      )}
-    </div>
+    </motion.section>
   );
 }

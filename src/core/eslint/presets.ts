@@ -7,6 +7,7 @@
 import type { ESLintConfig } from './index';
 
 export type PresetType = 'strict-typescript' | 'react-optimized' | 'performance' | 'accessibility' | 'security' | 'recommended';
+export type { PresetType as ESLintPresetType };
 
 export interface Preset {
   name: string;
